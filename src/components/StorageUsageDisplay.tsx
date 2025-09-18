@@ -11,7 +11,7 @@ import {
   RiArrowUpLine,
   RiRefreshLine
 } from '@remixicon/react';
-import { getUserStorageQuota, getUserStorageStats, updateUserStorageTier } from '@/actions/file-operations';
+import { getUserStorageQuotaAction, getUserStorageStatsAction, updateUserStorageTierAction } from '@/lib/actions/file-actions';
 
 interface StorageQuotaData {
   quota: {
@@ -115,16 +115,16 @@ export default function StorageUsageDisplay() {
   const fetchStorageData = async () => {
     try {
       const [quotaResponse, statsResponse] = await Promise.all([
-        getUserStorageQuota(),
-        getUserStorageStats(),
+        getUserStorageQuotaAction(),
+        getUserStorageStatsAction(),
       ]);
 
-      if (quotaResponse.success && quotaResponse.quota) {
-        setQuotaData(quotaResponse.quota as StorageQuotaData);
+      if (quotaResponse.success && quotaResponse.data) {
+        setQuotaData(quotaResponse.data as StorageQuotaData);
       }
 
-      if (statsResponse.success && statsResponse.stats) {
-        setStatsData(statsResponse.stats as StorageStatsData);
+      if (statsResponse.success && statsResponse.data) {
+        setStatsData(statsResponse.data as StorageStatsData);
       }
     } catch (error) {
       console.error('Failed to fetch storage data:', error);
@@ -141,7 +141,9 @@ export default function StorageUsageDisplay() {
 
   const handleUpgradeTo10GB = async () => {
     try {
-      const result = await updateUserStorageTier('PRO_50GB');
+      const formData = new FormData();
+      formData.append('tier', 'PRO_50GB');
+      const result = await updateUserStorageTierAction(formData);
       if (result.success) {
         await fetchStorageData(); // Refresh data after upgrade
         alert('Storage upgraded to 10GB successfully!');

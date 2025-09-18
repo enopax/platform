@@ -18,7 +18,7 @@ import {
   RiErrorWarningLine,
   RiDragDropLine
 } from '@remixicon/react';
-import { getUserStorageQuota } from '@/actions/file-operations';
+import { getUserStorageQuotaAction } from '@/lib/actions/file-actions';
 
 interface FileUploadProps {
   isOpen: boolean;
@@ -186,10 +186,10 @@ export default function FileUpload({ isOpen, onClose, onUploadSuccess, teamId, p
   useEffect(() => {
     if (isOpen && !teamId) {
       setQuotaLoading(true);
-      getUserStorageQuota()
+      getUserStorageQuotaAction()
         .then(response => {
           if (response.success) {
-            setStorageQuota(response.quota);
+            setStorageQuota(response.data);
           }
         })
         .catch(error => {

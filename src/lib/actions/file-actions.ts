@@ -194,3 +194,161 @@ export async function searchFilesAction(formData: FormData): Promise<ActionResul
     };
   }
 }
+
+export async function checkTeamStorageQuotaAction(teamId: string, fileSizeBytes: number): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const quotaCheck = await teamFilesService.checkTeamStorageQuota(
+      session.user.id,
+      teamId,
+      fileSizeBytes
+    );
+
+    return {
+      success: true,
+      data: quotaCheck
+    };
+
+  } catch (error) {
+    console.error('Quota check error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to check storage quota'
+    };
+  }
+}
+
+export async function getTeamFilesAction(teamId: string, projectId?: string): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const files = await teamFilesService.getTeamFiles(
+      session.user.id,
+      teamId,
+      projectId
+    );
+
+    return {
+      success: true,
+      data: files
+    };
+
+  } catch (error) {
+    console.error('Get team files error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch team files'
+    };
+  }
+}
+
+export async function getTeamStorageStatsAction(teamId: string): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const stats = await teamFilesService.getTeamStorageStats(teamId);
+
+    return {
+      success: true,
+      data: stats
+    };
+
+  } catch (error) {
+    console.error('Get team storage stats error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch storage statistics'
+    };
+  }
+}
+
+export async function getUserStorageQuotaAction(): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const quota = await storageQuotaService.getUserStorageQuota(session.user.id);
+
+    return {
+      success: true,
+      data: quota
+    };
+
+  } catch (error) {
+    console.error('Get user storage quota error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch storage quota'
+    };
+  }
+}
+
+export async function getUserStorageStatsAction(): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const stats = await storageQuotaService.getUserStorageStats(session.user.id);
+
+    return {
+      success: true,
+      data: stats
+    };
+
+  } catch (error) {
+    console.error('Get user storage stats error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch storage stats'
+    };
+  }
+}
+
+export async function updateUserStorageTierAction(formData: FormData): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const tier = formData.get('tier') as string;
+    if (!tier) {
+      return { success: false, error: 'Storage tier is required' };
+    }
+
+    const validTiers = ['FREE_500MB', 'BASIC_5GB', 'PRO_50GB', 'ENTERPRISE_500GB', 'UNLIMITED'];
+    if (!validTiers.includes(tier)) {
+      return { success: false, error: 'Invalid storage tier' };
+    }
+
+    await storageQuotaService.updateUserStorageTier(session.user.id, tier as any);
+
+    revalidatePath('/main/resources');
+
+    return {
+      success: true,
+      data: { message: `Storage tier updated to ${tier}` }
+    };
+
+  } catch (error) {
+    console.error('Update storage tier error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update storage tier'
+    };
+  }
+}

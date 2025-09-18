@@ -24,7 +24,7 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { userFilesService } from '@/lib/services/user-files';
-import { syncUserFiles, deleteFile, downloadFile } from '@/actions/file-operations';
+import { syncFilesAction, deleteFileAction, getFileDownloadUrlAction } from '@/lib/actions/file-actions';
 import FileBrowserClient from './FileBrowserClient';
 import StorageUsageDisplay from '@/components/StorageUsageDisplay';
 
@@ -76,7 +76,7 @@ export default async function FileBrowserPage() {
               Analytics
             </Button>
           </Link>
-          <form action={syncUserFiles}>
+          <form action={syncFilesAction}>
             <Button variant="outline" size="sm" type="submit">
               <RiRefreshLine className="mr-2 h-4 w-4" />
               Sync Files
@@ -93,8 +93,8 @@ export default async function FileBrowserPage() {
       {/* Client Component for Interactive Features */}
       <FileBrowserClient
         files={files}
-        deleteFileAction={deleteFile}
-        downloadFileAction={downloadFile}
+        deleteFileAction={deleteFileAction}
+        downloadFileAction={getFileDownloadUrlAction}
       />
     </div>
   );
