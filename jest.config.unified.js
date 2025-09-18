@@ -28,6 +28,34 @@ module.exports = {
       ],
     },
 
+    // Service tests (Node environment)
+    {
+      displayName: 'services',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      setupFilesAfterEnv: ['<rootDir>/tests/setup/services.js'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+      },
+      testMatch: [
+        '<rootDir>/tests/services/**/*.test.ts',
+      ],
+    },
+
+    // API tests (Node environment)
+    {
+      displayName: 'api',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      setupFilesAfterEnv: ['<rootDir>/tests/setup/api.js'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+      },
+      testMatch: [
+        '<rootDir>/tests/api/**/*.test.ts',
+      ],
+    },
+
     // Component tests (JSDOM environment)
     {
       displayName: 'components',
@@ -50,7 +78,8 @@ module.exports = {
   ],
   collectCoverageFrom: [
     'src/lib/validation/**/*.ts',
-    'src/lib/actions/**/*.ts',
+    'src/lib/services/**/*.ts',
+    'src/actions/**/*.ts',
     'src/components/**/*.{ts,tsx}',
     '!src/**/*.test.{ts,tsx}',
     '!src/**/__tests__/**',

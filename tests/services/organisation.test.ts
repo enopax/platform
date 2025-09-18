@@ -1,0 +1,681 @@
+/**
+ * Tests for OrganisationService
+ */
+
+import { OrganisationService, organisationService } from '@/lib/services/organisation';
+import { OrganisationRole } from '@prisma/client';
+
+// Mock Prisma Client
+jest.mock('@prisma/client', () => {
+  const mockPrisma = {
+    organisation: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
+    },
+    organisationMember: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+    },
+  };
+
+  return {
+    PrismaClient: jest.fn(() => mockPrisma),
+    OrganisationRole: {
+      OWNER: 'OWNER',
+      MANAGER: 'MANAGER',
+      MEMBER: 'MEMBER',
+    },
+  };
+});
+
+// Get reference to mocked Prisma instance
+const mockPrismaInstance = {
+  organisation: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn(),
+  },
+  organisationMember: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+  },
+};
+
+// Mock the entire prisma import
+jest.doMock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => mockPrismaInstance),
+  OrganisationRole: {
+    OWNER: 'OWNER',
+    MANAGER: 'MANAGER',
+    MEMBER: 'MEMBER',
+  },
+}));
+
+describe('OrganisationService', () => {
+  let service: OrganisationService;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    service = new OrganisationService();
+  });
+
+  describe('constructor and instance', () => {
+    it('should be instantiated', () => {
+      expect(service).toBeDefined();
+      expect(service).toBeInstanceOf(OrganisationService);
+    });
+
+    it('should export a singleton instance', () => {
+      expect(organisationService).toBeInstanceOf(OrganisationService);
+    });
+
+    it('should have all required methods', () => {
+      const expectedMethods = [
+        'createOrganisation',
+        'getOrganisationById',
+        'getUserOrganisations',
+        'updateOrganisation',
+        'deleteOrganisation',
+        'getUserRole',
+        'isUserMember',
+        'validateOrganisationName',
+        'getOrganisationMembers',
+      ];
+
+      expectedMethods.forEach(method => {
+        expect(typeof service[method]).toBe('function');
+      });
+    });
+  });
+
+  describe('createOrganisation', () => {
+    const mockOrganisationData = {
+      name: 'Test Organisation',
+      description: 'A test organisation',
+      website: 'https://test.com',
+      email: 'test@test.com',
+    };
+
+    const mockCreatedOrganisation = {
+      id: 'org-123',
+      name: 'Test Organisation',
+      description: 'A test organisation',
+      website: 'https://test.com',
+      address: null,
+      phone: null,
+      email: 'test@test.com',
+      logo: null,
+      isActive: true,
+      ownerId: 'user-123',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it('should create organisation successfully', async () => {
+      mockPrismaInstance.organisation.create.mockResolvedValue(mockCreatedOrganisation);
+      mockPrismaInstance.organisationMember.create.mockResolvedValue({
+        id: 'member-123',
+        userId: 'user-123',
+        organisationId: 'org-123',
+        role: OrganisationRole.OWNER,
+      });
+
+      const result = await service.createOrganisation('user-123', mockOrganisationData);
+
+      expect(mockPrismaInstance.organisation.create).toHaveBeenCalledWith({
+        data: {
+          name: 'Test Organisation',
+          description: 'A test organisation',
+          website: 'https://test.com',
+          address: undefined,
+          phone: undefined,
+          email: 'test@test.com',
+          logo: undefined,
+          ownerId: 'user-123',
+        },
+      });
+
+      expect(mockPrismaInstance.organisationMember.create).toHaveBeenCalledWith({
+        data: {
+          userId: 'user-123',
+          organisationId: 'org-123',
+          role: OrganisationRole.OWNER,
+        },
+      });
+
+      expect(result).toEqual({
+        ...mockCreatedOrganisation,
+        memberCount: 1,
+        teamCount: 0,
+        projectCount: 0,
+      });
+    });
+
+    it('should handle creation errors', async () => {
+      const error = new Error('Database connection failed');
+      mockPrismaInstance.organisation.create.mockRejectedValue(error);
+
+      await expect(
+        service.createOrganisation('user-123', mockOrganisationData)
+      ).rejects.toThrow('Database connection failed');
+    });
+  });
+
+  describe('getOrganisationById', () => {
+    const mockOrganisation = {
+      id: 'org-123',
+      name: 'Test Organisation',
+      description: 'A test organisation',
+      website: 'https://test.com',
+      address: null,
+      phone: null,
+      email: 'test@test.com',
+      logo: null,
+      isActive: true,
+      ownerId: 'user-123',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      _count: {
+        members: 5,
+        teams: 3,
+        projects: 10,
+      },
+    };
+
+    it('should return organisation with counts', async () => {
+      mockPrisma.organisation.findUnique.mockResolvedValue(mockOrganisation);
+
+      const result = await service.getOrganisationById('org-123');
+
+      expect(mockPrisma.organisation.findUnique).toHaveBeenCalledWith({
+        where: { id: 'org-123' },
+        include: {
+          _count: {
+            select: {
+              members: true,
+              teams: true,
+              projects: true,
+            },
+          },
+        },
+      });
+
+      expect(result).toEqual({
+        ...mockOrganisation,
+        memberCount: 5,
+        teamCount: 3,
+        projectCount: 10,
+      });
+    });
+
+    it('should return null for non-existent organisation', async () => {
+      mockPrisma.organisation.findUnique.mockResolvedValue(null);
+
+      const result = await service.getOrganisationById('non-existent');
+
+      expect(result).toBeNull();
+    });
+
+    it('should handle database errors', async () => {
+      const error = new Error('Database connection failed');
+      mockPrisma.organisation.findUnique.mockRejectedValue(error);
+
+      await expect(
+        service.getOrganisationById('org-123')
+      ).rejects.toThrow('Database connection failed');
+    });
+  });
+
+  describe('getUserOrganisations', () => {
+    const mockMemberships = [
+      {
+        organisation: {
+          id: 'org-123',
+          name: 'Organisation 1',
+          description: 'First org',
+          website: null,
+          address: null,
+          phone: null,
+          email: null,
+          logo: null,
+          isActive: true,
+          ownerId: 'user-123',
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+          _count: {
+            members: 3,
+            teams: 2,
+            projects: 5,
+          },
+        },
+      },
+      {
+        organisation: {
+          id: 'org-456',
+          name: 'Organisation 2',
+          description: 'Second org',
+          website: 'https://org2.com',
+          address: null,
+          phone: null,
+          email: 'info@org2.com',
+          logo: null,
+          isActive: true,
+          ownerId: 'user-456',
+          createdAt: new Date('2024-01-02'),
+          updatedAt: new Date('2024-01-02'),
+          _count: {
+            members: 1,
+            teams: 0,
+            projects: 1,
+          },
+        },
+      },
+    ];
+
+    it('should return user organisations with counts', async () => {
+      mockPrisma.organisationMember.findMany.mockResolvedValue(mockMemberships);
+
+      const result = await service.getUserOrganisations('user-123');
+
+      expect(mockPrisma.organisationMember.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-123' },
+        include: {
+          organisation: {
+            include: {
+              _count: {
+                select: {
+                  members: true,
+                  teams: true,
+                  projects: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { joinedAt: 'desc' },
+      });
+
+      expect(result).toEqual([
+        {
+          ...mockMemberships[0].organisation,
+          memberCount: 3,
+          teamCount: 2,
+          projectCount: 5,
+        },
+        {
+          ...mockMemberships[1].organisation,
+          memberCount: 1,
+          teamCount: 0,
+          projectCount: 1,
+        },
+      ]);
+    });
+
+    it('should return empty array for user with no organisations', async () => {
+      mockPrisma.organisationMember.findMany.mockResolvedValue([]);
+
+      const result = await service.getUserOrganisations('user-no-orgs');
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('updateOrganisation', () => {
+    const updateData = {
+      name: 'Updated Organisation',
+      description: 'Updated description',
+      website: 'https://updated.com',
+    };
+
+    const mockMembership = {
+      userId: 'user-123',
+      organisationId: 'org-123',
+      role: OrganisationRole.OWNER,
+    };
+
+    const mockUpdatedOrganisation = {
+      id: 'org-123',
+      name: 'Updated Organisation',
+      description: 'Updated description',
+      website: 'https://updated.com',
+      address: null,
+      phone: null,
+      email: null,
+      logo: null,
+      isActive: true,
+      ownerId: 'user-123',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      _count: {
+        members: 5,
+        teams: 3,
+        projects: 10,
+      },
+    };
+
+    it('should update organisation when user has owner permissions', async () => {
+      mockPrisma.organisationMember.findUnique.mockResolvedValue(mockMembership);
+      mockPrisma.organisation.update.mockResolvedValue(mockUpdatedOrganisation);
+
+      const result = await service.updateOrganisation('org-123', 'user-123', updateData);
+
+      expect(mockPrisma.organisationMember.findUnique).toHaveBeenCalledWith({
+        where: {
+          userId_organisationId: {
+            userId: 'user-123',
+            organisationId: 'org-123',
+          },
+        },
+      });
+
+      expect(mockPrisma.organisation.update).toHaveBeenCalledWith({
+        where: { id: 'org-123' },
+        data: {
+          name: 'Updated Organisation',
+          description: 'Updated description',
+          website: 'https://updated.com',
+          address: undefined,
+          phone: undefined,
+          email: undefined,
+          logo: undefined,
+        },
+        include: {
+          _count: {
+            select: {
+              members: true,
+              teams: true,
+              projects: true,
+            },
+          },
+        },
+      });
+
+      expect(result).toEqual({
+        ...mockUpdatedOrganisation,
+        memberCount: 5,
+        teamCount: 3,
+        projectCount: 10,
+      });
+    });
+
+    it('should update organisation when user has manager permissions', async () => {
+      const managerMembership = { ...mockMembership, role: OrganisationRole.MANAGER };
+      mockPrisma.organisationMember.findUnique.mockResolvedValue(managerMembership);
+      mockPrisma.organisation.update.mockResolvedValue(mockUpdatedOrganisation);
+
+      const result = await service.updateOrganisation('org-123', 'user-123', updateData);
+
+      expect(result).toBeDefined();
+    });
+
+    it('should throw error when user has insufficient permissions', async () => {
+      const memberMembership = { ...mockMembership, role: OrganisationRole.MEMBER };
+      mockPrisma.organisationMember.findUnique.mockResolvedValue(memberMembership);
+
+      await expect(
+        service.updateOrganisation('org-123', 'user-123', updateData)
+      ).rejects.toThrow('Insufficient permissions to update organisation');
+    });
+
+    it('should throw error when user is not a member', async () => {
+      mockPrisma.organisationMember.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.updateOrganisation('org-123', 'user-123', updateData)
+      ).rejects.toThrow('Insufficient permissions to update organisation');
+    });
+  });
+
+  describe('deleteOrganisation', () => {
+    const mockOrganisation = {
+      id: 'org-123',
+      name: 'Test Organisation',
+      ownerId: 'user-123',
+      isActive: true,
+    };
+
+    it('should soft delete organisation when user is owner', async () => {
+      mockPrisma.organisation.findUnique.mockResolvedValue(mockOrganisation);
+      mockPrisma.organisation.update.mockResolvedValue({ ...mockOrganisation, isActive: false });
+
+      await service.deleteOrganisation('org-123', 'user-123');
+
+      expect(mockPrisma.organisation.findUnique).toHaveBeenCalledWith({
+        where: { id: 'org-123' },
+      });
+
+      expect(mockPrisma.organisation.update).toHaveBeenCalledWith({
+        where: { id: 'org-123' },
+        data: { isActive: false },
+      });
+    });
+
+    it('should throw error when user is not the owner', async () => {
+      const nonOwnerOrg = { ...mockOrganisation, ownerId: 'different-user' };
+      mockPrisma.organisation.findUnique.mockResolvedValue(nonOwnerOrg);
+
+      await expect(
+        service.deleteOrganisation('org-123', 'user-123')
+      ).rejects.toThrow('Only the organisation owner can delete the organisation');
+    });
+
+    it('should throw error when organisation does not exist', async () => {
+      mockPrisma.organisation.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.deleteOrganisation('non-existent', 'user-123')
+      ).rejects.toThrow('Only the organisation owner can delete the organisation');
+    });
+  });
+
+  describe('getUserRole', () => {
+    it('should return user role when membership exists', async () => {
+      const mockMembership = {
+        role: OrganisationRole.MANAGER,
+      };
+      mockPrisma.organisationMember.findUnique.mockResolvedValue(mockMembership);
+
+      const result = await service.getUserRole('user-123', 'org-123');
+
+      expect(mockPrisma.organisationMember.findUnique).toHaveBeenCalledWith({
+        where: {
+          userId_organisationId: {
+            userId: 'user-123',
+            organisationId: 'org-123',
+          },
+        },
+      });
+
+      expect(result).toBe(OrganisationRole.MANAGER);
+    });
+
+    it('should return null when membership does not exist', async () => {
+      mockPrisma.organisationMember.findUnique.mockResolvedValue(null);
+
+      const result = await service.getUserRole('user-123', 'org-123');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('isUserMember', () => {
+    it('should return true when user is a member', async () => {
+      const mockMembership = {
+        userId: 'user-123',
+        organisationId: 'org-123',
+        role: OrganisationRole.MEMBER,
+      };
+      mockPrisma.organisationMember.findUnique.mockResolvedValue(mockMembership);
+
+      const result = await service.isUserMember('user-123', 'org-123');
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when user is not a member', async () => {
+      mockPrisma.organisationMember.findUnique.mockResolvedValue(null);
+
+      const result = await service.isUserMember('user-123', 'org-123');
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when database error occurs', async () => {
+      mockPrisma.organisationMember.findUnique.mockRejectedValue(new Error('Database error'));
+
+      const result = await service.isUserMember('user-123', 'org-123');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('validateOrganisationName', () => {
+    it('should return true when name is available', async () => {
+      mockPrisma.organisation.findFirst.mockResolvedValue(null);
+
+      const result = await service.validateOrganisationName('Available Name');
+
+      expect(mockPrisma.organisation.findFirst).toHaveBeenCalledWith({
+        where: {
+          name: 'Available Name',
+          isActive: true,
+        },
+      });
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when name is already taken', async () => {
+      mockPrisma.organisation.findFirst.mockResolvedValue({
+        id: 'existing-org',
+        name: 'Taken Name',
+      });
+
+      const result = await service.validateOrganisationName('Taken Name');
+
+      expect(result).toBe(false);
+    });
+
+    it('should exclude specific organisation when provided', async () => {
+      mockPrisma.organisation.findFirst.mockResolvedValue(null);
+
+      const result = await service.validateOrganisationName('Name', 'exclude-org-123');
+
+      expect(mockPrisma.organisation.findFirst).toHaveBeenCalledWith({
+        where: {
+          name: 'Name',
+          isActive: true,
+          NOT: { id: 'exclude-org-123' },
+        },
+      });
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when database error occurs', async () => {
+      mockPrisma.organisation.findFirst.mockRejectedValue(new Error('Database error'));
+
+      const result = await service.validateOrganisationName('Name');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('getOrganisationMembers', () => {
+    const mockMembers = [
+      {
+        id: 'member-1',
+        role: OrganisationRole.OWNER,
+        joinedAt: new Date('2024-01-01'),
+        user: {
+          id: 'user-1',
+          name: 'John Doe',
+          email: 'john@example.com',
+          image: 'https://avatar.com/john',
+        },
+      },
+      {
+        id: 'member-2',
+        role: OrganisationRole.MEMBER,
+        joinedAt: new Date('2024-01-02'),
+        user: {
+          id: 'user-2',
+          name: 'Jane Smith',
+          email: 'jane@example.com',
+          image: null,
+        },
+      },
+    ];
+
+    it('should return organisation members with user details', async () => {
+      mockPrisma.organisationMember.findMany.mockResolvedValue(mockMembers);
+
+      const result = await service.getOrganisationMembers('org-123');
+
+      expect(mockPrisma.organisationMember.findMany).toHaveBeenCalledWith({
+        where: { organisationId: 'org-123' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: [
+          { role: 'asc' },
+          { joinedAt: 'desc' },
+        ],
+      });
+
+      expect(result).toEqual([
+        {
+          id: 'member-1',
+          role: OrganisationRole.OWNER,
+          joinedAt: new Date('2024-01-01'),
+          user: {
+            id: 'user-1',
+            name: 'John Doe',
+            email: 'john@example.com',
+            image: 'https://avatar.com/john',
+          },
+        },
+        {
+          id: 'member-2',
+          role: OrganisationRole.MEMBER,
+          joinedAt: new Date('2024-01-02'),
+          user: {
+            id: 'user-2',
+            name: 'Jane Smith',
+            email: 'jane@example.com',
+            image: null,
+          },
+        },
+      ]);
+    });
+
+    it('should return empty array for organisation with no members', async () => {
+      mockPrisma.organisationMember.findMany.mockResolvedValue([]);
+
+      const result = await service.getOrganisationMembers('org-no-members');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle database errors', async () => {
+      const error = new Error('Database connection failed');
+      mockPrisma.organisationMember.findMany.mockRejectedValue(error);
+
+      await expect(
+        service.getOrganisationMembers('org-123')
+      ).rejects.toThrow('Database connection failed');
+    });
+  });
+});
