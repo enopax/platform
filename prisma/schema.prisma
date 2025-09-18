@@ -1,0 +1,548 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  GUEST
+  CUSTOMER
+  ADMIN
+}
+
+enum OrganisationRole {
+  MEMBER
+  MANAGER
+  OWNER
+}
+
+enum TeamRole {
+  MEMBER
+  LEAD
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum ProjectPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum JoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TeamVisibility {
+  PUBLIC      // Anyone in org can see and request to join
+  PRIVATE     // Only members can see
+  INVITE_ONLY // Only visible to invited users
+}
+
+enum MembershipEntity {
+  ORGANISATION
+  TEAM
+}
+
+enum MembershipAction {
+  ADDED
+  REMOVED
+  ROLE_CHANGED
+  PROMOTED
+  DEMOTED
+}
+
+enum ResourceType {
+  COMPUTE
+  STORAGE
+  NETWORK
+  DATABASE
+  API
+  OTHER
+}
+
+enum ResourceStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  DELETED
+}
+
+enum StorageTier {
+  FREE_500MB      // 500MB free tier
+  BASIC_5GB       // 5GB basic paid tier
+  PRO_50GB        // 50GB professional tier
+  ENTERPRISE_500GB // 500GB enterprise tier
+  UNLIMITED       // Unlimited storage for special accounts
+}
+
+model User {
+  id            String    @id @default(cuid())
+  firstname     String?
+  lastname      String?
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String
+  role          UserRole
+  storageTier   StorageTier @default(FREE_500MB)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  authenticators Authenticator[]
+  organisationMemberships OrganisationMember[]
+  ownedOrganisations Organisation[] @relation("OrganisationOwner")
+  teamMemberships TeamMember[]
+  ownedTeams Team[] @relation("TeamOwner")
+  organisationJoinRequests OrganisationJoinRequest[]
+  teamJoinRequests TeamJoinRequest[]
+  auditLogsAsUser MembershipAuditLog[] @relation("AuditLogUser")
+  auditLogsAsActor MembershipAuditLog[] @relation("AuditLogActor")
+  storageMetrics UserStorageMetrics[]
+  storageActivity UserStorageActivity[]
+  files UserFile[]
+  storageQuota UserStorageQuota?
+  teamStorageResources TeamStorageResource[] @relation("TeamStorageOwner")
+  ownedResources Resource[] @relation("ResourceOwner")
+  apiKeys ApiKey[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+model Authenticator {
+  credentialID         String  @unique @map("credential_id")
+  userId               String  @map("user_id")
+  providerAccountId    String  @map("provider_account_id")
+  credentialPublicKey  String  @map("credential_public_key")
+  counter              Int
+  credentialDeviceType String  @map("credential_device_type")
+  credentialBackedUp   Boolean @map("credential_backed_up")
+  transports           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+  @@map("authenticators")
+}
+
+model Organisation {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  website     String?
+  address     String?
+  phone       String?
+  email       String?
+  logo        String?
+  isActive    Boolean   @default(true)
+  ownerId     String    @map("owner_id")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  owner    User                  @relation("OrganisationOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  members  OrganisationMember[]
+  teams    Team[]
+  projects Project[]
+  joinRequests OrganisationJoinRequest[]
+
+  @@map("organisations")
+}
+
+model OrganisationMember {
+  id             String           @id @default(cuid())
+  userId         String           @map("user_id")
+  organisationId String           @map("organisation_id")
+  role           OrganisationRole @default(MEMBER)
+  joinedAt       DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organisationId])
+  @@map("organisation_members")
+}
+
+model Team {
+  id             String         @id @default(cuid())
+  name           String
+  description    String?
+  color          String?        // Hex color code for team identification
+  isActive       Boolean        @default(true)
+  visibility     TeamVisibility @default(PRIVATE)
+  allowJoinRequests Boolean     @default(true)
+  maxMembers     Int?           // Optional member limit
+  tags           String[]       // Team categorization
+  organisationId String         @map("organisation_id")
+  ownerId        String         @map("owner_id")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organisation Organisation      @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  owner        User              @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  members      TeamMember[]
+  projects     Project[]         @relation("ProjectTeam")
+  joinRequests TeamJoinRequest[]
+  storageResource TeamStorageResource?
+  files        UserFile[]
+  managedResources Resource[] @relation("TeamManagedResource")
+
+  @@unique([name, organisationId]) // Team names must be unique within an organisation
+  @@map("teams")
+}
+
+model TeamMember {
+  id       String   @id @default(cuid())
+  userId   String   @map("user_id")
+  teamId   String   @map("team_id")
+  role     TeamRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+  @@map("team_members")
+}
+
+model Project {
+  id             String          @id @default(cuid())
+  name           String
+  description    String?
+  status         ProjectStatus   @default(PLANNING)
+  priority       ProjectPriority @default(MEDIUM)
+  budget         Decimal?        @db.Decimal(15, 2)
+  currency       String?         @default("USD")
+  startDate      DateTime?
+  endDate        DateTime?
+  actualEndDate  DateTime?
+  progress       Int             @default(0) // Progress percentage (0-100)
+  repositoryUrl  String?         // Git repository URL
+  documentationUrl String?       // Documentation URL
+  organisationId String          @map("organisation_id")
+  teamId         String          @map("team_id") // Assigned team
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  organisation Organisation  @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  team         Team          @relation("ProjectTeam", fields: [teamId], references: [id], onDelete: Restrict)
+  files        UserFile[]
+
+  @@unique([name, organisationId]) // Project names must be unique within an organisation
+  @@map("projects")
+}
+
+model OrganisationJoinRequest {
+  id             String            @id @default(cuid())
+  userId         String            @map("user_id")
+  organisationId String            @map("organisation_id")
+  status         JoinRequestStatus @default(PENDING)
+  respondedBy    String?           @map("responded_by") // User ID who responded
+  requestedAt    DateTime          @default(now())
+  respondedAt    DateTime?
+  updatedAt      DateTime          @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organisationId]) // User can only have one pending request per organisation
+  @@map("organisation_join_requests")
+}
+
+model TeamJoinRequest {
+  id          String            @id @default(cuid())
+  userId      String            @map("user_id")
+  teamId      String            @map("team_id")
+  status      JoinRequestStatus @default(PENDING)
+  message     String?           // Optional message from requester
+  respondedBy String?           @map("responded_by") // User ID who responded
+  requestedAt DateTime          @default(now())
+  respondedAt DateTime?
+  updatedAt   DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId]) // User can only have one pending request per team
+  @@map("team_join_requests")
+}
+
+model MembershipAuditLog {
+  id         String           @id @default(cuid())
+  entityType MembershipEntity // ORGANISATION | TEAM
+  entityId   String           @map("entity_id")
+  userId     String           @map("user_id") // Target user
+  actorId    String           @map("actor_id") // Who performed the action
+  action     MembershipAction // ADDED | REMOVED | ROLE_CHANGED | PROMOTED | DEMOTED
+  oldRole    String?          @map("old_role")
+  newRole    String?          @map("new_role")
+  reason     String?          // Optional reason
+  createdAt  DateTime         @default(now())
+
+  user  User @relation("AuditLogUser", fields: [userId], references: [id])
+  actor User @relation("AuditLogActor", fields: [actorId], references: [id])
+
+  @@map("membership_audit_logs")
+}
+
+model UserStorageMetrics {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  date      DateTime @default(now())
+  
+  // Storage metrics
+  totalFiles     Int     @default(0)
+  totalSize      BigInt  @default(0) // Size in bytes
+  pinnedFiles    Int     @default(0)
+  pinnedSize     BigInt  @default(0) // Size in bytes
+  
+  // Activity metrics
+  uploadCount    Int     @default(0)
+  downloadCount  Int     @default(0)
+  deleteCount    Int     @default(0)
+  
+  // File type distribution
+  documentFiles  Int     @default(0)
+  imageFiles     Int     @default(0)
+  videoFiles     Int     @default(0)
+  archiveFiles   Int     @default(0)
+  otherFiles     Int     @default(0)
+  
+  // Performance metrics
+  avgResponseTime Int    @default(0) // in milliseconds
+  availabilityRate Float @default(100.0) // percentage
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, date])
+  @@map("user_storage_metrics")
+}
+
+model UserStorageActivity {
+  id       String   @id @default(cuid())
+  userId   String   @map("user_id")
+  action   String   // upload, download, delete, pin, unpin
+  fileName String?  @map("file_name")
+  fileSize BigInt?  @map("file_size") // Size in bytes
+  ipfsHash String?  @map("ipfs_hash")
+  timestamp DateTime @default(now())
+  
+  // Performance data
+  responseTime Int? @map("response_time") // in milliseconds
+  success      Boolean @default(true)
+  errorMessage String? @map("error_message")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, timestamp])
+  @@map("user_storage_activity")
+}
+
+model UserFile {
+  id       String   @id @default(cuid())
+  userId   String   @map("user_id")
+  teamId   String?  @map("team_id") // Team context for storage allocation
+  projectId String? @map("project_id") // Project context (optional)
+  ipfsHash String   @map("ipfs_hash")
+  fileName String   @map("file_name")
+  fileSize BigInt   @map("file_size")
+  fileType String   @map("file_type")
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
+  // Pin tracking from IPFS cluster
+  isPinned Boolean @default(true) @map("is_pinned")
+  replicationCount Int @default(0) @map("replication_count")
+  nodeLocations String[] @map("node_locations")
+
+  // Metadata
+  metadata Json? // Additional metadata from IPFS cluster
+  lastSyncAt DateTime @default(now()) @map("last_sync_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team? @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, ipfsHash])
+  @@index([ipfsHash])
+  @@index([userId, uploadedAt])
+  @@index([teamId, uploadedAt])
+  @@index([projectId, uploadedAt])
+  @@map("user_files")
+}
+
+model UserStorageQuota {
+  id                String      @id @default(cuid())
+  userId            String      @unique @map("user_id")
+  tier              StorageTier @default(FREE_500MB)
+  allocatedBytes    BigInt      @default(524288000) @map("allocated_bytes") // Total storage allocated - default 500MB
+  usedBytes         BigInt      @default(0) @map("used_bytes") // Currently used storage
+
+  // Tracking fields
+  lastUpdated       DateTime    @default(now()) @map("last_updated")
+  tierUpdatedAt     DateTime?   @map("tier_updated_at") // When tier was last changed
+  tierUpdatedBy     String?     @map("tier_updated_by") // Admin who updated tier
+
+  // Billing/subscription info
+  subscriptionId    String?     @map("subscription_id") // External subscription reference
+  subscriptionEnds  DateTime?   @map("subscription_ends") // When current tier expires
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_storage_quotas")
+}
+
+model TeamStorageResource {
+  id                String      @id @default(cuid())
+  teamId            String      @unique @map("team_id") // One storage resource per team
+  name              String      // e.g., "Team Storage", "Dev Team Storage"
+  description       String?     // Optional description
+  tier              StorageTier @default(FREE_500MB)
+  totalBytes        BigInt      @map("total_bytes") // Total storage purchased for team
+  usedBytes         BigInt      @default(0) @map("used_bytes") // Currently used by team
+
+  // Billing/subscription info
+  subscriptionId    String?     @map("subscription_id")
+  subscriptionEnds  DateTime?   @map("subscription_ends")
+
+  // Management - purchased by team leader/owner
+  purchasedBy       String      @map("purchased_by") // User ID who purchased (team leader)
+  isActive          Boolean     @default(true) @map("is_active")
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  team              Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  purchaser         User        @relation("TeamStorageOwner", fields: [purchasedBy], references: [id])
+
+  @@map("team_storage_resources")
+}
+
+model Resource {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  type          ResourceType   @default(OTHER)
+  status        ResourceStatus @default(ACTIVE)
+
+  // Resource configuration (JSON for flexibility)
+  configuration Json?          // Resource-specific configuration
+  endpoint      String?        // API endpoint or access URL
+  credentials   Json?          // Encrypted credentials or tokens
+
+  // Resource metrics/limits
+  quotaLimit    BigInt?        @map("quota_limit") // Resource quota limit (bytes, requests, etc.)
+  currentUsage  BigInt         @default(0) @map("current_usage") // Current usage
+
+  // Management - always owned by creator
+  ownerId       String         @map("owner_id") // User who created the resource
+  teamId        String?        @map("team_id") // Optionally managed by a team
+
+  // Sharing and access
+  isPublic      Boolean        @default(false) @map("is_public") // Public access within org
+  tags          String[]       // Categorisation tags
+
+  // Lifecycle
+  isActive      Boolean        @default(true) @map("is_active")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?      @map("deleted_at") // Soft delete
+
+  // Relations
+  owner         User           @relation("ResourceOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  team          Team?          @relation("TeamManagedResource", fields: [teamId], references: [id], onDelete: SetNull)
+
+  @@map("resources")
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  name        String   // User-friendly name for the API key
+  keyPreview  String   // First few characters of the key for display (e.g., "sk_test_...")
+  hashedKey   String   @unique // Hashed version of the actual API key
+  permissions String[] // Array of permissions (e.g., ["read", "write", "admin"])
+
+  // User who owns this API key
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Usage tracking
+  lastUsedAt  DateTime? @map("last_used_at")
+  usageCount  Int       @default(0) @map("usage_count")
+
+  // Status and lifecycle
+  isActive    Boolean   @default(true) @map("is_active")
+  expiresAt   DateTime? @map("expires_at") // Optional expiration
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("api_keys")
+}
+
