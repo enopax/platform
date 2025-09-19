@@ -1,10 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useActionState, useState } from 'react';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
-import { Select } from '@/components/common/Select';
 import { Callout } from '@/components/common/Callout';
+import { Label } from '@/components/common/Label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/common/Select';
 import {
   RiAddLine,
   RiKeyLine,
@@ -13,161 +20,139 @@ import {
   RiCheckLine,
   RiAlertLine
 } from '@remixicon/react';
+import { createApiKey, CreateApiKeyState } from '@/actions/api-key';
 
 interface CreateApiKeyFormProps {
   userId: string;
 }
 
-interface ApiKeyResult {
-  success: boolean;
-  apiKey?: string;
-  error?: string;
-}
+const initialState: CreateApiKeyState = {};
 
 export default function CreateApiKeyForm({ userId }: CreateApiKeyFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<ApiKeyResult | null>(null);
+  const [state, formAction, pending] = useActionState(createApiKey, initialState);
   const [showApiKey, setShowApiKey] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    permissions: 'read',
-    expiresIn: '30',
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setResult(null);
-
-    try {
-      const response = await fetch('/api/developer/api-keys/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          name: formData.name,
-          permissions: [formData.permissions],
-          expiresIn: formData.expiresIn ? parseInt(formData.expiresIn) : null,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setResult({ success: true, apiKey: data.apiKey });
-        setFormData({ name: '', permissions: 'read', expiresIn: '30' });
-      } else {
-        setResult({ success: false, error: data.error || 'Failed to create API key' });
-      }
-    } catch (error) {
-      setResult({ success: false, error: 'Network error occurred' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
 
   return (
     <div className="space-y-6">
       {/* Result Display */}
-      {result && (
+      {state.success && (
         <Callout
-          variant={result.success ? 'success' : 'error'}
-          title={result.success ? 'API Key Created Successfully!' : 'Failed to create API key'}
-          icon={result.success ? RiCheckLine : RiAlertLine}
+          variant="success"
+          title="API Key Created Successfully!"
+          icon={RiCheckLine}
         >
-          {result.success ? (
-            <div>
-              <p className="text-sm mb-3">
-                Please copy and save this API key. You won't be able to see it again.
-              </p>
-              <div className="flex items-center gap-2 p-3 bg-white/50 dark:bg-black/20 rounded-lg">
-                <RiKeyLine className="h-4 w-4" />
-                <code className="flex-1 font-mono text-sm">
-                  {showApiKey ? result.apiKey : '••••••••••••••••••••••••••••••••'}
-                </code>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                >
-                  {showApiKey ? <RiEyeOffLine className="h-4 w-4" /> : <RiEyeLine className="h-4 w-4" />}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigator.clipboard.writeText(result.apiKey || '')}
-                >
-                  Copy
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm">
-              {result.error}
+          <div>
+            <p className="text-sm mb-3">
+              Please copy and save this API key. You won't be able to see it again.
             </p>
-          )}
+            <div className="flex items-center gap-2 p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+              <RiKeyLine className="h-4 w-4" />
+              <code className="flex-1 font-mono text-sm">
+                {showApiKey ? state.apiKey : '••••••••••••••••••••••••••••••••'}
+              </code>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowApiKey(!showApiKey)}
+              >
+                {showApiKey ? <RiEyeOffLine className="h-4 w-4" /> : <RiEyeLine className="h-4 w-4" />}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => navigator.clipboard.writeText(state.apiKey || '')}
+              >
+                Copy
+              </Button>
+            </div>
+          </div>
+        </Callout>
+      )}
+
+      {state.error && (
+        <Callout
+          variant="error"
+          title="Failed to create API key"
+          icon={RiAlertLine}
+        >
+          <p className="text-sm">
+            {state.error}
+          </p>
         </Callout>
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form action={formAction} className="space-y-4">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <Label htmlFor="name">
             API Key Name
-          </label>
+          </Label>
           <Input
             id="name"
+            name="name"
             type="text"
-            value={formData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
             placeholder="e.g., My App Integration"
             required
             className="w-full"
+            hasError={!!state.fieldErrors?.name}
           />
+          {state.fieldErrors?.name && (
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+              {state.fieldErrors.name}
+            </p>
+          )}
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Choose a descriptive name to help you identify this key later.
           </p>
         </div>
 
         <div>
-          <label htmlFor="permissions" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <Label htmlFor="permissions">
             Permissions
-          </label>
-          <Select
-            value={formData.permissions}
-            onValueChange={(value) => handleInputChange('permissions', value)}
-          >
-            <option value="read">Read Only</option>
-            <option value="write">Read & Write</option>
-            <option value="admin">Full Access</option>
+          </Label>
+          <Select name="permissions" required defaultValue="read">
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Select permissions" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="read">Read Only</SelectItem>
+              <SelectItem value="write">Read & Write</SelectItem>
+              <SelectItem value="admin">Full Access</SelectItem>
+            </SelectContent>
           </Select>
+          {state.fieldErrors?.permissions && (
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+              {state.fieldErrors.permissions}
+            </p>
+          )}
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Select the level of access this API key should have.
           </p>
         </div>
 
         <div>
-          <label htmlFor="expiresIn" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <Label htmlFor="expiresIn">
             Expiration
-          </label>
-          <Select
-            value={formData.expiresIn}
-            onValueChange={(value) => handleInputChange('expiresIn', value)}
-          >
-            <option value="7">7 days</option>
-            <option value="30">30 days</option>
-            <option value="90">90 days</option>
-            <option value="365">1 year</option>
-            <option value="">Never expires</option>
+          </Label>
+          <Select name="expiresIn" required defaultValue="30">
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Select expiration" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">7 days</SelectItem>
+              <SelectItem value="30">30 days</SelectItem>
+              <SelectItem value="90">90 days</SelectItem>
+              <SelectItem value="365">1 year</SelectItem>
+              <SelectItem value="0">Never expires</SelectItem>
+            </SelectContent>
           </Select>
+          {state.fieldErrors?.expiresIn && (
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+              {state.fieldErrors.expiresIn}
+            </p>
+          )}
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Choose when this API key should expire for security.
           </p>
@@ -176,15 +161,15 @@ export default function CreateApiKeyForm({ userId }: CreateApiKeyFormProps) {
         <div className="flex gap-3">
           <Button
             type="submit"
-            disabled={isLoading || !formData.name.trim()}
+            disabled={pending}
             className="flex items-center gap-2"
           >
-            {isLoading ? (
+            {pending ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             ) : (
               <RiAddLine className="h-4 w-4" />
             )}
-            {isLoading ? 'Creating...' : 'Create API Key'}
+            {pending ? 'Creating...' : 'Create API Key'}
           </Button>
         </div>
       </form>
