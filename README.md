@@ -42,6 +42,7 @@ npm run test:coverage
 # Run specific test suites
 npm run test:validation   # Validation schema tests
 npm run test:actions      # Server action tests
+npm run test:services     # Service layer tests
 npm run test:components   # React component tests
 ```
 
@@ -86,6 +87,7 @@ tests/
 ├── setup/                  # Environment-specific test configurations
 ├── validation/             # Validation schema tests
 ├── actions/               # Server Action tests
+├── services/              # Service layer tests
 └── components/            # React component tests
 ```
 
@@ -93,27 +95,33 @@ tests/
 
 ## 🧪 Testing Strategy
 
-### Three-Layer Testing Approach
+### Multi-Layer Testing Approach
 
 1. **Validation Layer** (Node.js environment)
    - Zod schema validation tests
    - Form data parsing and sanitisation
    - File upload constraints and validation
 
-2. **Business Logic Layer** (Node.js environment)
+2. **Service Layer** (Node.js environment)
+   - Business logic service tests (organisation, team, user services)
+   - Database interaction validation
+   - Service method functionality verification
+
+3. **Actions Layer** (Node.js environment)
    - Server Action structure and exports
    - Authentication and authorisation
    - Service integration and error handling
 
-3. **Presentation Layer** (JSDOM environment)
+4. **Presentation Layer** (JSDOM environment)
    - React component rendering
    - User interaction handling
    - State management and loading states
 
 ### Test Results
-- ✅ **23 tests passing** across 3 isolated environments
+- ✅ **130+ tests passing** across 4 isolated environments
 - ✅ **Environment isolation** prevents test interference
-- ✅ **Comprehensive coverage** of validation, business logic, and UI
+- ✅ **Comprehensive coverage** of validation, services, actions, and UI
+- ✅ **Team API functionality** fully tested
 
 > 📖 **For detailed testing documentation, see [JEST-TESTS.md](./JEST-TESTS.md)**
 
@@ -152,6 +160,12 @@ tests/
 - Advanced search and filtering capabilities
 - Team-based file organisation
 
+### Team Management API
+- Complete CRUD operations for team management
+- Team member management with role-based permissions
+- Organisation-scoped team operations
+- RESTful API endpoints for external integrations
+
 ### Authentication & Security
 - NextAuth.js v5 with multiple provider support
 - Session-based authentication with secure cookie handling
@@ -162,6 +176,29 @@ tests/
 - Real-time feedback with loading states
 - Progressive enhancement for accessibility
 - Comprehensive error handling and user feedback
+
+---
+
+## 🔌 API Endpoints
+
+### Team Management API
+Complete RESTful API for team operations:
+
+```bash
+# Team CRUD Operations
+POST   /api/team/create           # Create new team
+GET    /api/team/list             # List teams (with optional organisationId filter)
+GET    /api/team/[id]             # Get team details
+PUT    /api/team/[id]             # Update team
+DELETE /api/team/[id]             # Delete team (soft delete)
+
+# Team Member Management
+GET    /api/team/[id]/members     # List team members
+POST   /api/team/[id]/members     # Add team member
+DELETE /api/team/[id]/members     # Remove team member
+```
+
+All endpoints require authentication and follow role-based permission controls.
 
 ---
 
@@ -208,7 +245,7 @@ npm start
 ```
 
 ### Environment Variables
-Required environment variables (see `.env.local.example`):
+Required environment variables (see `.default.env`):
 - Database connection strings
 - NextAuth.js configuration
 - IPFS cluster endpoints
