@@ -1,7 +1,8 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { teamService } from '@/lib/services/team';
+import { userService } from '@/lib/services/user';
 
 export interface UpdateTeamState {
   success?: boolean;
@@ -62,23 +63,8 @@ export async function updateTeam(
       };
     }
 
-    // Validate organisation exists
-    const organisationExists = await prisma.organisation.findUnique({
-      where: { id: organisationId }
-    });
-
-    if (!organisationExists) {
-      return {
-        error: 'Selected organisation does not exist',
-        fieldErrors: { organisationId: 'Selected organisation does not exist' }
-      };
-    }
-
     // Validate owner exists
-    const ownerExists = await prisma.user.findUnique({
-      where: { id: ownerId }
-    });
-
+    const ownerExists = await userService.validateUserExists(ownerId);
     if (!ownerExists) {
       return {
         error: 'Selected owner does not exist',
@@ -87,15 +73,8 @@ export async function updateTeam(
     }
 
     // Check for duplicate team name within the organisation (excluding current team)
-    const duplicateTeam = await prisma.team.findFirst({
-      where: {
-        name: name.trim(),
-        organisationId,
-        NOT: { id: teamId }
-      }
-    });
-
-    if (duplicateTeam) {
+    const isNameAvailable = await teamService.validateTeamName(name.trim(), organisationId, teamId);
+    if (!isNameAvailable) {
       return {
         error: 'A team with this name already exists in the organisation',
         fieldErrors: { name: 'A team with this name already exists in the organisation' }
@@ -110,16 +89,12 @@ export async function updateTeam(
       };
     }
 
-    await prisma.team.update({
-      where: { id: teamId },
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        color: color?.trim() || null,
-        organisationId,
-        ownerId,
-        isActive,
-      },
+    // Use service to update team
+    await teamService.updateTeam(teamId, ownerId, {
+      name: name.trim(),
+      description: description?.trim() || undefined,
+      color: color?.trim() || undefined,
+      organisationId,
     });
 
     revalidatePath('/admin/team');
@@ -167,23 +142,8 @@ export async function createTeam(
       };
     }
 
-    // Validate organisation exists
-    const organisationExists = await prisma.organisation.findUnique({
-      where: { id: organisationId }
-    });
-
-    if (!organisationExists) {
-      return {
-        error: 'Selected organisation does not exist',
-        fieldErrors: { organisationId: 'Selected organisation does not exist' }
-      };
-    }
-
     // Validate owner exists
-    const ownerExists = await prisma.user.findUnique({
-      where: { id: ownerId }
-    });
-
+    const ownerExists = await userService.validateUserExists(ownerId);
     if (!ownerExists) {
       return {
         error: 'Selected owner does not exist',
@@ -192,14 +152,8 @@ export async function createTeam(
     }
 
     // Check for duplicate team name within the organisation
-    const duplicateTeam = await prisma.team.findFirst({
-      where: {
-        name: name.trim(),
-        organisationId
-      }
-    });
-
-    if (duplicateTeam) {
+    const isNameAvailable = await teamService.validateTeamName(name.trim(), organisationId);
+    if (!isNameAvailable) {
       return {
         error: 'A team with this name already exists in the organisation',
         fieldErrors: { name: 'A team with this name already exists in the organisation' }
@@ -214,23 +168,12 @@ export async function createTeam(
       };
     }
 
-    const team = await prisma.team.create({
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        color: color?.trim() || null,
-        organisationId,
-        ownerId,
-      },
-    });
-
-    // Also add the owner as a team member with LEAD role
-    await prisma.teamMember.create({
-      data: {
-        userId: ownerId,
-        teamId: team.id,
-        role: 'LEAD',
-      },
+    // Use service to create team
+    await teamService.createTeam(ownerId, {
+      name: name.trim(),
+      description: description?.trim() || undefined,
+      color: color?.trim() || undefined,
+      organisationId,
     });
 
     revalidatePath('/admin/team');
@@ -248,53 +191,8 @@ export async function createTeam(
 // Real database team search function
 export async function findTeams(query: string) {
   try {
-    // Search teams by name or description
-    const teams = await prisma.team.findMany({
-      where: {
-        OR: [
-          {
-            name: {
-              contains: query,
-              mode: 'insensitive',
-            },
-          },
-          {
-            description: {
-              contains: query,
-              mode: 'insensitive',
-            },
-          },
-        ],
-        isActive: true, // Only show active teams
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        color: true,
-        organisationId: true,
-        organisation: {
-          select: {
-            name: true,
-          },
-        },
-        owner: {
-          select: {
-            name: true,
-            firstname: true,
-            lastname: true,
-            email: true,
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: [
-        { name: 'asc' },
-      ],
-      take: 10, // Limit to 10 results
-    });
-
+    // Use service to search teams (this would need to be implemented in the service)
+    const teams = await teamService.searchTeams(query);
     return teams;
   } catch (error) {
     console.error('Failed to search teams:', error);

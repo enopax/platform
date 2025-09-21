@@ -168,6 +168,8 @@ export class TeamFilesService {
         }
       }
 
+      //Prisma Transaction??
+
       // Remove from IPFS cluster
       await ipfsDataService.unpinFile(userFile.ipfsHash);
 

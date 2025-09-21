@@ -1,8 +1,9 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { type ProjectStatus, type ProjectPriority } from '@prisma/client';
+import { projectService } from '@/lib/services/project';
+import { userService } from '@/lib/services/user';
 
 export interface UpdateProjectState {
   success?: boolean;
@@ -73,8 +74,8 @@ export async function updateProject(
     const progressStr = formData.get('progress') as string;
     const repositoryUrl = formData.get('repositoryUrl') as string;
     const documentationUrl = formData.get('documentationUrl') as string;
-    const organisationId = formData.get('organisationId') as string;
     const teamId = formData.get('teamId') as string;
+    const userId = formData.get('userId') as string; // Should be passed from client
 
     // Basic validation
     if (!projectId) {
@@ -91,24 +92,17 @@ export async function updateProject(
       };
     }
 
-    if (!organisationId) {
+    if (!userId) {
       return {
-        error: 'Organisation is required',
-        fieldErrors: { organisationId: 'Organisation is required' }
-      };
-    }
-
-    if (!teamId) {
-      return {
-        error: 'Team is required',
-        fieldErrors: { teamId: 'Team is required' }
+        error: 'User ID is required',
+        fieldErrors: { name: 'User ID is required' }
       };
     }
 
     // Validate dates
-    const startDate = startDateStr ? new Date(startDateStr) : null;
-    const endDate = endDateStr ? new Date(endDateStr) : null;
-    const actualEndDate = actualEndDateStr ? new Date(actualEndDateStr) : null;
+    const startDate = startDateStr ? new Date(startDateStr) : undefined;
+    const endDate = endDateStr ? new Date(endDateStr) : undefined;
+    const actualEndDate = actualEndDateStr ? new Date(actualEndDateStr) : undefined;
 
     if (startDate && endDate && startDate >= endDate) {
       return {
@@ -118,8 +112,8 @@ export async function updateProject(
     }
 
     // Validate progress
-    const progress = progressStr ? parseInt(progressStr) : 0;
-    if (progress < 0 || progress > 100) {
+    const progress = progressStr ? parseInt(progressStr) : undefined;
+    if (progress !== undefined && (progress < 0 || progress > 100)) {
       return {
         error: 'Progress must be between 0 and 100',
         fieldErrors: { progress: 'Progress must be between 0 and 100' }
@@ -127,7 +121,7 @@ export async function updateProject(
     }
 
     // Validate budget
-    const budget = budgetStr ? parseFloat(budgetStr) : null;
+    const budget = budgetStr ? parseFloat(budgetStr) : undefined;
     if (budgetStr && (isNaN(budget!) || budget! < 0)) {
       return {
         error: 'Budget must be a valid positive number',
@@ -150,64 +144,21 @@ export async function updateProject(
       };
     }
 
-    // Validate organisation exists
-    const organisationExists = await prisma.organisation.findUnique({
-      where: { id: organisationId }
-    });
-
-    if (!organisationExists) {
-      return {
-        error: 'Selected organisation does not exist',
-        fieldErrors: { organisationId: 'Selected organisation does not exist' }
-      };
-    }
-
-    // Validate team exists
-    const teamExists = await prisma.team.findUnique({
-      where: { id: teamId }
-    });
-
-    if (!teamExists) {
-      return {
-        error: 'Selected team does not exist',
-        fieldErrors: { teamId: 'Selected team does not exist' }
-      };
-    }
-
-    // Check for duplicate project name within the organisation (excluding current project)
-    const duplicateProject = await prisma.project.findFirst({
-      where: {
-        name: name.trim(),
-        organisationId,
-        NOT: { id: projectId }
-      }
-    });
-
-    if (duplicateProject) {
-      return {
-        error: 'A project with this name already exists in the organisation',
-        fieldErrors: { name: 'A project with this name already exists in the organisation' }
-      };
-    }
-
-    await prisma.project.update({
-      where: { id: projectId },
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        status,
-        priority,
-        budget,
-        currency: currency || 'USD',
-        startDate,
-        endDate,
-        actualEndDate,
-        progress,
-        repositoryUrl: repositoryUrl?.trim() || null,
-        documentationUrl: documentationUrl?.trim() || null,
-        organisationId,
-        teamId,
-      },
+    // Use service to update project
+    await projectService.updateProject(userId, projectId, {
+      name: name.trim(),
+      description: description?.trim() || undefined,
+      status,
+      priority,
+      budget,
+      currency: currency || 'USD',
+      startDate,
+      endDate,
+      actualEndDate,
+      progress,
+      repositoryUrl: repositoryUrl?.trim() || undefined,
+      documentationUrl: documentationUrl?.trim() || undefined,
+      teamId,
     });
 
     revalidatePath('/admin/project');
@@ -220,7 +171,7 @@ export async function updateProject(
   } catch (error) {
     console.error('Failed to update project:', error);
     return {
-      error: 'Failed to update project. Please try again.',
+      error: error instanceof Error ? error.message : 'Failed to update project. Please try again.',
     };
   }
 }
@@ -386,71 +337,8 @@ export async function createProject(
 // Real database project search function
 export async function findProjects(query: string) {
   try {
-    // Search projects by name or description
-    const projects = await prisma.project.findMany({
-      where: {
-        OR: [
-          {
-            name: {
-              contains: query,
-              mode: 'insensitive',
-            },
-          },
-          {
-            description: {
-              contains: query,
-              mode: 'insensitive',
-            },
-          },
-        ],
-        isActive: true, // Only show active projects
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        status: true,
-        priority: true,
-        progress: true,
-        startDate: true,
-        endDate: true,
-        budget: true,
-        currency: true,
-        repositoryUrl: true,
-        documentationUrl: true,
-        isActive: true,
-        organisation: {
-          select: {
-            name: true,
-          },
-        },
-        team: {
-          select: {
-            name: true,
-            owner: {
-              select: {
-                name: true,
-                firstname: true,
-                lastname: true,
-                email: true,
-              },
-            },
-            _count: {
-              select: {
-                members: true,
-              },
-            },
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: [
-        { updatedAt: 'desc' },
-      ],
-      take: 10, // Limit to 10 results
-    });
-
+    // Use service to search projects (this would need to be implemented in the service)
+    const projects = await projectService.searchProjects(query);
     return projects;
   } catch (error) {
     console.error('Failed to search projects:', error);

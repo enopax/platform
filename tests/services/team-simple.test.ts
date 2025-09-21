@@ -64,6 +64,7 @@ describe('TeamService - Simple Tests', () => {
       'getTeamMembers',
       'addTeamMember',
       'removeTeamMember',
+      'searchTeams',
     ];
 
     expectedMethods.forEach(method => {

@@ -1,6 +1,6 @@
 {
-  "name": "storage",
-  "version": "0.3.1",
+  "name": "fivelines",
+  "version": "0.3.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,6 +12,7 @@
     "test:coverage": "jest --config jest.config.unified.js --coverage",
     "test:validation": "jest --config jest.config.unified.js --selectProjects validation",
     "test:actions": "jest --config jest.config.unified.js --selectProjects actions",
+    "test:services": "jest --config jest.config.unified.js --selectProjects services",
     "test:components": "jest --config jest.config.unified.js --selectProjects components"
   },
   "dependencies": {
@@ -55,7 +56,6 @@
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.15.2",
-    "sharp": "^0.33.5",
     "stripe": "^18.4.0",
     "tailwind-merge": "^2.5.5",
     "tailwind-variants": "^0.3.1",

@@ -281,6 +281,64 @@ export class OrganisationService {
       throw error;
     }
   }
+
+  async searchOrganisations(query: string, limit: number = 10) {
+    try {
+      const organisations = await prisma.organisation.findMany({
+        where: {
+          OR: [
+            {
+              name: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+            {
+              description: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+          ],
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          website: true,
+          email: true,
+          isActive: true,
+          owner: {
+            select: {
+              name: true,
+              firstname: true,
+              lastname: true,
+              email: true,
+            },
+          },
+          _count: {
+            select: {
+              members: true,
+              teams: true,
+              projects: true,
+            },
+          },
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: [
+          { name: 'asc' },
+        ],
+        take: limit,
+      });
+
+      return organisations;
+    } catch (error) {
+      console.error('Failed to search organisations:', error);
+      return [];
+    }
+  }
 }
 
 export const organisationService = new OrganisationService();

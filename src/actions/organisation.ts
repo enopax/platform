@@ -1,8 +1,8 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { logOrganisationMembershipChange } from '@/lib/auditLog';
+import { organisationService } from '@/lib/services/organisation';
+import { userService } from '@/lib/services/user';
 
 export interface UpdateOrganisationState {
   success?: boolean;
@@ -63,10 +63,7 @@ export async function updateOrganisation(
     }
 
     // Validate owner exists
-    const ownerExists = await prisma.user.findUnique({
-      where: { id: ownerId }
-    });
-
+    const ownerExists = await userService.validateUserExists(ownerId);
     if (!ownerExists) {
       return {
         error: 'Selected owner does not exist',
@@ -94,18 +91,14 @@ export async function updateOrganisation(
       }
     }
 
-    await prisma.organisation.update({
-      where: { id: organisationId },
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        website: website?.trim() || null,
-        email: email?.trim() || null,
-        phone: phone?.trim() || null,
-        address: address?.trim() || null,
-        ownerId,
-        isActive,
-      },
+    // Use service to update organisation (this will need to be implemented in the service)
+    await organisationService.updateOrganisation(organisationId, ownerId, {
+      name: name.trim(),
+      description: description?.trim() || undefined,
+      website: website?.trim() || undefined,
+      email: email?.trim() || undefined,
+      phone: phone?.trim() || undefined,
+      address: address?.trim() || undefined,
     });
 
     revalidatePath('/admin/organisation');
@@ -151,10 +144,7 @@ export async function createOrganisation(
     }
 
     // Validate owner exists
-    const ownerExists = await prisma.user.findUnique({
-      where: { id: ownerId }
-    });
-
+    const ownerExists = await userService.validateUserExists(ownerId);
     if (!ownerExists) {
       return {
         error: 'Selected owner does not exist',
@@ -182,37 +172,15 @@ export async function createOrganisation(
       }
     }
 
-    const organisation = await prisma.organisation.create({
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        website: website?.trim() || null,
-        email: email?.trim() || null,
-        phone: phone?.trim() || null,
-        address: address?.trim() || null,
-        ownerId,
-      },
+    // Use service to create organisation
+    await organisationService.createOrganisation(ownerId, {
+      name: name.trim(),
+      description: description?.trim() || undefined,
+      website: website?.trim() || undefined,
+      email: email?.trim() || undefined,
+      phone: phone?.trim() || undefined,
+      address: address?.trim() || undefined,
     });
-
-    // Also add the owner as a member with OWNER role
-    await prisma.organisationMember.create({
-      data: {
-        userId: ownerId,
-        organisationId: organisation.id,
-        role: 'OWNER',
-      },
-    });
-
-    // Log the owner addition
-    await logOrganisationMembershipChange(
-      organisation.id,
-      ownerId,
-      ownerId, // Owner added themselves
-      'ADDED',
-      undefined,
-      'OWNER',
-      'Organisation created'
-    );
 
     revalidatePath('/admin/organisation');
 
@@ -228,56 +196,9 @@ export async function createOrganisation(
 // Real database organisation search function
 export async function findOrganisations(query: string) {
   try {
-    // Search organisations by name or description
-    const organisations = await prisma.organisation.findMany({
-      where: {
-        OR: [
-          {
-            name: {
-              contains: query,
-              mode: 'insensitive',
-            },
-          },
-          {
-            description: {
-              contains: query,
-              mode: 'insensitive',
-            },
-          },
-        ],
-        isActive: true, // Only show active organisations
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        website: true,
-        email: true,
-        isActive: true,
-        owner: {
-          select: {
-            name: true,
-            firstname: true,
-            lastname: true,
-            email: true,
-          },
-        },
-        _count: {
-          select: {
-            members: true,
-            teams: true,
-            projects: true,
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: [
-        { name: 'asc' },
-      ],
-      take: 10, // Limit to 10 results
-    });
-
+    // Use service to search organisations
+    // This would need to be implemented in the service
+    const organisations = await organisationService.searchOrganisations(query);
     return organisations;
   } catch (error) {
     console.error('Failed to search organisations:', error);
