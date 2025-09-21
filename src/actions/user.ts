@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { auth, signIn } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole, StorageTier } from '@prisma/client';
+import { userService } from '@/lib/services/user';
 
 // Storage tier to bytes mapping
 const STORAGE_TIER_BYTES: Record<StorageTier, bigint> = {
@@ -213,10 +214,7 @@ export async function settings(state: object | null, formData: FormData) {
 export async function setAvatar(userId: string, images: string[]) {
   try {
     const session = await auth();
-    await prisma.user.update({
-      where: { id: session?.userId },
-      data: { image: images[0] }
-    });
+    await userService.setUserAvatar(session?.userId!, images);
     revalidatePath('/account/settings');
 
     return {
@@ -233,52 +231,7 @@ export async function setAvatar(userId: string, images: string[]) {
 
 export async function findUsers(query: string) {
   try {
-    // Search users by email, name, firstname, or lastname
-    const users = await prisma.user.findMany({
-      where: {
-        OR: [{
-          email: {
-            contains: query,
-            mode: 'insensitive',
-          },
-        }, {
-          name: {
-            contains: query,
-            mode: 'insensitive',
-          },
-        }, {
-          firstname: {
-            contains: query,
-            mode: 'insensitive',
-          },
-        }, {
-          lastname: {
-            contains: query,
-            mode: 'insensitive',
-          },
-        }],
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        firstname: true,
-        lastname: true,
-        emailVerified: true,
-        image: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: [{
-        name: 'asc'
-      }, {
-        firstname: 'asc'
-      }, {
-        email: 'asc'
-      }],
-      take: 10,
-    });
-
+    const users = await userService.searchUsers(query);
     return users;
   } catch (error) {
     console.error('Failed to search users:', error);
@@ -309,6 +262,7 @@ export async function updateUserAdmin(
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
     const role = formData.get('role') as UserRole;
+    const adminUserId = formData.get('adminUserId') as string;
 
     // Basic validation
     if (!email || !email.includes('@')) {
@@ -322,6 +276,13 @@ export async function updateUserAdmin(
       return {
         error: 'Valid role is required',
         fieldErrors: { role: 'Valid role is required' }
+      };
+    }
+
+    if (!adminUserId) {
+      return {
+        error: 'Admin user ID is required',
+        fieldErrors: { name: 'Admin user ID is required' }
       };
     }
 
@@ -340,16 +301,14 @@ export async function updateUserAdmin(
       };
     }
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        firstname: firstname || null,
-        lastname: lastname || null,
-        name: name || null,
-        email,
-        role,
-      },
-    });
+    // Use service to update user
+    await userService.updateUserAdmin(userId, {
+      firstname: firstname || undefined,
+      lastname: lastname || undefined,
+      name: name || undefined,
+      email,
+      role,
+    }, adminUserId);
 
     revalidatePath('/admin/user');
     revalidatePath(`/admin/user/${userId}`);
@@ -358,7 +317,7 @@ export async function updateUserAdmin(
   } catch (error) {
     console.error('Failed to update user:', error);
     return {
-      error: 'Failed to update user. Please try again.',
+      error: error instanceof Error ? error.message : 'Failed to update user. Please try again.',
     };
   }
 }

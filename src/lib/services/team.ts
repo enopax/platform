@@ -452,6 +452,61 @@ export class TeamService {
       throw error;
     }
   }
+
+  async searchTeams(query: string, limit: number = 10) {
+    try {
+      const teams = await prisma.team.findMany({
+        where: {
+          OR: [
+            {
+              name: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+            {
+              description: {
+                contains: query,
+                mode: 'insensitive',
+              },
+            },
+          ],
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          color: true,
+          organisationId: true,
+          organisation: {
+            select: {
+              name: true,
+            },
+          },
+          owner: {
+            select: {
+              name: true,
+              firstname: true,
+              lastname: true,
+              email: true,
+            },
+          },
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: [
+          { name: 'asc' },
+        ],
+        take: limit,
+      });
+
+      return teams;
+    } catch (error) {
+      console.error('Failed to search teams:', error);
+      return [];
+    }
+  }
 }
 
 export const teamService = new TeamService();

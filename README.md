@@ -166,6 +166,12 @@ tests/
 - Organisation-scoped team operations
 - RESTful API endpoints for external integrations
 
+### Project Management API
+- Complete CRUD operations for project management
+- Project assignment to teams with permission controls
+- Project file management and organisation
+- RESTful API endpoints for external integrations
+
 ### Authentication & Security
 - NextAuth.js v5 with multiple provider support
 - Session-based authentication with secure cookie handling
@@ -196,6 +202,21 @@ DELETE /api/team/[id]             # Delete team (soft delete)
 GET    /api/team/[id]/members     # List team members
 POST   /api/team/[id]/members     # Add team member
 DELETE /api/team/[id]/members     # Remove team member
+```
+
+### Project Management API
+Complete RESTful API for project operations:
+
+```bash
+# Project CRUD Operations
+POST   /api/project/create        # Create new project
+GET    /api/project/list          # List projects (with optional organisationId/teamId filter)
+GET    /api/project/[id]          # Get project details
+PUT    /api/project/[id]          # Update project
+DELETE /api/project/[id]          # Delete project (soft delete)
+
+# Project File Management
+GET    /api/project/[id]/files    # List project files
 ```
 
 All endpoints require authentication and follow role-based permission controls.

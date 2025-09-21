@@ -11,6 +11,7 @@ jest.mock('@prisma/client', () => {
       create: jest.fn(),
       findUnique: jest.fn(),
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
     },
     organisationMember: {
@@ -51,6 +52,7 @@ describe('OrganisationService - Simple Tests', () => {
       'isUserMember',
       'validateOrganisationName',
       'getOrganisationMembers',
+      'searchOrganisations',
     ];
 
     expectedMethods.forEach(method => {
@@ -92,5 +94,9 @@ describe('OrganisationService - Simple Tests', () => {
 
   it('should have getOrganisationMembers method', () => {
     expect(typeof organisationService.getOrganisationMembers).toBe('function');
+  });
+
+  it('should have searchOrganisations method', () => {
+    expect(typeof organisationService.searchOrganisations).toBe('function');
   });
 });
