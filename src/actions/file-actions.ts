@@ -6,7 +6,7 @@ import { teamFilesService } from '@/lib/services/team-files';
 import { storageQuotaService } from '@/lib/services/storage-quota';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { fileUploadSchema, fileDeleteSchema, fileSearchSchema, validateFormData } from '@/lib/validation/file-schemas';
+import { validateFileUpload, validateFileDelete, validateFileSearch, parseFormDataToObject } from '@/lib/validation/file-schemas';
 
 export interface ActionResult {
   success: boolean;
@@ -22,7 +22,8 @@ export async function uploadFileAction(formData: FormData): Promise<ActionResult
     }
 
     // Validate form data
-    const validation = validateFormData(fileUploadSchema, formData);
+    const parsedData = parseFormDataToObject(formData);
+    const validation = validateFileUpload(parsedData);
     if (!validation.success) {
       return { success: false, error: validation.error };
     }
@@ -84,7 +85,8 @@ export async function deleteFileAction(formData: FormData): Promise<ActionResult
     }
 
     // Validate form data
-    const validation = validateFormData(fileDeleteSchema, formData);
+    const parsedData = parseFormDataToObject(formData);
+    const validation = validateFileDelete(parsedData);
     if (!validation.success) {
       return { success: false, error: validation.error };
     }
@@ -166,7 +168,8 @@ export async function searchFilesAction(formData: FormData): Promise<ActionResul
     }
 
     // Validate form data
-    const validation = validateFormData(fileSearchSchema, formData);
+    const parsedData = parseFormDataToObject(formData);
+    const validation = validateFileSearch(parsedData);
     if (!validation.success) {
       return { success: false, error: validation.error };
     }

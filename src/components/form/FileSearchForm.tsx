@@ -5,7 +5,7 @@ import { useActionState } from 'react';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { Callout } from '@/components/common/Callout';
-import { searchFilesAction, type ActionResult } from '@/lib/actions/file-actions';
+import { searchFilesAction, type ActionResult } from '@/actions/file-actions';
 import { RiSearchLine, RiLoader4Line } from '@remixicon/react';
 
 interface FileSearchFormProps {

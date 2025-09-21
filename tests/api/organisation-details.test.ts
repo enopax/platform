@@ -4,40 +4,28 @@
 
 import { NextRequest } from 'next/server';
 import { GET, PUT, DELETE } from '@/app/api/organisation/[id]/route';
+import { auth } from '@/lib/auth';
 
 // Mock the auth module
-const mockAuth = jest.fn();
 jest.mock('@/lib/auth', () => ({
-  auth: mockAuth,
+  auth: jest.fn(),
 }));
 
-// Mock the organisation service
-const mockOrganisationService = {
-  isUserMember: jest.fn(),
-  getOrganisationById: jest.fn(),
-  validateOrganisationName: jest.fn(),
-  updateOrganisation: jest.fn(),
-  deleteOrganisation: jest.fn(),
-};
+const mockAuth = auth as jest.MockedFunction<typeof auth>;
 
+// Mock the organisation service
 jest.mock('@/lib/services/organisation', () => ({
-  organisationService: mockOrganisationService,
+  organisationService: {
+    isUserMember: jest.fn(),
+    getOrganisationById: jest.fn(),
+    validateOrganisationName: jest.fn(),
+    updateOrganisation: jest.fn(),
+    deleteOrganisation: jest.fn(),
+  },
   CreateOrganisationData: {},
 }));
 
-// Mock zod for PUT tests
-jest.mock('zod', () => {
-  const originalZod = jest.requireActual('zod');
-  return {
-    ...originalZod,
-    z: {
-      ...originalZod.z,
-      object: jest.fn(() => ({
-        safeParse: jest.fn(),
-      })),
-    },
-  };
-});
+// No longer using zod, validation is now done with simple JavaScript functions
 
 describe('Organisation Details API Routes', () => {
   const mockSession = {
@@ -72,6 +60,8 @@ describe('Organisation Details API Routes', () => {
   });
 
   describe('GET /api/organisation/[id]', () => {
+    // Get the mocked service
+    const { organisationService: mockOrganisationService } = require('@/lib/services/organisation');
     describe('Authentication', () => {
       it('should return 401 when user is not authenticated', async () => {
         mockAuth.mockResolvedValue(null);

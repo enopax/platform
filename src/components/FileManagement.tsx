@@ -4,8 +4,8 @@ import React from 'react';
 import { useActionState } from 'react';
 import { Button } from '@/components/common/Button';
 import { Callout } from '@/components/common/Callout';
-import { deleteFileAction, syncFilesAction, type ActionResult } from '@/lib/actions/file-actions';
-import { deleteTeamFileAction } from '@/lib/actions/team-actions';
+import { deleteFileAction, syncFilesAction, type ActionResult } from '@/actions/file-actions';
+import { deleteTeamFileAction } from '@/actions/team-actions';
 import { RiDeleteBinLine, RiRefreshLine, RiDownloadLine, RiLoader4Line } from '@remixicon/react';
 
 interface FileItem {

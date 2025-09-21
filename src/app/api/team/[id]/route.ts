@@ -1,18 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { teamService, CreateTeamData } from '@/lib/services/team';
-import { z } from 'zod';
-import { TeamVisibility } from '@prisma/client';
-
-const updateTeamSchema = z.object({
-  name: z.string().min(1, 'Team name is required').max(100, 'Name must be less than 100 characters').optional(),
-  description: z.string().optional(),
-  color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Invalid hex color').optional(),
-  visibility: z.nativeEnum(TeamVisibility).optional(),
-  allowJoinRequests: z.boolean().optional(),
-  maxMembers: z.number().min(1).max(1000).optional(),
-  tags: z.array(z.string()).optional(),
-});
 
 export async function GET(
   request: NextRequest,
@@ -83,21 +71,7 @@ export async function PUT(
     const { id: teamId } = params;
 
     // Parse request body
-    const body = await request.json();
-
-    // Validate input data
-    const validation = updateTeamSchema.safeParse(body);
-    if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: 'Invalid input data',
-          details: validation.error.issues,
-        },
-        { status: 400 }
-      );
-    }
-
-    const data: Partial<CreateTeamData> = validation.data;
+    const data: Partial<CreateTeamData> = await request.json();
 
     // If updating name, check if it's available within the organisation
     if (data.name) {

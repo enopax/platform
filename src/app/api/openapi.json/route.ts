@@ -385,10 +385,10 @@ export async function GET() {
 
     // Generate documentation for each discovered route
     for (const route of routes) {
-      if (route === '/openapi.json') continue; // Skip self-reference
+      if (route === 'openapi.json') continue; // Skip self-reference
 
       const methods = await analyzeRouteFile(route);
-      const apiPath = `/api${route}`;
+      const apiPath = `/${route}`;
 
       openApiSpec.paths[apiPath] = generatePathDocumentation(route, methods);
     }

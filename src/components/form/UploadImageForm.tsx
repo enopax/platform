@@ -6,7 +6,7 @@ import { Label } from '@/components/common/Label';
 import { Input } from '@/components/common/Input';
 import { Callout } from '@/components/common/Callout';
 import { Button } from '@/components/common/Button';
-import { uploadImageAction, type ImageUploadResult } from '@/lib/actions/image-actions';
+import { uploadImageAction, type ImageUploadResult } from '@/actions/image-actions';
 
 interface UploadImageProps {
   onUploadComplete?: (urls: string[]) => void;

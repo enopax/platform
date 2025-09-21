@@ -18,7 +18,7 @@ import {
   RiErrorWarningLine,
   RiDragDropLine
 } from '@remixicon/react';
-import { getUserStorageQuotaAction } from '@/lib/actions/file-actions';
+import { getUserStorageQuotaAction } from '@/actions/file-actions';
 
 interface FileUploadProps {
   isOpen: boolean;

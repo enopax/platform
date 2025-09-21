@@ -15,7 +15,7 @@ jest.mock('react', () => ({
 }))
 
 // Mock the action
-jest.mock('@/lib/actions/file-actions', () => ({
+jest.mock('@/actions/file-actions', () => ({
   uploadFileAction: jest.fn(),
 }))
 
