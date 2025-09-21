@@ -4,24 +4,27 @@
 
 import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/organisation/[id]/members/route';
+import { auth } from '@/lib/auth';
 
 // Mock the auth module
-const mockAuth = jest.fn();
 jest.mock('@/lib/auth', () => ({
-  auth: mockAuth,
+  auth: jest.fn(),
 }));
 
-// Mock the organisation service
-const mockOrganisationService = {
-  isUserMember: jest.fn(),
-  getOrganisationMembers: jest.fn(),
-};
+const mockAuth = auth as jest.MockedFunction<typeof auth>;
 
+// Mock the organisation service
 jest.mock('@/lib/services/organisation', () => ({
-  organisationService: mockOrganisationService,
+  organisationService: {
+    isUserMember: jest.fn(),
+    getOrganisationMembers: jest.fn(),
+  },
 }));
 
 describe('GET /api/organisation/[id]/members', () => {
+  // Get the mocked service
+  const { organisationService: mockOrganisationService } = require('@/lib/services/organisation');
+
   const mockSession = {
     user: {
       id: 'user-123',

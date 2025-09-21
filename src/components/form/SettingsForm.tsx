@@ -80,16 +80,6 @@ export default function SettingsForm({
         />
       </div>
 
-      <Divider>Storage Plan</Divider>
-
-      <StorageTierSelector
-        selectedTier={selectedTier}
-        onTierChange={setSelectedTier}
-        disabled={isPending}
-      />
-
-      <input type="hidden" name="storageTier" value={selectedTier} />
-
       <Divider>Password</Divider>
       
       <div className="space-y-2">

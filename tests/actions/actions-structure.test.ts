@@ -3,7 +3,7 @@
  */
 
 // Import directly instead of dynamic imports
-import { uploadFileAction, deleteFileAction, syncFilesAction, searchFilesAction } from '@/lib/actions/file-actions'
+import { uploadFileAction, deleteFileAction, syncFilesAction, searchFilesAction } from '@/actions/file-actions'
 
 // Mock the dependencies
 jest.mock('@/lib/auth', () => ({

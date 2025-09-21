@@ -4,39 +4,30 @@
 
 import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/organisation/create/route';
+import { auth } from '@/lib/auth';
 
 // Mock the auth module
-const mockAuth = jest.fn();
 jest.mock('@/lib/auth', () => ({
-  auth: mockAuth,
+  auth: jest.fn(),
 }));
 
-// Mock the organisation service
-const mockOrganisationService = {
-  validateOrganisationName: jest.fn(),
-  createOrganisation: jest.fn(),
-};
+const mockAuth = auth as jest.MockedFunction<typeof auth>;
 
+// Mock the organisation service
 jest.mock('@/lib/services/organisation', () => ({
-  organisationService: mockOrganisationService,
+  organisationService: {
+    validateOrganisationName: jest.fn(),
+    createOrganisation: jest.fn(),
+  },
   CreateOrganisationData: {},
 }));
 
-// Mock zod
-jest.mock('zod', () => {
-  const originalZod = jest.requireActual('zod');
-  return {
-    ...originalZod,
-    z: {
-      ...originalZod.z,
-      object: jest.fn(() => ({
-        safeParse: jest.fn(),
-      })),
-    },
-  };
-});
+// No longer using zod, validation is now done with simple JavaScript functions
 
 describe('POST /api/organisation/create', () => {
+  // Get the mocked service
+  const { organisationService: mockOrganisationService } = require('@/lib/services/organisation');
+
   const mockSession = {
     user: {
       id: 'user-123',

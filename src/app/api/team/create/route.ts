@@ -1,19 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { teamService, CreateTeamData } from '@/lib/services/team';
-import { z } from 'zod';
-import { TeamVisibility } from '@prisma/client';
-
-const createTeamSchema = z.object({
-  name: z.string().min(1, 'Team name is required').max(100, 'Name must be less than 100 characters'),
-  description: z.string().optional(),
-  color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Invalid hex color').optional(),
-  visibility: z.nativeEnum(TeamVisibility).optional(),
-  allowJoinRequests: z.boolean().optional(),
-  maxMembers: z.number().min(1).max(1000).optional(),
-  tags: z.array(z.string()).optional(),
-  organisationId: z.string().min(1, 'Organisation ID is required'),
-});
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,21 +11,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const body = await request.json();
-
-    // Validate input data
-    const validation = createTeamSchema.safeParse(body);
-    if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: 'Invalid input data',
-          details: validation.error.issues,
-        },
-        { status: 400 }
-      );
-    }
-
-    const data: CreateTeamData = validation.data;
+    const data: CreateTeamData = await request.json();
 
     // Check if team name is already taken within the organisation
     const isNameAvailable = await teamService.validateTeamName(data.name, data.organisationId);

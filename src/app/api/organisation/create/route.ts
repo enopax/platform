@@ -1,17 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { organisationService, CreateOrganisationData } from '@/lib/services/organisation';
-import { z } from 'zod';
 
-const createOrganisationSchema = z.object({
-  name: z.string().min(1, 'Organisation name is required').max(100, 'Name must be less than 100 characters'),
-  description: z.string().optional(),
-  website: z.string().url('Invalid website URL').optional().or(z.literal('')),
-  address: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().email('Invalid email address').optional().or(z.literal('')),
-  logo: z.string().optional(),
-});
+function validateCreateOrganisationData(data: any): { success: true; data: CreateOrganisationData } | { success: false; error: string; issues?: any[] } {
+  const errors: any[] = [];
+
+  // Name validation (required for creation)
+  if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
+    errors.push({ path: ['name'], message: 'Organisation name is required' });
+  } else if (data.name.length > 100) {
+    errors.push({ path: ['name'], message: 'Name must be less than 100 characters' });
+  }
+
+  // Website validation
+  if (data.website !== undefined && data.website !== '') {
+    if (typeof data.website !== 'string') {
+      errors.push({ path: ['website'], message: 'Website must be a string' });
+    } else {
+      try {
+        new URL(data.website);
+      } catch {
+        errors.push({ path: ['website'], message: 'Invalid website URL' });
+      }
+    }
+  }
+
+  // Email validation
+  if (data.email !== undefined && data.email !== '') {
+    if (typeof data.email !== 'string') {
+      errors.push({ path: ['email'], message: 'Email must be a string' });
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(data.email)) {
+        errors.push({ path: ['email'], message: 'Invalid email address' });
+      }
+    }
+  }
+
+  if (errors.length > 0) {
+    return { success: false, error: 'Invalid input data', issues: errors };
+  }
+
+  return {
+    success: true,
+    data: {
+      name: data.name,
+      description: data.description,
+      website: data.website || undefined,
+      address: data.address,
+      phone: data.phone,
+      email: data.email || undefined,
+      logo: data.logo,
+    }
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,12 +67,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Validate input data
-    const validation = createOrganisationSchema.safeParse(body);
+    const validation = validateCreateOrganisationData(body);
     if (!validation.success) {
       return NextResponse.json(
         {
-          error: 'Invalid input data',
-          details: validation.error.issues,
+          error: validation.error,
+          details: validation.issues,
         },
         { status: 400 }
       );

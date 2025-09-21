@@ -24,7 +24,7 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { userFilesService } from '@/lib/services/user-files';
-import { syncFilesAction, deleteFileAction, getFileDownloadUrlAction } from '@/lib/actions/file-actions';
+import { syncFilesAction, deleteFileAction, getFileDownloadUrlAction } from '@/actions/file-actions';
 import FileBrowserClient from './FileBrowserClient';
 import StorageUsageDisplay from '@/components/StorageUsageDisplay';
 

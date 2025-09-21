@@ -6,7 +6,7 @@ import { Label } from '@/components/common/Label';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { Callout } from '@/components/common/Callout';
-import { uploadFileAction, type ActionResult } from '@/lib/actions/file-actions';
+import { uploadFileAction, type ActionResult } from '@/actions/file-actions';
 import { RiUploadLine, RiLoader4Line } from '@remixicon/react';
 
 interface FileUploadFormProps {

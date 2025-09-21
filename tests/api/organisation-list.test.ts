@@ -135,8 +135,8 @@ describe('GET /api/organisation/list', () => {
         logo: 'https://logo1.com/logo.png',
         isActive: true,
         ownerId: 'user-123',
-        createdAt: mockOrganisations[0].createdAt,
-        updatedAt: mockOrganisations[0].updatedAt,
+        createdAt: mockOrganisations[0].createdAt.toISOString(),
+        updatedAt: mockOrganisations[0].updatedAt.toISOString(),
         memberCount: 10,
         teamCount: 5,
         projectCount: 20,
@@ -153,8 +153,8 @@ describe('GET /api/organisation/list', () => {
         logo: 'https://logo2.com/logo.png',
         isActive: true,
         ownerId: 'user-456',
-        createdAt: mockOrganisations[1].createdAt,
-        updatedAt: mockOrganisations[1].updatedAt,
+        createdAt: mockOrganisations[1].createdAt.toISOString(),
+        updatedAt: mockOrganisations[1].updatedAt.toISOString(),
         memberCount: 3,
         teamCount: 1,
         projectCount: 5,
@@ -209,8 +209,8 @@ describe('GET /api/organisation/list', () => {
         logo: null,
         isActive: true,
         ownerId: 'user-123',
-        createdAt: organisationWithNulls[0].createdAt,
-        updatedAt: organisationWithNulls[0].updatedAt,
+        createdAt: organisationWithNulls[0].createdAt.toISOString(),
+        updatedAt: organisationWithNulls[0].updatedAt.toISOString(),
         memberCount: 10,
         teamCount: 5,
         projectCount: 20,
@@ -326,8 +326,8 @@ describe('GET /api/organisation/list', () => {
       expect(typeof organisation.memberCount).toBe('number');
       expect(typeof organisation.teamCount).toBe('number');
       expect(typeof organisation.projectCount).toBe('number');
-      expect(organisation.createdAt).toBeInstanceOf(Date);
-      expect(organisation.updatedAt).toBeInstanceOf(Date);
+      expect(typeof organisation.createdAt).toBe('string');
+      expect(typeof organisation.updatedAt).toBe('string');
     });
   });
 

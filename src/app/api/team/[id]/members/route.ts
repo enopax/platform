@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { teamService } from '@/lib/services/team';
-import { z } from 'zod';
-import { TeamRole } from '@prisma/client';
-
-const addMemberSchema = z.object({
-  userId: z.string().min(1, 'User ID is required'),
-  role: z.nativeEnum(TeamRole).optional(),
-});
-
-const removeMemberSchema = z.object({
-  userId: z.string().min(1, 'User ID is required'),
-});
 
 export async function GET(
   request: NextRequest,
@@ -73,21 +62,7 @@ export async function POST(
     const { id: teamId } = params;
 
     // Parse request body
-    const body = await request.json();
-
-    // Validate input data
-    const validation = addMemberSchema.safeParse(body);
-    if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: 'Invalid input data',
-          details: validation.error.issues,
-        },
-        { status: 400 }
-      );
-    }
-
-    const { userId, role } = validation.data;
+    const { userId, role } = await request.json();
 
     // Add the team member
     await teamService.addTeamMember(teamId, userId, session.user.id, role);
@@ -120,21 +95,7 @@ export async function DELETE(
     const { id: teamId } = params;
 
     // Parse request body
-    const body = await request.json();
-
-    // Validate input data
-    const validation = removeMemberSchema.safeParse(body);
-    if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: 'Invalid input data',
-          details: validation.error.issues,
-        },
-        { status: 400 }
-      );
-    }
-
-    const { userId } = validation.data;
+    const { userId } = await request.json();
 
     // Remove the team member
     await teamService.removeTeamMember(teamId, userId, session.user.id);

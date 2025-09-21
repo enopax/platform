@@ -11,7 +11,7 @@ import {
   RiArrowUpLine,
   RiRefreshLine
 } from '@remixicon/react';
-import { getUserStorageQuotaAction, getUserStorageStatsAction, updateUserStorageTierAction } from '@/lib/actions/file-actions';
+import { getUserStorageQuotaAction, getUserStorageStatsAction, updateUserStorageTierAction } from '@/actions/file-actions';
 
 interface StorageQuotaData {
   quota: {

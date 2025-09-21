@@ -1,71 +1,132 @@
-import { z } from 'zod';
+// Simple validation functions without zod dependency
 
-// File upload validation schema
-export const fileUploadSchema = z.object({
-  file: z.instanceof(File, { message: 'File is required' }),
-  teamId: z.string().optional(),
-  projectId: z.string().optional(),
-}).refine((data) => {
-  // Validate file size (100MB max)
+export interface FileUploadData {
+  file: File;
+  teamId?: string;
+  projectId?: string;
+}
+
+export interface FileDeleteData {
+  fileId: string;
+  teamId?: string;
+  isTeamFile?: boolean;
+}
+
+export interface FileSearchData {
+  query: string;
+  teamId?: string;
+}
+
+export interface ImageUploadData {
+  images: File[];
+}
+
+export interface TeamFileData {
+  teamId: string;
+  projectId?: string;
+  file?: File;
+  fileId?: string;
+}
+
+// File upload validation
+export function validateFileUpload(data: any): { success: true; data: FileUploadData } | { success: false; error: string } {
+  if (!data.file || !(data.file instanceof File)) {
+    return { success: false, error: 'File is required' };
+  }
+
   if (data.file.size > 100 * 1024 * 1024) {
-    return false;
+    return { success: false, error: 'File size must be less than 100MB' };
   }
-  return true;
-}, {
-  message: 'File size must be less than 100MB',
-  path: ['file']
-}).refine((data) => {
-  // Validate file type (basic check)
+
   if (data.file.size === 0) {
-    return false;
+    return { success: false, error: 'File cannot be empty' };
   }
-  return true;
-}, {
-  message: 'File cannot be empty',
-  path: ['file']
-});
 
-// File delete validation schema
-export const fileDeleteSchema = z.object({
-  fileId: z.string().min(1, 'File ID is required'),
-  teamId: z.string().optional(),
-  isTeamFile: z.boolean().optional(),
-});
+  return {
+    success: true,
+    data: {
+      file: data.file,
+      teamId: data.teamId || undefined,
+      projectId: data.projectId || undefined,
+    }
+  };
+}
 
-// File search validation schema
-export const fileSearchSchema = z.object({
-  query: z.string().min(1, 'Search query is required').max(100, 'Search query too long'),
-  teamId: z.string().optional(),
-});
+// File delete validation
+export function validateFileDelete(data: any): { success: true; data: FileDeleteData } | { success: false; error: string } {
+  if (!data.fileId || typeof data.fileId !== 'string' || data.fileId.trim().length === 0) {
+    return { success: false, error: 'File ID is required' };
+  }
 
-// Image upload validation schema
-export const imageUploadSchema = z.object({
-  images: z.array(z.instanceof(File)).min(1, 'At least one image is required'),
-}).refine((data) => {
-  // Validate all files are images
-  return data.images.every(file => file.type.startsWith('image/'));
-}, {
-  message: 'All files must be images',
-  path: ['images']
-}).refine((data) => {
-  // Validate file sizes (10MB max per image)
-  return data.images.every(file => file.size <= 10 * 1024 * 1024);
-}, {
-  message: 'Each image must be less than 10MB',
-  path: ['images']
-});
+  return {
+    success: true,
+    data: {
+      fileId: data.fileId,
+      teamId: data.teamId || undefined,
+      isTeamFile: data.isTeamFile || undefined,
+    }
+  };
+}
 
-// Team file operations validation schema
-export const teamFileSchema = z.object({
-  teamId: z.string().min(1, 'Team ID is required'),
-  projectId: z.string().optional(),
-  file: z.instanceof(File, { message: 'File is required' }).optional(),
-  fileId: z.string().optional(),
-}).refine((data) => {
-  // For upload operations, file is required
-  // For other operations, fileId might be required
-  return true; // Additional validation can be added based on operation type
-});
+// File search validation
+export function validateFileSearch(data: any): { success: true; data: FileSearchData } | { success: false; error: string } {
+  if (!data.query || typeof data.query !== 'string' || data.query.trim().length === 0) {
+    return { success: false, error: 'Search query is required' };
+  }
+
+  if (data.query.length > 100) {
+    return { success: false, error: 'Search query too long' };
+  }
+
+  return {
+    success: true,
+    data: {
+      query: data.query,
+      teamId: data.teamId || undefined,
+    }
+  };
+}
+
+// Image upload validation
+export function validateImageUpload(data: any): { success: true; data: ImageUploadData } | { success: false; error: string } {
+  if (!data.images || !Array.isArray(data.images) || data.images.length === 0) {
+    return { success: false, error: 'At least one image is required' };
+  }
+
+  if (!data.images.every(file => file instanceof File)) {
+    return { success: false, error: 'All items must be files' };
+  }
+
+  if (!data.images.every(file => file.type.startsWith('image/'))) {
+    return { success: false, error: 'All files must be images' };
+  }
+
+  if (!data.images.every(file => file.size <= 10 * 1024 * 1024)) {
+    return { success: false, error: 'Each image must be less than 10MB' };
+  }
+
+  return {
+    success: true,
+    data: { images: data.images }
+  };
+}
+
+// Team file validation
+export function validateTeamFile(data: any): { success: true; data: TeamFileData } | { success: false; error: string } {
+  if (!data.teamId || typeof data.teamId !== 'string' || data.teamId.trim().length === 0) {
+    return { success: false, error: 'Team ID is required' };
+  }
+
+  return {
+    success: true,
+    data: {
+      teamId: data.teamId,
+      projectId: data.projectId || undefined,
+      file: data.file || undefined,
+      fileId: data.fileId || undefined,
+    }
+  };
+}
 
 // Form data parsing helper
 export function parseFormDataToObject(formData: FormData): Record<string, any> {
@@ -100,28 +161,4 @@ export function parseFormDataToObject(formData: FormData): Record<string, any> {
   }
 
   return obj;
-}
-
-// Validation helper function
-export function validateFormData<T>(
-  schema: z.ZodSchema<T>,
-  formData: FormData
-): { success: true; data: T } | { success: false; error: string } {
-  try {
-    const parsedData = parseFormDataToObject(formData);
-    const result = schema.parse(parsedData);
-    return { success: true, data: result };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const firstError = error.errors?.[0];
-      return {
-        success: false,
-        error: firstError?.message || 'Validation failed'
-      };
-    }
-    return {
-      success: false,
-      error: 'Validation failed'
-    };
-  }
 }
