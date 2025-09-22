@@ -10,7 +10,6 @@ import { Textarea } from '@/components/common/Textarea';
 import { Switch } from '@/components/common/Switch';
 import ClientDate from '@/components/common/ClientDate';
 import { DatePicker } from '@/components/common/DatePicker';
-import TeamSearch from '@/components/search/TeamSearch';
 import { type Project, type User, type Organisation, type Team } from '@prisma/client';
 import { RiCheckLine, RiErrorWarningLine } from '@remixicon/react';
 import Link from 'next/link';
@@ -24,9 +23,8 @@ import {
 type ProjectWithDetails = Project & {
   team: Team & {
     owner: User;
-    organisation: Organisation;
+    organisation?: Organisation | null;
   };
-  organisation: Organisation;
 };
 
 // Form state that matches both create and update action return types
@@ -41,22 +39,21 @@ const initialState: ProjectFormState = {
 
 interface ProjectFormProps {
   project?: ProjectWithDetails;
-  organisations: Organisation[];
+  teams: (Team & { owner: User; organisation?: Organisation | null })[];
   onSuccess?: () => void;
   successMessage?: string;
   redirectUrl?: string;
 }
 
-export default function ProjectForm({ 
+export default function ProjectForm({
   project,
-  organisations,
+  teams,
   onSuccess,
   successMessage,
   redirectUrl
 }: ProjectFormProps) {
   const action = project ? updateProject : createProject;
   const [state, formAction, isPending] = useActionState(action, initialState);
-  const [selectedTeam, setSelectedTeam] = useState<Team & { owner: User; organisation: Organisation } | null>(project?.team || null);
   const [startDate, setStartDate] = useState<Date | undefined>(
     project?.startDate ? new Date(project.startDate) : undefined
   );
@@ -156,43 +153,40 @@ export default function ProjectForm({
         </div>
 
         <div>
-          <Label htmlFor="organisationId">
-            Organisation *
+          <Label htmlFor="teamId">
+            Team *
           </Label>
-          <Select name="organisationId" defaultValue={project?.organisationId || ''} required>
-            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.organisationId}>
-              <SelectValue placeholder="Select organisation" />
+          <Select name="teamId" defaultValue={project?.teamId || ''} required>
+            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.teamId}>
+              <SelectValue placeholder="Select team" />
             </SelectTrigger>
             <SelectContent>
-              {organisations.map((org) => (
-                <SelectItem key={org.id} value={org.id}>
-                  {org.name}
+              {teams.map((team) => (
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name} {team.isPersonal ? '(Personal)' : ''}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {state.fieldErrors?.organisationId && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.organisationId}</p>
+          {state.fieldErrors?.teamId && (
+            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.teamId}</p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="teamId">
-            Assigned Team *
-          </Label>
-          <div className="mt-1">
-            <TeamSearch
-              placeholder="Search for team..."
-              defaultValue={selectedTeam}
-              setResult={setSelectedTeam}
-              name="teamId"
-              required
-              hasError={!!state.fieldErrors?.teamId}
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="development"
+              name="development"
+              defaultChecked={project?.development ?? false}
             />
+            <Label htmlFor="development">
+              Development Project
+            </Label>
           </div>
-          {state.fieldErrors?.teamId && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.teamId}</p>
-          )}
+          <p className="text-sm text-gray-500 mt-1">
+            Development projects are for testing and experimentation
+          </p>
         </div>
 
         <div className="md:col-span-2">

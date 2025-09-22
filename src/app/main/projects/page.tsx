@@ -19,22 +19,37 @@ export default async function ProjectsPage() {
   const session = await auth();
   if (!session) return null;
 
-  // Fetch user's projects through organisation memberships
+  // Fetch user's projects through team memberships and organisation memberships
   const userProjects = await prisma.project.findMany({
     where: {
-      organisation: {
-        members: {
-          some: {
-            userId: session.user.id
+      team: {
+        OR: [
+          {
+            // User is a member of the team
+            members: {
+              some: {
+                userId: session.user.id
+              }
+            }
+          },
+          {
+            // User is a member of the organisation (if team belongs to one)
+            organisation: {
+              members: {
+                some: {
+                  userId: session.user.id
+                }
+              }
+            }
           }
-        }
+        ]
       }
     },
     include: {
-      organisation: true,
       team: {
         include: {
           owner: true,
+          organisation: true,
           _count: {
             select: {
               members: true,
@@ -112,7 +127,7 @@ export default async function ProjectsPage() {
                         {project.name}
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {project.organisation.name}
+                        {project.team.organisation?.name || 'Personal Team'}
                       </p>
                     </div>
                   </div>

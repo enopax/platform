@@ -507,6 +507,138 @@ export class TeamService {
       return [];
     }
   }
+
+  /**
+   * Ensures a user has a personal team, creating one if it doesn't exist
+   */
+  async ensurePersonalTeam(userId: string): Promise<TeamInfo> {
+    try {
+      // Check if user already has a personal team
+      const existingPersonalTeam = await prisma.team.findFirst({
+        where: {
+          ownerId: userId,
+          isPersonal: true
+        },
+        include: {
+          _count: {
+            select: {
+              members: true,
+              projects: true,
+            },
+          },
+        },
+      });
+
+      if (existingPersonalTeam) {
+        return {
+          ...existingPersonalTeam,
+          memberCount: existingPersonalTeam._count.members,
+          projectCount: existingPersonalTeam._count.projects,
+        };
+      }
+
+      // Get user details for team naming
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          firstname: true,
+          lastname: true,
+          email: true
+        }
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Create personal team name
+      const displayName = user.name ||
+        (user.firstname && user.lastname ? `${user.firstname} ${user.lastname}` : null) ||
+        user.email.split('@')[0];
+
+      const personalTeamName = `${displayName}'s Team`;
+
+      // Create personal team
+      const personalTeam = await prisma.team.create({
+        data: {
+          name: personalTeamName,
+          description: 'Personal team for individual projects',
+          isPersonal: true,
+          isDeletable: false,
+          visibility: 'PRIVATE',
+          allowJoinRequests: false,
+          ownerId: userId
+        },
+        include: {
+          _count: {
+            select: {
+              members: true,
+              projects: true,
+            },
+          },
+        },
+      });
+
+      // Add user as team member with full permissions
+      await prisma.teamMember.create({
+        data: {
+          userId: userId,
+          teamId: personalTeam.id,
+          role: 'LEAD',
+          canRead: true,
+          canWrite: true,
+          canExecute: true,
+          canLead: true
+        }
+      });
+
+      return {
+        ...personalTeam,
+        memberCount: personalTeam._count.members,
+        projectCount: personalTeam._count.projects,
+      };
+    } catch (error) {
+      console.error('Failed to ensure personal team:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Gets all teams owned by a user (including personal team)
+   */
+  async getUserOwnedTeams(userId: string): Promise<TeamInfo[]> {
+    try {
+      const teams = await prisma.team.findMany({
+        where: {
+          ownerId: userId,
+          isActive: true
+        },
+        include: {
+          _count: {
+            select: {
+              members: true,
+              projects: true,
+            },
+          },
+        },
+        orderBy: [
+          { isPersonal: 'desc' }, // Personal team first
+          { name: 'asc' }
+        ]
+      });
+
+      return teams.map(team => ({
+        ...team,
+        memberCount: team._count.members,
+        projectCount: team._count.projects,
+      }));
+    } catch (error) {
+      console.error('Failed to get user owned teams:', error);
+      throw error;
+    }
+  }
 }
 
 export const teamService = new TeamService();

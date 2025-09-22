@@ -86,7 +86,7 @@ export default function AddMemberForm({ teamId, availableUsers }: AddMemberFormP
           </SelectContent>
         </Select>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Available organization members who are not yet on this team
+          Available organisation members who are not yet on this team
         </p>
         {state.fieldErrors?.userId && (
           <p className="text-sm text-red-600 dark:text-red-400 mt-1">

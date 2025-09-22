@@ -15,7 +15,6 @@ export interface CreateOrganisationData {
 export interface OrganisationInfo extends Organisation {
   memberCount: number;
   teamCount: number;
-  projectCount: number;
 }
 
 export class OrganisationService {
@@ -49,7 +48,6 @@ export class OrganisationService {
         ...organisation,
         memberCount: 1, // Just the owner
         teamCount: 0,
-        projectCount: 0,
       };
     } catch (error) {
       console.error('Failed to create organisation:', error);
@@ -66,7 +64,6 @@ export class OrganisationService {
             select: {
               members: true,
               teams: true,
-              projects: true,
             },
           },
         },
@@ -80,7 +77,6 @@ export class OrganisationService {
         ...organisation,
         memberCount: organisation._count.members,
         teamCount: organisation._count.teams,
-        projectCount: organisation._count.projects,
       };
     } catch (error) {
       console.error('Failed to get organisation:', error);
@@ -112,7 +108,6 @@ export class OrganisationService {
         ...membership.organisation,
         memberCount: membership.organisation._count.members,
         teamCount: membership.organisation._count.teams,
-        projectCount: membership.organisation._count.projects,
       }));
     } catch (error) {
       console.error('Failed to get user organisations:', error);
@@ -157,7 +152,6 @@ export class OrganisationService {
             select: {
               members: true,
               teams: true,
-              projects: true,
             },
           },
         },
@@ -167,7 +161,6 @@ export class OrganisationService {
         ...organisation,
         memberCount: organisation._count.members,
         teamCount: organisation._count.teams,
-        projectCount: organisation._count.projects,
       };
     } catch (error) {
       console.error('Failed to update organisation:', error);
@@ -321,7 +314,6 @@ export class OrganisationService {
             select: {
               members: true,
               teams: true,
-              projects: true,
             },
           },
           createdAt: true,

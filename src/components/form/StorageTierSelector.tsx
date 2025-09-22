@@ -50,7 +50,7 @@ const storageTierOptions: StorageTierOption[] = [
   {
     value: 'ENTERPRISE_500GB',
     name: 'Enterprise',
-    description: 'For large organizations',
+    description: 'For large organisations',
     storage: '500 GB',
     price: '$150/month',
     icon: RiVipCrownLine,

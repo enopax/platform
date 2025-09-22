@@ -73,7 +73,7 @@ export async function createTeamJoinRequest(
       return { error: 'You are the owner of this team' };
     }
 
-    // Check if user is a member of the organization
+    // Check if user is a member of the organisation
     const orgMembership = await prisma.organisationMember.findUnique({
       where: {
         userId_organisationId: {
@@ -84,7 +84,7 @@ export async function createTeamJoinRequest(
     });
 
     if (!orgMembership) {
-      return { error: 'You must be a member of the organization to join this team' };
+      return { error: 'You must be a member of the organisation to join this team' };
     }
 
     // Check if there's already a pending request

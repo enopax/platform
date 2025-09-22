@@ -198,11 +198,6 @@ export default function OrganisationSearchSection() {
                     <span className="font-medium">{searchResult._count.teams}</span>
                     <span className="ml-1">teams</span>
                   </div>
-                  <div className="flex items-center">
-                    <RiProjectorLine className="h-3 w-3 mr-1" />
-                    <span className="font-medium">{searchResult._count.projects}</span>
-                    <span className="ml-1">projects</span>
-                  </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2">

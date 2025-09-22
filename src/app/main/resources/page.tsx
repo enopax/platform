@@ -22,15 +22,17 @@ async function getResourceMetrics(userId: string) {
         OR: [
           { ownerId: userId, type: 'STORAGE', isActive: true },
           {
-            team: {
-              OR: [
-                {
-                  members: {
-                    some: { userId }
-                  }
-                },
-                { ownerId: userId }
-              ]
+            project: {
+              team: {
+                OR: [
+                  {
+                    members: {
+                      some: { userId }
+                    }
+                  },
+                  { ownerId: userId }
+                ]
+              }
             },
             type: 'STORAGE',
             isActive: true,
@@ -80,23 +82,25 @@ export default async function ResourcesPage({
           ownerId: session.user.id,
           isActive: true,
         },
-        // Resources managed by teams the user is a member of
+        // Resources managed by teams the user is a member of (through projects)
         {
-          team: {
-            OR: [
-              // Teams where user is a member
-              {
-                members: {
-                  some: {
-                    userId: session.user.id
+          project: {
+            team: {
+              OR: [
+                // Teams where user is a member
+                {
+                  members: {
+                    some: {
+                      userId: session.user.id
+                    }
                   }
+                },
+                // Teams where user is the owner
+                {
+                  ownerId: session.user.id
                 }
-              },
-              // Teams where user is the owner
-              {
-                ownerId: session.user.id
-              }
-            ]
+              ]
+            }
           },
           isActive: true,
         },
@@ -117,11 +121,17 @@ export default async function ResourcesPage({
           email: true,
         }
       },
-      team: {
+      project: {
         select: {
           id: true,
           name: true,
-          organisationId: true,
+          team: {
+            select: {
+              id: true,
+              name: true,
+              organisationId: true,
+            }
+          }
         }
       }
     },

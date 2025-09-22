@@ -16,7 +16,7 @@ import {
 
 type TeamWithDetails = Team & {
   owner: User;
-  organisation: Organisation;
+  organisation: Organisation | null;
   members: (TeamMember & {
     user: User;
   })[];
@@ -46,7 +46,7 @@ const columns: ColumnDef<TeamWithDetails>[] = [
             {row.original.name}
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            {row.original.organisation.name}
+            {row.original.organisation?.name || 'Personal Team'}
           </div>
           {row.original.description && (
             <div className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs mt-1">

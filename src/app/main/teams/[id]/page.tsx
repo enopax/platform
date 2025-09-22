@@ -108,15 +108,17 @@ export default async function TeamMembersPage({
     return user.email;
   };
 
-  // Get organization members who aren't already team members
-  const availableUsers = team.organisation.members
-    .filter(orgMember => 
-      // Not already a team member
-      !team.members.some(teamMember => teamMember.userId === orgMember.userId) &&
-      // Not the team owner
-      orgMember.userId !== team.ownerId
-    )
-    .map(orgMember => orgMember.user);
+  // Get organisation members who aren't already team members
+  const availableUsers = team.organisation?.members
+    ? team.organisation.members
+        .filter(orgMember =>
+          // Not already a team member
+          !team.members.some(teamMember => teamMember.userId === orgMember.userId) &&
+          // Not the team owner
+          orgMember.userId !== team.ownerId
+        )
+        .map(orgMember => orgMember.user)
+    : [];
 
 
   // Create team owner as a member entry for the table
@@ -164,7 +166,7 @@ export default async function TeamMembersPage({
                   </h1>
                   <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                     <RiBuildingLine className="w-4 h-4" />
-                    {team.organisation.name}
+                    {team.organisation?.name || 'Personal Team'}
                   </div>
                 </div>
               </div>
@@ -204,7 +206,10 @@ export default async function TeamMembersPage({
                   <RiUserAddLine className="w-12 h-12 mx-auto mb-4 opacity-40" />
                   <p className="mb-2">No available users to add</p>
                   <p className="text-sm">
-                    All organization members are already part of this team, or you may need to add more members to the organization first.
+                    {team.organisation
+                      ? 'All organisation members are already part of this team, or you may need to add more members to the organisation first.'
+                      : 'This is a personal team. To add members, first create or join an organisation.'
+                    }
                   </p>
                 </div>
               )}

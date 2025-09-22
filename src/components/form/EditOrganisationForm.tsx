@@ -93,15 +93,6 @@ export default function EditOrganisationForm({ organisation, userId, isAdmin }: 
             </div>
             <p className="text-xs text-gray-600 dark:text-gray-400">Teams</p>
           </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-1">
-              <RiProjectorLine className="h-4 w-4 text-gray-500 mr-1" />
-              <span className="font-semibold text-gray-900 dark:text-white">
-                {organisation._count.projects}
-              </span>
-            </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">Projects</p>
-          </div>
         </div>
       </Card>
 

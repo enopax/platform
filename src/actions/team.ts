@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { teamService } from '@/lib/services/team';
 import { userService } from '@/lib/services/user';
+import { auth } from '@/lib/auth';
 
 export interface UpdateTeamState {
   success?: boolean;
@@ -34,11 +35,12 @@ export async function updateTeam(
   formData: FormData
 ): Promise<UpdateTeamState> {
   try {
+    const session = await auth();
+    const ownerId = session?.user.id;
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const color = formData.get('color') as string;
     const organisationId = formData.get('organisationId') as string;
-    const ownerId = formData.get('ownerId') as string;
     const isActive = formData.get('isActive') === 'true';
 
     // Basic validation
@@ -114,11 +116,12 @@ export async function createTeam(
   formData: FormData
 ): Promise<CreateTeamState> {
   try {
+    const session = await auth();
+    const ownerId = session?.user.id;
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const color = formData.get('color') as string;
     const organisationId = formData.get('organisationId') as string;
-    const ownerId = formData.get('ownerId') as string;
 
     // Basic validation
     if (!name || name.trim().length < 2) {
@@ -175,8 +178,6 @@ export async function createTeam(
       color: color?.trim() || undefined,
       organisationId,
     });
-
-    revalidatePath('/admin/team');
     revalidatePath('/main/teams');
 
     return { success: true };

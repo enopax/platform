@@ -45,7 +45,7 @@ export async function createAuditLog({
 }
 
 /**
- * Log organization membership changes
+ * Log organisation membership changes
  */
 export async function logOrganisationMembershipChange(
   organisationId: string,

@@ -45,7 +45,7 @@ export default async function Page() {
 
           <h2 className="text-xl font-semibold">5. Data Sharing</h2>
           <p>
-            Your personal data will not be shared with third parties unless it is necessary for the organization of the camp or you have explicitly consented. We only transfer data to third countries (outside the EU) if appropriate safeguards are in place.
+            Your personal data will not be shared with third parties unless it is necessary for the organisation of the camp or you have explicitly consented. We only transfer data to third countries (outside the EU) if appropriate safeguards are in place.
           </p>
 
           <h2 className="text-xl font-semibold">6. Data Retention</h2>

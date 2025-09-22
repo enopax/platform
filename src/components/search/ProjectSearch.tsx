@@ -7,11 +7,11 @@ import { findProjects } from '@/actions/project';
 // Extended Project type with search results
 interface SearchableProject extends Project {
   id: string;
-  organisation: {
-    name: string;
-  };
   team: {
     name: string;
+    organisation?: {
+      name: string;
+    } | null;
     owner: {
       name: string | null;
       firstname: string | null;
@@ -44,7 +44,7 @@ export default function ProjectSearch({
         ? `${project.description.substring(0, 60)}...` 
         : project.description;
     }
-    return `${project.organisation.name} • Team: ${project.team.name}`;
+    return `${project.team.organisation?.name || 'Personal Team'} • Team: ${project.team.name}`;
   };
 
   const getBadgeText = (project: SearchableProject): string => {
