@@ -258,6 +258,13 @@ model TeamMember {
   userId   String   @map("user_id")
   teamId   String   @map("team_id")
   role     TeamRole @default(MEMBER)
+
+  // New permissions system
+  canRead    Boolean @default(true) @map("can_read")      // r: Can view team resources
+  canWrite   Boolean @default(false) @map("can_write")    // w: Can modify team resources
+  canExecute Boolean @default(false) @map("can_execute")  // x: Can use/run team resources
+  canLead    Boolean @default(false) @map("can_lead")     // lead: Can manage team members and permissions
+
   joinedAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

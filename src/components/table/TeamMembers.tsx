@@ -5,12 +5,17 @@ import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import { RiUserLine, RiUserUnfollowLine, RiArrowUpLine } from '@remixicon/react';
 import { useState } from 'react';
-import { removeMember, promoteMember, demoteMember } from '@/actions/teamMember';
+import { removeMember, promoteMember, demoteMember, updateMemberPermissions } from '@/actions/teamMember';
+import PermissionsToggle from '@/components/ui/PermissionsToggle';
 
 interface TeamMember {
   id: string;
   role: 'OWNER' | 'LEAD' | 'MEMBER';
   joinedAt: Date;
+  canRead?: boolean;
+  canWrite?: boolean;
+  canExecute?: boolean;
+  canLead?: boolean;
   user: {
     id: string;
     name: string | null;
@@ -206,6 +211,64 @@ const teamMemberColumns: ColumnDef<TeamMemberWithActions>[] = [
          })}
       </span>
     ),
+  },
+  {
+    header: 'Permissions',
+    accessorKey: 'permissions',
+    meta: {
+      align: 'text-center',
+    },
+    cell: ({ row }) => {
+      const member = row.original;
+
+      if (member.role === 'OWNER') {
+        return (
+          <div className="flex items-center justify-center gap-1">
+            <Badge variant="default" className="text-xs bg-gray-100 text-gray-800">
+              Full Access
+            </Badge>
+          </div>
+        );
+      }
+
+      const handlePermissionChange = async (
+        userId: string,
+        teamId: string,
+        permissions: {
+          canRead: boolean;
+          canWrite: boolean;
+          canExecute: boolean;
+          canLead: boolean;
+        }
+      ) => {
+        try {
+          const result = await updateMemberPermissions(teamId, userId, permissions);
+          if (result.error) {
+            console.error('Failed to update permissions:', result.error);
+            alert(`Failed to update permissions: ${result.error}`);
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          console.error('Failed to update permissions:', error);
+          throw error;
+        }
+      };
+
+      return (
+        <PermissionsToggle
+          userId={member.user.id}
+          teamId={member.teamId}
+          initialPermissions={{
+            canRead: member.canRead ?? true,
+            canWrite: member.canWrite ?? false,
+            canExecute: member.canExecute ?? false,
+            canLead: member.canLead ?? false,
+          }}
+          onPermissionChange={handlePermissionChange}
+          disabled={!member.canManage}
+        />
+      );
+    },
   },
   {
     header: 'Actions',
