@@ -25,6 +25,11 @@ export interface RemoveMemberState {
   error?: string;
 }
 
+export interface UpdatePermissionsState {
+  success?: boolean;
+  error?: string;
+}
+
 export async function addTeamMember(
   teamId: string,
   prevState: AddTeamMemberState,
@@ -106,12 +111,18 @@ export async function addTeamMember(
       };
     }
 
+    // Set default permissions based on role
+    const defaultPermissions = role === 'LEAD'
+      ? { canRead: true, canWrite: true, canExecute: true, canLead: true }
+      : { canRead: true, canWrite: false, canExecute: false, canLead: false };
+
     // Add the team member
     await prisma.teamMember.create({
       data: {
         userId,
         teamId,
         role,
+        ...defaultPermissions,
       },
     });
 
@@ -319,7 +330,7 @@ export async function promoteMember(
       return { error: 'You do not have permission to promote members' };
     }
 
-    // Update member role to LEAD
+    // Update member role to LEAD and grant full permissions
     await prisma.teamMember.update({
       where: {
         userId_teamId: {
@@ -327,7 +338,13 @@ export async function promoteMember(
           teamId
         }
       },
-      data: { role: 'LEAD' }
+      data: {
+        role: 'LEAD',
+        canRead: true,
+        canWrite: true,
+        canExecute: true,
+        canLead: true
+      }
     });
 
     // Log the promotion
@@ -375,7 +392,7 @@ export async function demoteMember(
       return { error: 'You do not have permission to demote members' };
     }
 
-    // Update member role to MEMBER
+    // Update member role to MEMBER and revoke lead permissions
     await prisma.teamMember.update({
       where: {
         userId_teamId: {
@@ -383,7 +400,13 @@ export async function demoteMember(
           teamId
         }
       },
-      data: { role: 'MEMBER' }
+      data: {
+        role: 'MEMBER',
+        canRead: true,
+        canWrite: false,
+        canExecute: false,
+        canLead: false
+      }
     });
 
     // Log the demotion
@@ -404,5 +427,85 @@ export async function demoteMember(
   } catch (error) {
     console.error('Failed to demote member:', error);
     return { error: 'Failed to demote member. Please try again.' };
+  }
+}
+
+export async function updateMemberPermissions(
+  teamId: string,
+  userId: string,
+  permissions: {
+    canRead: boolean;
+    canWrite: boolean;
+    canExecute: boolean;
+    canLead: boolean;
+  }
+): Promise<UpdatePermissionsState> {
+  try {
+    const session = await auth();
+    if (!session) {
+      return { error: 'Authentication required' };
+    }
+
+    // Check if team exists and user has permission to manage permissions
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        members: {
+          where: { userId: session.user.id }
+        }
+      }
+    });
+
+    if (!team) {
+      return { error: 'Team not found' };
+    }
+
+    // Check permissions - user must be owner or have lead permissions
+    const isOwner = team.ownerId === session.user.id;
+    const userMembership = team.members[0];
+    const canManagePermissions = isOwner || (userMembership?.canLead === true);
+
+    if (!canManagePermissions) {
+      return { error: 'You do not have permission to manage team member permissions' };
+    }
+
+    // Get current member data
+    const currentMember = await prisma.teamMember.findUnique({
+      where: {
+        userId_teamId: {
+          userId,
+          teamId
+        }
+      }
+    });
+
+    if (!currentMember) {
+      return { error: 'Team member not found' };
+    }
+
+    // Update member permissions
+    await prisma.teamMember.update({
+      where: {
+        userId_teamId: {
+          userId,
+          teamId
+        }
+      },
+      data: {
+        canRead: permissions.canRead,
+        canWrite: permissions.canWrite,
+        canExecute: permissions.canExecute,
+        canLead: permissions.canLead,
+      }
+    });
+
+    revalidatePath(`/main/teams/${teamId}`);
+    revalidatePath(`/main/teams/${teamId}/manage`);
+    revalidatePath(`/main/teams/${teamId}/members`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to update member permissions:', error);
+    return { error: 'Failed to update permissions. Please try again.' };
   }
 }

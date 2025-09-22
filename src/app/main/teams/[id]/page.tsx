@@ -91,9 +91,10 @@ export default async function TeamMembersPage({
   const isOwner = team.ownerId === session.user.id;
   const userMembership = team.members.find(m => m.userId === session.user.id);
   const isTeamLead = userMembership?.role === 'LEAD';
-  const canManage = isOwner || isTeamLead;
+  const canManageMembers = isOwner || isTeamLead;
+  const canManagePermissions = isOwner || (userMembership?.canLead === true);
 
-  if (!canManage) {
+  if (!canManageMembers) {
     notFound();
   }
 
@@ -125,6 +126,10 @@ export default async function TeamMembersPage({
     teamId: team.id,
     role: 'OWNER' as const,
     joinedAt: new Date(), // Teams don't track owner join date
+    canRead: true,
+    canWrite: true,
+    canExecute: true,
+    canLead: true,
     user: team.owner
   };
 
@@ -136,7 +141,7 @@ export default async function TeamMembersPage({
     ...member,
     teamId: team.id,
     currentUserId: session.user.id,
-    canManage: isOwner || (isTeamLead && member.userId !== session.user.id),
+    canManage: canManagePermissions && member.userId !== session.user.id,
     isOwner
   })) as TeamMemberWithActions[];
 
