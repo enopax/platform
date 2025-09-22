@@ -43,23 +43,29 @@ interface ProjectFormProps {
   onSuccess?: () => void;
   successMessage?: string;
   redirectUrl?: string;
+  preselectedTeamId?: string;
 }
+
+// Project type options based on cloud provider research
+const PROJECT_TYPES = [
+  { value: 'web-app', label: 'Web Application', description: 'Frontend applications, websites, dashboards' },
+  { value: 'api', label: 'API Service', description: 'Backend APIs, microservices, REST/GraphQL services' },
+  { value: 'mobile-app', label: 'Mobile Application', description: 'iOS, Android, or cross-platform mobile apps' },
+  { value: 'data-project', label: 'Data Project', description: 'Analytics, ETL, data processing, ML models' },
+  { value: 'infrastructure', label: 'Infrastructure', description: 'DevOps, deployment, monitoring, tooling' },
+  { value: 'other', label: 'Other', description: 'Custom or mixed-purpose projects' },
+];
 
 export default function ProjectForm({
   project,
   teams,
   onSuccess,
   successMessage,
-  redirectUrl
+  redirectUrl,
+  preselectedTeamId
 }: ProjectFormProps) {
   const action = project ? updateProject : createProject;
   const [state, formAction, isPending] = useActionState(action, initialState);
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    project?.startDate ? new Date(project.startDate) : undefined
-  );
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    project?.endDate ? new Date(project.endDate) : undefined
-  );
   const router = useRouter();
 
   const isCreate = !project;
@@ -104,13 +110,6 @@ export default function ProjectForm({
         <input type="hidden" name="projectId" value={project.id} />
       )}
       
-      {/* Hidden fields for date picker values */}
-      {startDate && (
-        <input type="hidden" name="startDate" value={startDate.toISOString().split('T')[0]} />
-      )}
-      {endDate && (
-        <input type="hidden" name="endDate" value={endDate.toISOString().split('T')[0]} />
-      )}
 
       {state.error && (
         <Callout
@@ -132,8 +131,9 @@ export default function ProjectForm({
         </Callout>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="md:col-span-2">
+      <div className="space-y-6">
+        {/* Project Name - Full width */}
+        <div>
           <Label htmlFor="name">
             Project Name *
           </Label>
@@ -152,27 +152,65 @@ export default function ProjectForm({
           )}
         </div>
 
-        <div>
-          <Label htmlFor="teamId">
-            Team *
-          </Label>
-          <Select name="teamId" defaultValue={project?.teamId || ''} required>
-            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.teamId}>
-              <SelectValue placeholder="Select team" />
-            </SelectTrigger>
-            <SelectContent>
-              {teams.map((team) => (
-                <SelectItem key={team.id} value={team.id}>
-                  {team.name} {team.isPersonal ? '(Personal)' : ''}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {state.fieldErrors?.teamId && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.teamId}</p>
-          )}
+        {/* Team and Project Type - Side by side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <Label htmlFor="teamId">
+              Team *
+            </Label>
+            <Select
+              name="teamId"
+              defaultValue={
+                project?.teamId ||
+                preselectedTeamId ||
+                teams.find(team => team.isPersonal)?.id ||
+                teams[0]?.id ||
+                ''
+              }
+              required
+            >
+              <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.teamId}>
+                <SelectValue placeholder="Select team" />
+              </SelectTrigger>
+              <SelectContent>
+                {teams.map((team) => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.name} {team.isPersonal ? '(Personal)' : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {state.fieldErrors?.teamId && (
+              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.teamId}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="projectType">
+              Project Type
+            </Label>
+            <Select name="projectType" defaultValue={project?.projectType || 'web-app'}>
+              <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.projectType}>
+                <SelectValue placeholder="Select project type" />
+              </SelectTrigger>
+              <SelectContent>
+                {PROJECT_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    <div>
+                      <div className="font-medium text-left">{type.label}</div>
+                      <div className="text-sm text-gray-500">{type.description}</div>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {state.fieldErrors?.projectType && (
+              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.projectType}</p>
+            )}
+          </div>
         </div>
 
+        {/* Development Toggle */}
         <div>
           <div className="flex items-center space-x-2">
             <Switch
@@ -189,9 +227,10 @@ export default function ProjectForm({
           </p>
         </div>
 
-        <div className="md:col-span-2">
+        {/* Description - Full width */}
+        <div>
           <Label htmlFor="description">
-            Description
+            Description (Optional)
           </Label>
           <Textarea
             id="description"
@@ -200,187 +239,131 @@ export default function ProjectForm({
             rows={3}
             className="mt-1"
             hasError={!!state.fieldErrors?.description}
-            placeholder="Describe the project goals, scope, and requirements..."
+            placeholder="Brief description of the project (optional)..."
           />
           {state.fieldErrors?.description && (
             <p className="mt-1 text-sm text-red-600">{state.fieldErrors.description}</p>
           )}
         </div>
+      </div>
 
-        <div>
-          <Label htmlFor="status">
-            Status
-          </Label>
-          <Select name="status" defaultValue={project?.status || 'PLANNING'}>
-            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.status}>
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="PLANNING">Planning</SelectItem>
-              <SelectItem value="ACTIVE">Active</SelectItem>
-              <SelectItem value="ON_HOLD">On Hold</SelectItem>
-              <SelectItem value="COMPLETED">Completed</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-          {state.fieldErrors?.status && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.status}</p>
-          )}
-        </div>
+      {/* Hidden fields with smart defaults for simplified creation */}
+      {isCreate && (
+        <>
+          <input type="hidden" name="status" value="PLANNING" />
+          <input type="hidden" name="priority" value="MEDIUM" />
+          <input type="hidden" name="progress" value="0" />
+          <input type="hidden" name="currency" value="USD" />
+        </>
+      )}
 
-        <div>
-          <Label htmlFor="priority">
-            Priority
-          </Label>
-          <Select name="priority" defaultValue={project?.priority || 'MEDIUM'}>
-            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.priority}>
-              <SelectValue placeholder="Select priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="LOW">Low</SelectItem>
-              <SelectItem value="MEDIUM">Medium</SelectItem>
-              <SelectItem value="HIGH">High</SelectItem>
-              <SelectItem value="URGENT">Urgent</SelectItem>
-            </SelectContent>
-          </Select>
-          {state.fieldErrors?.priority && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.priority}</p>
-          )}
-        </div>
+      {/* Update-only fields */}
+      {isUpdate && (
+        <div className="pt-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Advanced Settings
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label htmlFor="status">
+                Status
+              </Label>
+              <Select name="status" defaultValue={project?.status || 'PLANNING'}>
+                <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.status}>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PLANNING">Planning</SelectItem>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+              {state.fieldErrors?.status && (
+                <p className="mt-1 text-sm text-red-600">{state.fieldErrors.status}</p>
+              )}
+            </div>
 
-        <div>
-          <Label htmlFor="startDate">
-            Start Date
-          </Label>
-          <div className="mt-1">
-            <DatePicker
-              placeholder="Select start date"
-              value={startDate}
-              onChange={setStartDate}
-              hasError={!!state.fieldErrors?.startDate}
-            />
+            <div>
+              <Label htmlFor="priority">
+                Priority
+              </Label>
+              <Select name="priority" defaultValue={project?.priority || 'MEDIUM'}>
+                <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.priority}>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="LOW">Low</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="HIGH">High</SelectItem>
+                  <SelectItem value="URGENT">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+              {state.fieldErrors?.priority && (
+                <p className="mt-1 text-sm text-red-600">{state.fieldErrors.priority}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="progress">
+                Progress (%)
+              </Label>
+              <Input
+                type="number"
+                id="progress"
+                name="progress"
+                min="0"
+                max="100"
+                defaultValue={project?.progress?.toString() || '0'}
+                className="mt-1"
+                hasError={!!state.fieldErrors?.progress}
+              />
+              {state.fieldErrors?.progress && (
+                <p className="mt-1 text-sm text-red-600">{state.fieldErrors.progress}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="budget">
+                Budget
+              </Label>
+              <Input
+                type="number"
+                id="budget"
+                name="budget"
+                step="0.01"
+                min="0"
+                defaultValue={project?.budget?.toString() || ''}
+                className="mt-1"
+                placeholder="0.00"
+                hasError={!!state.fieldErrors?.budget}
+              />
+              {state.fieldErrors?.budget && (
+                <p className="mt-1 text-sm text-red-600">{state.fieldErrors.budget}</p>
+              )}
+            </div>
+
+            <div className="md:col-span-2">
+              <Label htmlFor="repositoryUrl">
+                Repository URL
+              </Label>
+              <Input
+                type="url"
+                id="repositoryUrl"
+                name="repositoryUrl"
+                defaultValue={project?.repositoryUrl || ''}
+                className="mt-1"
+                placeholder="https://github.com/username/repo"
+                hasError={!!state.fieldErrors?.repositoryUrl}
+              />
+              {state.fieldErrors?.repositoryUrl && (
+                <p className="mt-1 text-sm text-red-600">{state.fieldErrors.repositoryUrl}</p>
+              )}
+            </div>
           </div>
-          {state.fieldErrors?.startDate && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.startDate}</p>
-          )}
-        </div>
 
-        <div>
-          <Label htmlFor="endDate">
-            Target End Date
-          </Label>
-          <div className="mt-1">
-            <DatePicker
-              placeholder="Select target end date"
-              value={endDate}
-              onChange={setEndDate}
-              hasError={!!state.fieldErrors?.endDate}
-              fromDate={startDate} // Prevent selecting end date before start date
-            />
-          </div>
-          {state.fieldErrors?.endDate && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.endDate}</p>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="budget">
-            Budget
-          </Label>
-          <Input
-            type="number"
-            id="budget"
-            name="budget"
-            step="0.01"
-            min="0"
-            defaultValue={project?.budget?.toString() || ''}
-            className="mt-1"
-            placeholder="0.00"
-            hasError={!!state.fieldErrors?.budget}
-          />
-          {state.fieldErrors?.budget && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.budget}</p>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="currency">
-            Currency
-          </Label>
-          <Select name="currency" defaultValue={project?.currency || 'USD'}>
-            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.currency}>
-              <SelectValue placeholder="Select currency" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="USD">USD ($)</SelectItem>
-              <SelectItem value="EUR">EUR (€)</SelectItem>
-              <SelectItem value="GBP">GBP (£)</SelectItem>
-              <SelectItem value="CAD">CAD (C$)</SelectItem>
-              <SelectItem value="AUD">AUD (A$)</SelectItem>
-            </SelectContent>
-          </Select>
-          {state.fieldErrors?.currency && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.currency}</p>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="progress">
-            Progress (%)
-          </Label>
-          <Input
-            type="number"
-            id="progress"
-            name="progress"
-            min="0"
-            max="100"
-            defaultValue={project?.progress?.toString() || '0'}
-            className="mt-1"
-            hasError={!!state.fieldErrors?.progress}
-          />
-          {state.fieldErrors?.progress && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.progress}</p>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="repositoryUrl">
-            Repository URL
-          </Label>
-          <Input
-            type="url"
-            id="repositoryUrl"
-            name="repositoryUrl"
-            defaultValue={project?.repositoryUrl || ''}
-            className="mt-1"
-            placeholder="https://github.com/username/repo"
-            hasError={!!state.fieldErrors?.repositoryUrl}
-          />
-          {state.fieldErrors?.repositoryUrl && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.repositoryUrl}</p>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="documentationUrl">
-            Documentation URL
-          </Label>
-          <Input
-            type="url"
-            id="documentationUrl"
-            name="documentationUrl"
-            defaultValue={project?.documentationUrl || ''}
-            className="mt-1"
-            placeholder="https://docs.example.com"
-            hasError={!!state.fieldErrors?.documentationUrl}
-          />
-          {state.fieldErrors?.documentationUrl && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.documentationUrl}</p>
-          )}
-        </div>
-
-        {isUpdate && (
-          <div>
+          <div className="mt-6">
             <div className="flex items-center space-x-2">
               <Switch
                 id="isActive"
@@ -392,11 +375,11 @@ export default function ProjectForm({
               </Label>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {isUpdate && project && (
-        <div className="border-t pt-6">
+        <div className="pt-6">
           <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
             <div>
               <strong>Created:</strong> <ClientDate date={project.createdAt} format="time" />
@@ -408,7 +391,7 @@ export default function ProjectForm({
         </div>
       )}
 
-      <div className="flex justify-end space-x-4 pt-6 border-t">
+      <div className="flex justify-end space-x-4 pt-6">
         <Button type="submit" disabled={isPending || (state.success && isCreate)}>
           {getSubmitButtonText()}
         </Button>
