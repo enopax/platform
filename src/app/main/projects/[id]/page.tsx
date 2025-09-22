@@ -26,7 +26,7 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
   const { id } = await params;
 
   // Get project with full details
-  const [projectRaw, userOrganisations] = await Promise.all([
+  const [projectRaw, userTeams] = await Promise.all([
     prisma.project.findUnique({
       where: { id },
       include: {
@@ -53,13 +53,13 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
         },
       },
     }),
-    // Get organisations where the user is a member (they can edit projects in their orgs)
-    prisma.organisation.findMany({
+    // Get teams where the user is a member (they can edit projects in their teams)
+    prisma.team.findMany({
       where: {
         OR: [
-          // Organisations they own
+          // Teams they own
           { ownerId: session.user.id },
-          // Organisations they're a member of
+          // Teams they're a member of
           {
             members: {
               some: {
@@ -69,10 +69,9 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
           }
         ]
       },
-      select: {
-        id: true,
-        name: true,
-        description: true,
+      include: {
+        owner: true,
+        organisation: true,
       },
       orderBy: { name: 'asc' }
     })
@@ -157,9 +156,9 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
               </h2>
             </div>
             <div className="p-6">
-              <ProjectForm 
+              <ProjectForm
                 project={project}
-                organisations={userOrganisations}
+                teams={userTeams}
                 successMessage="Project updated successfully!"
               />
             </div>
