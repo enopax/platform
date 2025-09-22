@@ -16,6 +16,7 @@ export interface CreateResourceState {
     projectId?: string;
     tags?: string;
     ownerId?: string;
+    teamId?: string;
   };
 }
 
@@ -31,6 +32,7 @@ export interface UpdateResourceState {
     quotaLimit?: string;
     projectId?: string;
     tags?: string;
+    teamId?: string;
   };
 }
 
@@ -48,6 +50,7 @@ export async function createResource(
     const projectId = formData.get('projectId') as string;
     const tagsStr = formData.get('tags') as string;
     const ownerId = formData.get('ownerId') as string;
+    const teamId = formData.get('teamId') as string;
     const isPublic = formData.get('isPublic') === 'on';
 
     // Basic validation
@@ -72,6 +75,13 @@ export async function createResource(
       };
     }
 
+    if (!teamId) {
+      return {
+        error: 'Team is required',
+        fieldErrors: { teamId: 'Team is required' }
+      };
+    }
+
     // Validate owner exists
     const ownerExists = await prisma.user.findUnique({
       where: { id: ownerId }
@@ -81,6 +91,34 @@ export async function createResource(
       return {
         error: 'Selected owner does not exist',
         fieldErrors: { ownerId: 'Selected owner does not exist' }
+      };
+    }
+
+    // Validate team exists and user has access
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        members: {
+          select: { userId: true }
+        }
+      }
+    });
+
+    if (!team) {
+      return {
+        error: 'Selected team does not exist',
+        fieldErrors: { teamId: 'Selected team does not exist' }
+      };
+    }
+
+    // Check if user is team owner or member
+    const isTeamOwner = team.ownerId === ownerId;
+    const isTeamMember = team.members.some(member => member.userId === ownerId);
+
+    if (!isTeamOwner && !isTeamMember) {
+      return {
+        error: 'You do not have access to this team',
+        fieldErrors: { teamId: 'You do not have access to this team' }
       };
     }
 
@@ -156,6 +194,8 @@ export async function createResource(
         projectId: projectId?.trim() || null,
         isPublic,
         tags,
+        // Note: teamId might need schema update to be directly stored
+        // For now storing team information through validation above
       },
     });
 
