@@ -14,10 +14,10 @@ export default async function CreateResourcePage() {
         <div className="flex items-center gap-4 mb-6">
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Create New Resource
+              Purchase New Resource
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
-              Add a new computing resource to your infrastructure
+              Acquire and configure a new resource for your projects
             </p>
           </div>
         </div>
