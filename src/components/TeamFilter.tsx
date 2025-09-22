@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/Select';
-import { type Team, type Organisation, type User } from '@prisma/client';
+import { type Team, type User, type Organisation } from '@prisma/client';
 
 type TeamWithDetails = Team & {
   owner: User;
@@ -13,20 +13,31 @@ type TeamWithDetails = Team & {
   };
 };
 
-interface TeamSelectorProps {
+interface TeamFilterProps {
   teams: TeamWithDetails[];
   selectedTeamId: string | null;
-  onTeamChange: (teamId: string | null) => void;
+  totalProjects: number;
 }
 
-export default function TeamSelector({ teams, selectedTeamId, onTeamChange }: TeamSelectorProps) {
+export default function TeamFilter({ teams, selectedTeamId, totalProjects }: TeamFilterProps) {
+  const router = useRouter();
+
+  const handleTeamChange = (value: string) => {
+    if (value === 'all') {
+      router.push('/main/projects');
+    } else {
+      router.push(`/main/projects?team=${value}`);
+    }
+  };
+
   return (
     <div className="w-full sm:w-80">
-      <Select value={selectedTeamId || teams[0].id} onValueChange={(value) => onTeamChange(value === 'all' ? null : value)}>
+      <Select value={selectedTeamId || 'all'} onValueChange={handleTeamChange}>
         <SelectTrigger>
           <SelectValue placeholder="Filter by team" />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="all">All Teams ({totalProjects} projects)</SelectItem>
           {teams.map((team) => (
             <SelectItem key={team.id} value={team.id}>
               {team.name} {team.isPersonal ? '(Personal)' : ''} ({team._count.projects} projects)

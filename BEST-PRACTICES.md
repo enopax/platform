@@ -70,6 +70,71 @@ This document consolidates best practices from across the project documentation 
 - Handle timezone considerations properly
 - Validate date ranges server-side
 
+### Server/Client Component Architecture
+- **Server-first approach**: Keep most content in server components (page.tsx)
+- **Minimal client components**: Only create client components for interactive elements
+- **Follow established patterns**: Look at existing pages like `/main/developer/page.tsx` for structure
+- **Avoid unnecessary abstraction**: Don't split into multiple components unless there's clear benefit
+
+#### Good Architecture Pattern:
+```typescript
+// page.tsx (Server Component)
+export default async function ProjectsPage() {
+  const data = await fetchData();
+
+  return (
+    <div>
+      {/* Static content directly in page */}
+      <header>...</header>
+      <section>...</section>
+
+      {/* Only interactive parts as client components */}
+      <InteractiveFilter data={data} />
+      <DisplayGrid items={filteredData} />
+
+      {/* More static content */}
+      <footer>...</footer>
+    </div>
+  );
+}
+```
+
+#### Avoid This Anti-Pattern:
+```typescript
+// Don't wrap everything in client components
+return <PageWrapper><AllContent /></PageWrapper>
+```
+
+### Component Boundaries
+- **Server components**: Headers, static sections, forms, quick actions
+- **Client components**: Dropdowns, filters, interactive grids, modals
+- **URL-based state**: Use searchParams instead of client state when possible
+- **Component size**: Keep client components focused and small (< 150 lines typically)
+
+### Common Mistakes to Avoid
+- **❌ Don't import server-only modules in client components**: Never import `auth()`, `prisma`, or Node.js modules like `fs` in `'use client'` components
+- **❌ Don't make entire pages client components**: This causes Node.js module resolution errors
+- **❌ Don't over-abstract**: Creating too many small components makes code harder to follow
+- **❌ Don't duplicate state**: Use either URL params OR client state, not both for the same data
+
+### Debugging Server/Client Issues
+```typescript
+// Error: Can't resolve 'fs' in client component
+'use client';
+import { auth } from '@/lib/auth'; // ❌ Server-only module
+
+// Solution: Separate server and client concerns
+// page.tsx (Server)
+const session = await auth();
+return <ClientComponent data={data} />;
+
+// ClientComponent.tsx
+'use client';
+export default function ClientComponent({ data }) {
+  // ✅ No server imports
+}
+```
+
 ---
 
 ## 🗄️ Database & Query Optimisation

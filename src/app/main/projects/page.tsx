@@ -1,25 +1,33 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import ProjectsList from '@/components/ProjectsList';
+import { Card } from '@/components/common/Card';
+import { Button } from '@/components/common/Button';
+import ProjectGrid from '@/components/ProjectGrid';
+import TeamFilter from '@/components/TeamFilter';
+import {
+  RiAddLine,
+  RiUserLine
+} from '@remixicon/react';
+import Link from 'next/link';
 
-export default async function ProjectsPage() {
+export default async function ProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ team?: string }>;
+}) {
   const session = await auth();
   if (!session) return null;
 
-  // Fetch user's projects through team memberships and organisation memberships
-  const [userProjects, userTeams] = await Promise.all([
+  const { team: selectedTeamId } = await searchParams;
+
+  // Simplified queries - only check team membership, not organisation membership
+  const [allProjects, teams] = await Promise.all([
     prisma.project.findMany({
       where: {
         team: {
           OR: [
-            {
-              // User is a member of the team
-              members: {
-                some: {
-                  userId: session.user.id
-                }
-              }
-            },
+            { ownerId: session.user.id },
+            { members: { some: { userId: session.user.id } } }
           ]
         }
       },
@@ -41,18 +49,11 @@ export default async function ProjectsPage() {
         { updatedAt: 'desc' }
       ]
     }),
-    // Fetch user's teams for the selector
     prisma.team.findMany({
       where: {
         OR: [
-          {
-            // User is a member of the team
-            members: {
-              some: {
-                userId: session.user.id
-              }
-            }
-          },
+          { ownerId: session.user.id },
+          { members: { some: { userId: session.user.id } } }
         ]
       },
       include: {
@@ -66,11 +67,18 @@ export default async function ProjectsPage() {
         }
       },
       orderBy: [
-        { isPersonal: 'desc' }, // Personal teams first
+        { isPersonal: 'desc' },
         { name: 'asc' }
       ]
     })
   ]);
+
+  // Filter projects based on selected team
+  const projects = selectedTeamId
+    ? allProjects.filter(project => project.teamId === selectedTeamId)
+    : allProjects;
+
+  const selectedTeam = selectedTeamId ? teams.find(t => t.id === selectedTeamId) : null;
 
   return (
     <div>
@@ -88,11 +96,56 @@ export default async function ProjectsPage() {
         </div>
       </div>
 
-      {/* Projects List with Team Filter */}
-      <ProjectsList
-        initialProjects={userProjects}
-        teams={userTeams}
+      {/* Team Filter & Create Button */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <TeamFilter
+            teams={teams}
+            selectedTeamId={selectedTeamId}
+            totalProjects={allProjects.length}
+          />
+          <Link href="/main/projects/new">
+            <Button className="w-full sm:w-auto">
+              <RiAddLine className="mr-2 h-4 w-4" />
+              Create Project
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Project Grid */}
+      <ProjectGrid
+        projects={projects}
+        selectedTeamName={selectedTeam?.name}
       />
+
+      {/* Quick Actions Section */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Quick Actions
+        </h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Link href="/main/projects/new" className="group">
+            <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-400 dark:hover:border-brand-500 transition-colors cursor-pointer">
+              <RiAddLine className="h-6 w-6 text-gray-400 group-hover:text-brand-500 mb-2" />
+              <h4 className="font-medium text-gray-900 dark:text-white">Create New Project</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Start a new project and assign it to a team
+              </p>
+            </div>
+          </Link>
+
+          <div className="opacity-50 cursor-not-allowed">
+            <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+              <RiUserLine className="h-6 w-6 text-gray-400 mb-2" />
+              <h4 className="font-medium text-gray-900 dark:text-white">Join Project</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Request to join existing projects (coming soon)
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }
