@@ -5,18 +5,17 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Label } from '@/components/common/Label';
 import { Callout } from '@/components/common/Callout';
-import { Checkbox } from '@/components/common/Checkbox';
 import { Slider } from '@/components/common/Slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/Select';
-import TeamSearch from '@/components/search/TeamSearch';
 import { createResource, type CreateResourceState } from '@/actions/resource';
 import { RiDatabase2Line, RiCheckLine, RiErrorWarningLine, RiInformationLine, RiServerLine, RiCloudLine, RiCodeLine } from '@remixicon/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { type Team } from '@prisma/client';
+import { type Team, type Organisation } from '@prisma/client';
 
 interface CreateResourceFormProps {
   currentUserId: string;
+  teams: (Team & { organisation?: Organisation | null })[];
 }
 
 // Storage size options in GB
@@ -70,12 +69,13 @@ const RESOURCE_TYPES = [
   },
 ];
 
-export default function CreateResourceForm({ currentUserId }: CreateResourceFormProps) {
+export default function CreateResourceForm({ currentUserId, teams }: CreateResourceFormProps) {
   const router = useRouter();
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [isShared, setIsShared] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState<string>(
+    teams.find(team => team.isPersonal)?.id || teams[0]?.id || ''
+  );
   const [resourceType, setResourceType] = useState<ResourceType>('STORAGE');
-  const [storageSize, setStorageSize] = useState([2]); // Default to 5 GB (index 1)
+  const [storageSize, setStorageSize] = useState([1]); // Default to 5 GB (index 1)
   const [state, formAction, isPending] = useActionState<CreateResourceState, FormData>(
     createResource,
     {}
@@ -229,43 +229,30 @@ export default function CreateResourceForm({ currentUserId }: CreateResourceForm
           )}
         </div>
 
-        {/* Team Sharing */}
+        {/* Team Selection */}
         <div>
-          <div className="flex items-start space-x-3 mb-4">
-            <Checkbox
-              id="isShared"
-              checked={isShared}
-              onCheckedChange={(checked) => setIsShared(checked as boolean)}
-            />
-            <div className="grid gap-1.5 leading-none">
-              <Label htmlFor="isShared" className="text-sm font-medium leading-none">
-                Share with a team
-              </Label>
-              <p className="text-xs text-gray-500">
-                Allow team members to access and manage this storage space
-              </p>
-            </div>
-          </div>
-
-          {isShared && (
-            <div>
-              <Label htmlFor="teamId">
-                Select Team
-              </Label>
-              <div className="mt-1">
-                <TeamSearch
-                  placeholder="Search for team to share with..."
-                  defaultValue={selectedTeam}
-                  setResult={setSelectedTeam}
-                  name="teamId"
-                  hasError={!!state.fieldErrors?.teamId}
-                />
-              </div>
-              {state.fieldErrors?.teamId && (
-                <p className="mt-1 text-sm text-red-600">{state.fieldErrors.teamId}</p>
-              )}
-            </div>
+          <Label htmlFor="teamId">
+            Team *
+          </Label>
+          <Select value={selectedTeamId} onValueChange={setSelectedTeamId} name="teamId" required>
+            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.teamId}>
+              <SelectValue placeholder="Select team" />
+            </SelectTrigger>
+            <SelectContent>
+              {teams.map((team) => (
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name} {team.isPersonal ? '(Personal)' : ''}
+                  {team.organisation && ` - ${team.organisation.name}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {state.fieldErrors?.teamId && (
+            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.teamId}</p>
           )}
+          <p className="text-xs text-gray-500 mt-1">
+            Resources belong to teams and can be accessed by team members
+          </p>
         </div>
       </div>
 
@@ -273,10 +260,10 @@ export default function CreateResourceForm({ currentUserId }: CreateResourceForm
       <input type="hidden" name="ownerId" value={currentUserId} />
       <input type="hidden" name="type" value={resourceType} />
       <input type="hidden" name="status" value="ACTIVE" />
+      <input type="hidden" name="teamId" value={selectedTeamId} />
       {resourceType === 'STORAGE' && (
         <input type="hidden" name="quotaLimit" value={selectedStorageOption.bytes.toString()} />
       )}
-      {!isShared && <input type="hidden" name="teamId" value="" />}
 
       {/* Submit Button */}
       <div className="flex justify-end gap-4 pt-6">
