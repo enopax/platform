@@ -7,9 +7,10 @@ import { Label } from '@/components/common/Label';
 import { Callout } from '@/components/common/Callout';
 import { Checkbox } from '@/components/common/Checkbox';
 import { Slider } from '@/components/common/Slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/Select';
 import TeamSearch from '@/components/search/TeamSearch';
 import { createResource, type CreateResourceState } from '@/actions/resource';
-import { RiDatabase2Line, RiCheckLine, RiErrorWarningLine, RiInformationLine } from '@remixicon/react';
+import { RiDatabase2Line, RiCheckLine, RiErrorWarningLine, RiInformationLine, RiServerLine, RiCloudLine, RiCodeLine } from '@remixicon/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { type Team } from '@prisma/client';
@@ -31,10 +32,49 @@ const STORAGE_OPTIONS = [
   { value: 1000, label: '1 TB', bytes: 1000 * 1024 * 1024 * 1024 },
 ];
 
+type ResourceType = 'STORAGE' | 'COMPUTE' | 'DATABASE' | 'API' | 'NETWORK' | 'OTHER';
+
+// Resource type configuration
+const RESOURCE_TYPES = [
+  {
+    value: 'STORAGE' as ResourceType,
+    label: 'IPFS Storage',
+    description: 'Distributed file storage on IPFS network',
+    icon: RiDatabase2Line,
+    iconColor: 'text-blue-500',
+    available: true,
+  },
+  {
+    value: 'COMPUTE' as ResourceType,
+    label: 'Compute Resources',
+    description: 'Virtual machines and processing power',
+    icon: RiServerLine,
+    iconColor: 'text-green-500',
+    available: false,
+  },
+  {
+    value: 'DATABASE' as ResourceType,
+    label: 'Database Services',
+    description: 'Managed database instances',
+    icon: RiCloudLine,
+    iconColor: 'text-purple-500',
+    available: false,
+  },
+  {
+    value: 'API' as ResourceType,
+    label: 'API Services',
+    description: 'External API access and integrations',
+    icon: RiCodeLine,
+    iconColor: 'text-orange-500',
+    available: false,
+  },
+];
+
 export default function CreateResourceForm({ currentUserId }: CreateResourceFormProps) {
   const router = useRouter();
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [isShared, setIsShared] = useState(false);
+  const [resourceType, setResourceType] = useState<ResourceType>('STORAGE');
   const [storageSize, setStorageSize] = useState([2]); // Default to 5 GB (index 1)
   const [state, formAction, isPending] = useActionState<CreateResourceState, FormData>(
     createResource,
@@ -51,6 +91,37 @@ export default function CreateResourceForm({ currentUserId }: CreateResourceForm
   }, [state.success, router]);
 
   const selectedStorageOption = STORAGE_OPTIONS[storageSize[0]];
+  const selectedResourceType = RESOURCE_TYPES.find(type => type.value === resourceType);
+
+  // IPFS Storage Configuration Component
+  const StorageConfig = () => (
+    <>
+      {/* Storage Size Slider */}
+      <div>
+        <Label htmlFor="storageSize">
+          Storage Size: {selectedStorageOption.label}
+        </Label>
+        <div className="mt-3 px-2">
+          <Slider
+            value={storageSize}
+            onValueChange={setStorageSize}
+            max={STORAGE_OPTIONS.length - 1}
+            min={0}
+            step={1}
+            className="w-full"
+            ariaLabelThumb="Storage size selector"
+          />
+        </div>
+        <div className="flex justify-between text-xs text-gray-500 mt-2 px-2">
+          <span>1 GB</span>
+          <span>1 TB</span>
+        </div>
+        <p className="mt-2 text-sm text-gray-600">
+          Selected: <strong>{selectedStorageOption.label}</strong> of IPFS storage space
+        </p>
+      </div>
+    </>
+  );
 
   return (
     <form action={formAction} className="space-y-6">
@@ -77,10 +148,51 @@ export default function CreateResourceForm({ currentUserId }: CreateResourceForm
       )}
 
       <div className="space-y-6">
-        {/* Storage Name */}
+        {/* Resource Type Selection */}
+        <div>
+          <Label htmlFor="type">
+            Resource Type *
+          </Label>
+          <Select value={resourceType} onValueChange={(value) => setResourceType(value as ResourceType)}>
+            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.type}>
+              <SelectValue placeholder="Select resource type" />
+            </SelectTrigger>
+            <SelectContent>
+              {RESOURCE_TYPES.map((type) => {
+                const IconComponent = type.icon;
+                return (
+                  <SelectItem
+                    key={type.value}
+                    value={type.value}
+                    disabled={!type.available}
+                  >
+                    <div className="flex items-center gap-3">
+                      <IconComponent
+                        className={`w-5 h-5 ${type.available ? type.iconColor : 'text-gray-400'}`}
+                      />
+                      <div>
+                        <div className={`font-medium text-left ${type.available ? '' : 'text-gray-400'}`}>
+                          {type.label}
+                        </div>
+                        <div className={`text-sm ${type.available ? 'text-gray-500' : 'text-gray-400'}`}>
+                          {type.available ? type.description : 'Coming soon'}
+                        </div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          {state.fieldErrors?.type && (
+            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.type}</p>
+          )}
+        </div>
+
+        {/* Resource Name */}
         <div>
           <Label htmlFor="name">
-            Storage Space Name *
+            {selectedResourceType?.label || 'Resource'} Name *
           </Label>
           <Input
             type="text"
@@ -89,37 +201,15 @@ export default function CreateResourceForm({ currentUserId }: CreateResourceForm
             required
             hasError={!!state.fieldErrors?.name}
             className="mt-1"
-            placeholder="My IPFS Storage"
+            placeholder={`My ${selectedResourceType?.label || 'Resource'}`}
           />
           {state.fieldErrors?.name && (
             <p className="mt-1 text-sm text-red-600">{state.fieldErrors.name}</p>
           )}
         </div>
 
-        {/* Storage Size Slider */}
-        <div>
-          <Label htmlFor="storageSize">
-            Storage Size: {selectedStorageOption.label}
-          </Label>
-          <div className="mt-3 px-2">
-            <Slider
-              value={storageSize}
-              onValueChange={setStorageSize}
-              max={STORAGE_OPTIONS.length - 1}
-              min={0}
-              step={1}
-              className="w-full"
-              ariaLabelThumb="Storage size selector"
-            />
-          </div>
-          <div className="flex justify-between text-xs text-gray-500 mt-2 px-2">
-            <span>1 GB</span>
-            <span>1 TB</span>
-          </div>
-          <p className="mt-2 text-sm text-gray-600">
-            Selected: <strong>{selectedStorageOption.label}</strong> of IPFS storage space
-          </p>
-        </div>
+        {/* Resource Type Specific Configuration */}
+        {resourceType === 'STORAGE' && <StorageConfig />}
 
         {/* Description */}
         <div>
@@ -132,7 +222,7 @@ export default function CreateResourceForm({ currentUserId }: CreateResourceForm
             name="description"
             hasError={!!state.fieldErrors?.description}
             className="mt-1"
-            placeholder="Describe what you'll store here..."
+            placeholder={resourceType === 'STORAGE' ? 'Describe what you\'ll store here...' : 'Describe this resource...'}
           />
           {state.fieldErrors?.description && (
             <p className="mt-1 text-sm text-red-600">{state.fieldErrors.description}</p>
@@ -179,29 +269,17 @@ export default function CreateResourceForm({ currentUserId }: CreateResourceForm
         </div>
       </div>
 
-      {/* Information Callout */}
-      <Callout
-        title="IPFS Storage Information"
-        variant="note"
-        icon={RiInformationLine}
-      >
-        <div className="text-sm space-y-2">
-          <p>• Your files will be distributed across the IPFS network for redundancy</p>
-          <p>• Storage space is allocated from your account quota</p>
-          <p>• Shared storage allows team members to pin files using this allocation</p>
-          <p>• You can always adjust sharing settings later</p>
-        </div>
-      </Callout>
-
       {/* Hidden fields */}
       <input type="hidden" name="ownerId" value={currentUserId} />
-      <input type="hidden" name="type" value="STORAGE" />
+      <input type="hidden" name="type" value={resourceType} />
       <input type="hidden" name="status" value="ACTIVE" />
-      <input type="hidden" name="quotaLimit" value={selectedStorageOption.bytes.toString()} />
+      {resourceType === 'STORAGE' && (
+        <input type="hidden" name="quotaLimit" value={selectedStorageOption.bytes.toString()} />
+      )}
       {!isShared && <input type="hidden" name="teamId" value="" />}
 
       {/* Submit Button */}
-      <div className="flex justify-end gap-4 pt-6 border-t">
+      <div className="flex justify-end gap-4 pt-6">
         <Button
           type="button"
           variant="light"
@@ -215,8 +293,10 @@ export default function CreateResourceForm({ currentUserId }: CreateResourceForm
           disabled={isPending}
           isLoading={isPending}
         >
-          <RiDatabase2Line className="w-4 h-4 mr-2" />
-          {isPending ? 'Creating...' : 'Create Storage Space'}
+          {selectedResourceType && (
+            <selectedResourceType.icon className="w-4 h-4 mr-2" />
+          )}
+          {isPending ? 'Creating...' : 'Create Resource'}
         </Button>
       </div>
     </form>

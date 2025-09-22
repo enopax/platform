@@ -206,19 +206,6 @@ export default async function TeamMembersPage({
             </Card>
           </div>
         </div>
-
-        {/* Team Storage Management */}
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-            Team Storage
-          </h2>
-          <TeamStorageForm
-            teamId={team.id}
-            teamName={team.name}
-            canManage={canManage}
-            storage={teamStorage}
-          />
-        </div>
       </Container>
     </main>
   );
