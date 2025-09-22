@@ -25,7 +25,6 @@ export default async function ProjectAdminPage({
           organisation: true,
         },
       },
-      organisation: true,
     },
     orderBy: { createdAt: 'desc' },
     skip: (pageNumber - 1) * size,

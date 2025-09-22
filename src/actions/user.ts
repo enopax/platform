@@ -6,6 +6,7 @@ import { auth, signIn } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole, StorageTier } from '@prisma/client';
 import { userService } from '@/lib/services/user';
+import { teamService } from '@/lib/services/team';
 
 // Storage tier to bytes mapping
 const STORAGE_TIER_BYTES: Record<StorageTier, bigint> = {
@@ -135,6 +136,13 @@ export async function register(state: object | null, formData: FormData) {
         role: 'CUSTOMER',
       }
     });
+
+    // Create personal team for the new user
+    await teamService.ensurePersonalTeam(user.id);
+
+    // Create initial storage quota for the user
+    await createOrUpdateUserStorageQuota(user.id, StorageTier.FREE_500MB);
+
     await signIn('credentials', {
       email: email,
       password: password,

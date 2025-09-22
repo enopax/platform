@@ -25,7 +25,6 @@ export default async function EditProjectPage({ params }: EditProjectPageProps) 
             organisation: true,
           },
         },
-        organisation: true,
       },
     }),
     prisma.organisation.findMany({

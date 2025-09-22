@@ -6,50 +6,56 @@ import { RiArrowLeftLine, RiProjectorLine } from '@remixicon/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ProjectForm from '@/components/form/ProjectForm';
+import { teamService } from '@/lib/services/team';
 
 export default async function CreateProjectPage() {
   const session = await auth();
   if (!session) return null;
 
-  // Get organizations where the user is a member (they can create projects in their orgs)
-  const userOrganizations = await prisma.organisation.findMany({
+  // Ensure user has a personal team, then get all their teams
+  await teamService.ensurePersonalTeam(session.user.id);
+
+  // Get teams where the user is the owner (personal team + created teams)
+  const userTeams = await prisma.team.findMany({
     where: {
-      OR: [
-        // Organizations they own
-        { ownerId: session.user.id },
-        // Organizations they're a member of
-        {
-          members: {
-            some: {
-              userId: session.user.id
-            }
-          }
+      ownerId: session.user.id
+    },
+    include: {
+      owner: {
+        select: {
+          id: true,
+          name: true,
+          firstname: true,
+          lastname: true
         }
-      ]
+      },
+      organisation: {
+        select: {
+          id: true,
+          name: true
+        }
+      }
     },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-    },
-    orderBy: { name: 'asc' }
+    orderBy: [
+      { isPersonal: 'desc' }, // Personal team first
+      { name: 'asc' }
+    ]
   });
 
-  if (userOrganizations.length === 0) {
+  if (userTeams.length === 0) {
     return (
       <div>
         <Card className="p-8 text-center">
           <RiProjectorLine className="w-16 h-16 mx-auto mb-6 text-gray-400" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            No Organizations Found
+            No Teams Found
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-            You need to be a member of an organization to create projects. 
-            Please join an organization first or ask an admin to add you to one.
+            You need at least one team to create projects. Your personal team should have been created automatically.
           </p>
-          <Link href="/main/organisations">
+          <Link href="/main/teams">
             <Button>
-              View Organizations
+              View Teams
             </Button>
           </Link>
         </Card>
@@ -67,7 +73,7 @@ export default async function CreateProjectPage() {
               Create New Project
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
-              Create a project and assign it to a team within your organization
+              Create a project and assign it to one of your teams
             </p>
           </div>
         </div>
@@ -76,8 +82,8 @@ export default async function CreateProjectPage() {
       {/* Form */}
       <div className="max-w-4xl">
         <Card>
-          <ProjectForm 
-            organisations={userOrganizations}
+          <ProjectForm
+            teams={userTeams}
             redirectUrl="/main/projects"
           />
         </Card>

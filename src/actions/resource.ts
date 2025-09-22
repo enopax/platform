@@ -13,7 +13,7 @@ export interface CreateResourceState {
     status?: string;
     endpoint?: string;
     quotaLimit?: string;
-    teamId?: string;
+    projectId?: string;
     tags?: string;
     ownerId?: string;
   };
@@ -29,7 +29,7 @@ export interface UpdateResourceState {
     status?: string;
     endpoint?: string;
     quotaLimit?: string;
-    teamId?: string;
+    projectId?: string;
     tags?: string;
   };
 }
@@ -45,7 +45,7 @@ export async function createResource(
     const status = formData.get('status') as string;
     const endpoint = formData.get('endpoint') as string;
     const quotaLimitStr = formData.get('quotaLimit') as string;
-    const teamId = formData.get('teamId') as string;
+    const projectId = formData.get('projectId') as string;
     const tagsStr = formData.get('tags') as string;
     const ownerId = formData.get('ownerId') as string;
     const isPublic = formData.get('isPublic') === 'on';
@@ -84,16 +84,16 @@ export async function createResource(
       };
     }
 
-    // Validate team if provided
-    if (teamId && teamId.trim()) {
-      const teamExists = await prisma.team.findUnique({
-        where: { id: teamId }
+    // Validate project if provided
+    if (projectId && projectId.trim()) {
+      const projectExists = await prisma.project.findUnique({
+        where: { id: projectId }
       });
 
-      if (!teamExists) {
+      if (!projectExists) {
         return {
-          error: 'Selected team does not exist',
-          fieldErrors: { teamId: 'Selected team does not exist' }
+          error: 'Selected project does not exist',
+          fieldErrors: { projectId: 'Selected project does not exist' }
         };
       }
     }
@@ -153,7 +153,7 @@ export async function createResource(
         endpoint: endpoint?.trim() || null,
         quotaLimit,
         ownerId,
-        teamId: teamId?.trim() || null,
+        projectId: projectId?.trim() || null,
         isPublic,
         tags,
       },
@@ -182,7 +182,7 @@ export async function updateResource(
     const status = formData.get('status') as string;
     const endpoint = formData.get('endpoint') as string;
     const quotaLimitStr = formData.get('quotaLimit') as string;
-    const teamId = formData.get('teamId') as string;
+    const projectId = formData.get('projectId') as string;
     const tagsStr = formData.get('tags') as string;
     const isPublic = formData.get('isPublic') === 'on';
 
@@ -201,16 +201,16 @@ export async function updateResource(
       };
     }
 
-    // Validate team if provided
-    if (teamId && teamId.trim()) {
-      const teamExists = await prisma.team.findUnique({
-        where: { id: teamId }
+    // Validate project if provided
+    if (projectId && projectId.trim()) {
+      const projectExists = await prisma.project.findUnique({
+        where: { id: projectId }
       });
 
-      if (!teamExists) {
+      if (!projectExists) {
         return {
-          error: 'Selected team does not exist',
-          fieldErrors: { teamId: 'Selected team does not exist' }
+          error: 'Selected project does not exist',
+          fieldErrors: { projectId: 'Selected project does not exist' }
         };
       }
     }
@@ -282,7 +282,7 @@ export async function updateResource(
         status: status as any,
         endpoint: endpoint?.trim() || null,
         quotaLimit,
-        teamId: teamId?.trim() || null,
+        projectId: projectId?.trim() || null,
         isPublic,
         tags,
       },
@@ -346,17 +346,19 @@ export async function findResources(query: string, userId: string) {
             OR: [
               // Resources owned by the user
               { ownerId: userId },
-              // Resources managed by teams the user is a member of
+              // Resources managed by teams the user is a member of (through projects)
               {
-                team: {
-                  OR: [
-                    {
-                      members: {
-                        some: { userId }
-                      }
-                    },
-                    { ownerId: userId }
-                  ]
+                project: {
+                  team: {
+                    OR: [
+                      {
+                        members: {
+                          some: { userId }
+                        }
+                      },
+                      { ownerId: userId }
+                    ]
+                  }
                 }
               },
               // Public resources
@@ -378,9 +380,14 @@ export async function findResources(query: string, userId: string) {
             email: true,
           },
         },
-        team: {
+        project: {
           select: {
             name: true,
+            team: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
         createdAt: true,

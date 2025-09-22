@@ -15,18 +15,18 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { type User } from '@prisma/client';
 
-interface Organization {
+interface Organisation {
   id: string;
   name: string;
   description?: string | null;
 }
 
 interface CreateTeamFormProps {
-  organizations: Organization[];
+  organisations: Organisation[];
   currentUserId: string;
 }
 
-export default function CreateTeamForm({ organizations, currentUserId }: CreateTeamFormProps) {
+export default function CreateTeamForm({ organisations, currentUserId }: CreateTeamFormProps) {
   const router = useRouter();
   const [selectedOwner, setSelectedOwner] = useState<User | null>(null);
   const [state, formAction, isPending] = useActionState<CreateTeamState, FormData>(
@@ -87,17 +87,17 @@ export default function CreateTeamForm({ organizations, currentUserId }: CreateT
           )}
         </div>
 
-        {/* Organization */}
+        {/* Organisation */}
         <div>
           <Label htmlFor="organisationId">
-            Organization *
+            Organisation *
           </Label>
           <Select name="organisationId" required>
             <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.organisationId}>
-              <SelectValue placeholder="Select organization" />
+              <SelectValue placeholder="Select organisation" />
             </SelectTrigger>
             <SelectContent>
-              {organizations.map((org) => (
+              {organisations.map((org) => (
                 <SelectItem key={org.id} value={org.id}>
                   {org.name}
                 </SelectItem>
@@ -106,26 +106,6 @@ export default function CreateTeamForm({ organizations, currentUserId }: CreateT
           </Select>
           {state.fieldErrors?.organisationId && (
             <p className="mt-1 text-sm text-red-600">{state.fieldErrors.organisationId}</p>
-          )}
-        </div>
-
-        {/* Team Owner */}
-        <div>
-          <Label htmlFor="ownerId">
-            Team Owner *
-          </Label>
-          <div className="mt-1">
-            <UserSearch
-              placeholder="Search for team owner..."
-              defaultValue={selectedOwner}
-              setResult={setSelectedOwner}
-              name="ownerId"
-              required
-              hasError={!!state.fieldErrors?.ownerId}
-            />
-          </div>
-          {state.fieldErrors?.ownerId && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.ownerId}</p>
           )}
         </div>
 

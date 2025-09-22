@@ -22,7 +22,7 @@ export default async function OrganisationsPage() {
 
   const isAdmin = session.user.role === 'ADMIN';
 
-  // Fetch user's organisation memberships or all organizations for admin
+  // Fetch user's organisation memberships or all organisations for admin
   const organisationMemberships = isAdmin
     ? await prisma.organisation.findMany({
         include: {
@@ -47,8 +47,7 @@ export default async function OrganisationsPage() {
           _count: {
             select: {
               members: true,
-              teams: true,
-              projects: true
+              teams: true
             }
           }
         },
@@ -68,8 +67,7 @@ export default async function OrganisationsPage() {
               _count: {
                 select: {
                   members: true,
-                  teams: true,
-                  projects: true
+                  teams: true
                 }
               }
             }
@@ -154,11 +152,6 @@ export default async function OrganisationsPage() {
                     <RiTeamLine className="h-3 w-3 mr-1" />
                     <span className="font-medium">{organisation._count.teams}</span>
                     <span className="ml-1">teams</span>
-                  </div>
-                  <div className="flex items-center">
-                    <RiProjectorLine className="h-3 w-3 mr-1" />
-                    <span className="font-medium">{organisation._count.projects}</span>
-                    <span className="ml-1">projects</span>
                   </div>
                 </div>
 

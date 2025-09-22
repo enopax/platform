@@ -26,14 +26,18 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
   const { id } = await params;
 
   // Get project with full details
-  const [projectRaw, userOrganizations] = await Promise.all([
+  const [projectRaw, userOrganisations] = await Promise.all([
     prisma.project.findUnique({
       where: { id },
       include: {
         team: {
           include: {
             owner: true,
-            organisation: true,
+            organisation: {
+              include: {
+                members: true
+              }
+            },
             members: {
               include: {
                 user: true
@@ -47,20 +51,15 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
             }
           },
         },
-        organisation: {
-          include: {
-            members: true
-          }
-        },
       },
     }),
-    // Get organizations where the user is a member (they can edit projects in their orgs)
+    // Get organisations where the user is a member (they can edit projects in their orgs)
     prisma.organisation.findMany({
       where: {
         OR: [
-          // Organizations they own
+          // Organisations they own
           { ownerId: session.user.id },
-          // Organizations they're a member of
+          // Organisations they're a member of
           {
             members: {
               some: {
@@ -83,10 +82,15 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
     notFound();
   }
 
-  // Check if user has access to this project (member of the organization)
-  const hasAccess = projectRaw.organisation.members.some(
+  // Check if user has access to this project (member of the team or organisation)
+  const hasAccess = projectRaw.team.members.some(
     member => member.userId === session.user.id
-  ) || projectRaw.organisation.ownerId === session.user.id;
+  ) || (
+    projectRaw.team.organisation &&
+    (projectRaw.team.organisation.members?.some(
+      member => member.userId === session.user.id
+    ) || projectRaw.team.organisation.ownerId === session.user.id)
+  );
 
   if (!hasAccess) {
     notFound();
@@ -129,7 +133,7 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
               {project.name}
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
-              {project.organisation.name} • Team: {project.team.name}
+              {project.team.organisation?.name || 'Personal Team'} • Team: {project.team.name}
             </p>
           </div>
           <div className="flex gap-2">
@@ -155,7 +159,7 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
             <div className="p-6">
               <ProjectForm 
                 project={project}
-                organisations={userOrganizations}
+                organisations={userOrganisations}
                 successMessage="Project updated successfully!"
               />
             </div>

@@ -117,15 +117,30 @@ export default async function DashboardPage() {
 
   // Fetch personal data from database
   const [userProjects, userStorage] = await Promise.all([
-    // Get user's projects through organisation memberships
+    // Get user's projects through team memberships and organisation memberships
     prisma.project.findMany({
       where: {
-        organisation: {
-          members: {
-            some: {
-              userId: session.user.id
+        team: {
+          OR: [
+            {
+              // User is a member of the team
+              members: {
+                some: {
+                  userId: session.user.id
+                }
+              }
+            },
+            {
+              // User is a member of the organisation (if team belongs to one)
+              organisation: {
+                members: {
+                  some: {
+                    userId: session.user.id
+                  }
+                }
+              }
             }
-          }
+          ]
         }
       },
       select: {

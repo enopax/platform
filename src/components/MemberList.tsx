@@ -161,7 +161,7 @@ export default function MemberList({
             No members found
           </h3>
           <p className="text-gray-600 dark:text-gray-300">
-            Organization members will appear here.
+            Organisation members will appear here.
           </p>
         </Card>
       )}

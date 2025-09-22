@@ -41,7 +41,7 @@ const MemberActions = ({ member }: { member: OrganisationMemberWithActions }) =>
 
   const handleKick = async () => {
     // Confirm action with user
-    if (!confirm(`Are you sure you want to remove ${member.user.name || member.user.email} from this organization?`)) {
+    if (!confirm(`Are you sure you want to remove ${member.user.name || member.user.email} from this organisation?`)) {
       return;
     }
 
@@ -72,7 +72,7 @@ const MemberActions = ({ member }: { member: OrganisationMemberWithActions }) =>
         onClick={handleKick}
         disabled={processing}
         className="text-red-600 hover:bg-red-50 border-red-200"
-        title={`Remove ${member.user.name || member.user.email} from organization`}
+        title={`Remove ${member.user.name || member.user.email} from organisation`}
       >
         Kick
       </Button>

@@ -15,7 +15,6 @@ export interface CreateProjectData {
   progress?: number;
   repositoryUrl?: string;
   documentationUrl?: string;
-  organisationId: string;
   teamId: string;
 }
 
@@ -49,18 +48,17 @@ export interface ProjectInfo {
   progress: number;
   repositoryUrl?: string;
   documentationUrl?: string;
-  organisationId: string;
   teamId: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  organisation: {
-    id: string;
-    name: string;
-  };
   team: {
     id: string;
     name: string;
+    organisation?: {
+      id: string;
+      name: string;
+    } | null;
   };
   fileCount?: number;
 }
@@ -75,16 +73,16 @@ export class ProjectService {
         throw new Error('You are not a member of the specified team');
       }
 
-      // Verify team belongs to the organisation
+      // Get team details to check organisation
       const team = await teamService.getTeamById(data.teamId);
-      if (!team || team.organisationId !== data.organisationId) {
-        throw new Error('Team does not belong to the specified organisation');
+      if (!team) {
+        throw new Error('Team not found');
       }
 
-      // Check if project name is already taken within the organisation
-      const isNameAvailable = await this.validateProjectName(data.name, data.organisationId);
+      // Check if project name is already taken within the team
+      const isNameAvailable = await this.validateProjectName(data.name, data.teamId);
       if (!isNameAvailable) {
-        throw new Error('Project name is already taken within this organisation');
+        throw new Error('Project name is already taken within this team');
       }
 
       const project = await prisma.project.create({
@@ -100,20 +98,19 @@ export class ProjectService {
           progress: data.progress || 0,
           repositoryUrl: data.repositoryUrl,
           documentationUrl: data.documentationUrl,
-          organisationId: data.organisationId,
           teamId: data.teamId,
         },
         include: {
-          organisation: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
           team: {
             select: {
               id: true,
               name: true,
+              organisation: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              }
             }
           }
         }
@@ -133,12 +130,10 @@ export class ProjectService {
         progress: project.progress,
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
-        organisationId: project.organisationId,
         teamId: project.teamId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
-        organisation: project.organisation,
         team: project.team,
       };
     } catch (error) {
@@ -152,16 +147,16 @@ export class ProjectService {
       const project = await prisma.project.findUnique({
         where: { id: projectId },
         include: {
-          organisation: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
           team: {
             select: {
               id: true,
               name: true,
+              organisation: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              }
             }
           },
           _count: {
@@ -188,12 +183,10 @@ export class ProjectService {
         progress: project.progress,
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
-        organisationId: project.organisationId,
         teamId: project.teamId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
-        organisation: project.organisation,
         team: project.team,
         fileCount: project._count.files,
       };
@@ -212,16 +205,16 @@ export class ProjectService {
         },
         orderBy: { createdAt: 'desc' },
         include: {
-          organisation: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
           team: {
             select: {
               id: true,
               name: true,
+              organisation: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              }
             }
           },
           _count: {
@@ -246,12 +239,10 @@ export class ProjectService {
         progress: project.progress,
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
-        organisationId: project.organisationId,
         teamId: project.teamId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
-        organisation: project.organisation,
         team: project.team,
         fileCount: project._count.files,
       }));
@@ -265,21 +256,23 @@ export class ProjectService {
     try {
       const projects = await prisma.project.findMany({
         where: {
-          organisationId,
+          team: {
+            organisationId: organisationId
+          },
           isActive: true
         },
         orderBy: { createdAt: 'desc' },
         include: {
-          organisation: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
           team: {
             select: {
               id: true,
               name: true,
+              organisation: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              }
             }
           },
           _count: {
@@ -304,12 +297,10 @@ export class ProjectService {
         progress: project.progress,
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
-        organisationId: project.organisationId,
         teamId: project.teamId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
-        organisation: project.organisation,
         team: project.team,
         fileCount: project._count.files,
       }));
@@ -336,16 +327,16 @@ export class ProjectService {
         },
         orderBy: { createdAt: 'desc' },
         include: {
-          organisation: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
           team: {
             select: {
               id: true,
               name: true,
+              organisation: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              }
             }
           },
           _count: {
@@ -370,12 +361,10 @@ export class ProjectService {
         progress: project.progress,
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
-        organisationId: project.organisationId,
         teamId: project.teamId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
-        organisation: project.organisation,
         team: project.team,
         fileCount: project._count.files,
       }));
@@ -405,19 +394,14 @@ export class ProjectService {
         if (!isNewTeamMember) {
           throw new Error('You are not a member of the specified team');
         }
-
-        // Verify new team belongs to the same organisation
-        const newTeam = await teamService.getTeamById(data.teamId);
-        if (!newTeam || newTeam.organisationId !== existingProject.organisationId) {
-          throw new Error('Team does not belong to the same organisation');
-        }
       }
 
-      // If project name is being changed, validate uniqueness
+      // If project name is being changed, validate uniqueness within team
       if (data.name && data.name !== existingProject.name) {
-        const isNameAvailable = await this.validateProjectName(data.name, existingProject.organisationId, projectId);
+        const targetTeamId = data.teamId || existingProject.teamId;
+        const isNameAvailable = await this.validateProjectName(data.name, targetTeamId, projectId);
         if (!isNameAvailable) {
-          throw new Error('Project name is already taken within this organisation');
+          throw new Error('Project name is already taken within this team');
         }
       }
 
@@ -440,16 +424,16 @@ export class ProjectService {
         where: { id: projectId },
         data: updateData,
         include: {
-          organisation: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
           team: {
             select: {
               id: true,
               name: true,
+              organisation: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              }
             }
           },
           _count: {
@@ -474,12 +458,10 @@ export class ProjectService {
         progress: project.progress,
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
-        organisationId: project.organisationId,
         teamId: project.teamId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
-        organisation: project.organisation,
         team: project.team,
         fileCount: project._count.files,
       };
@@ -514,11 +496,11 @@ export class ProjectService {
     }
   }
 
-  async validateProjectName(name: string, organisationId: string, excludeId?: string): Promise<boolean> {
+  async validateProjectName(name: string, teamId: string, excludeId?: string): Promise<boolean> {
     try {
       const whereClause: any = {
         name,
-        organisationId,
+        teamId,
         isActive: true,
       };
 
@@ -583,14 +565,14 @@ export class ProjectService {
           repositoryUrl: true,
           documentationUrl: true,
           isActive: true,
-          organisation: {
-            select: {
-              name: true,
-            },
-          },
           team: {
             select: {
               name: true,
+              organisation: {
+                select: {
+                  name: true,
+                },
+              },
               owner: {
                 select: {
                   name: true,

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { type ProjectStatus, type ProjectPriority } from '@prisma/client';
 import { projectService } from '@/lib/services/project';
 import { userService } from '@/lib/services/user';
+import { prisma } from '@/lib/prisma';
 
 export interface UpdateProjectState {
   success?: boolean;
@@ -11,6 +12,7 @@ export interface UpdateProjectState {
   fieldErrors?: {
     name?: string;
     description?: string;
+    development?: string;
     status?: string;
     priority?: string;
     budget?: string;
@@ -21,7 +23,6 @@ export interface UpdateProjectState {
     progress?: string;
     repositoryUrl?: string;
     documentationUrl?: string;
-    organisationId?: string;
     teamId?: string;
   };
 }
@@ -32,6 +33,7 @@ export interface CreateProjectState {
   fieldErrors?: {
     name?: string;
     description?: string;
+    development?: string;
     status?: string;
     priority?: string;
     budget?: string;
@@ -42,7 +44,6 @@ export interface CreateProjectState {
     progress?: string;
     repositoryUrl?: string;
     documentationUrl?: string;
-    organisationId?: string;
     teamId?: string;
   };
 }
@@ -64,6 +65,7 @@ export async function updateProject(
     const projectId = formData.get('projectId') as string;
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
+    const development = formData.get('development') === 'on';
     const status = formData.get('status') as ProjectStatus;
     const priority = formData.get('priority') as ProjectPriority;
     const budgetStr = formData.get('budget') as string;
@@ -148,6 +150,7 @@ export async function updateProject(
     await projectService.updateProject(userId, projectId, {
       name: name.trim(),
       description: description?.trim() || undefined,
+      development,
       status,
       priority,
       budget,
@@ -183,6 +186,7 @@ export async function createProject(
   try {
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
+    const development = formData.get('development') === 'on';
     const status = (formData.get('status') as ProjectStatus) || 'PLANNING';
     const priority = (formData.get('priority') as ProjectPriority) || 'MEDIUM';
     const budgetStr = formData.get('budget') as string;
@@ -193,7 +197,6 @@ export async function createProject(
     const progressStr = formData.get('progress') as string;
     const repositoryUrl = formData.get('repositoryUrl') as string;
     const documentationUrl = formData.get('documentationUrl') as string;
-    const organisationId = formData.get('organisationId') as string;
     const teamId = formData.get('teamId') as string;
 
     // Basic validation
@@ -204,12 +207,6 @@ export async function createProject(
       };
     }
 
-    if (!organisationId) {
-      return {
-        error: 'Organisation is required',
-        fieldErrors: { organisationId: 'Organisation is required' }
-      };
-    }
 
     if (!teamId) {
       return {
@@ -263,17 +260,6 @@ export async function createProject(
       };
     }
 
-    // Validate organisation exists
-    const organisationExists = await prisma.organisation.findUnique({
-      where: { id: organisationId }
-    });
-
-    if (!organisationExists) {
-      return {
-        error: 'Selected organisation does not exist',
-        fieldErrors: { organisationId: 'Selected organisation does not exist' }
-      };
-    }
 
     // Validate team exists
     const teamExists = await prisma.team.findUnique({
@@ -287,18 +273,18 @@ export async function createProject(
       };
     }
 
-    // Check for duplicate project name within the organisation
+    // Check for duplicate project name within the team
     const duplicateProject = await prisma.project.findFirst({
       where: {
         name: name.trim(),
-        organisationId
+        teamId
       }
     });
 
     if (duplicateProject) {
       return {
-        error: 'A project with this name already exists in the organisation',
-        fieldErrors: { name: 'A project with this name already exists in the organisation' }
+        error: 'A project with this name already exists in this team',
+        fieldErrors: { name: 'A project with this name already exists in this team' }
       };
     }
 
@@ -306,6 +292,7 @@ export async function createProject(
       data: {
         name: name.trim(),
         description: description?.trim() || null,
+        development,
         status,
         priority,
         budget,
@@ -316,7 +303,6 @@ export async function createProject(
         progress,
         repositoryUrl: repositoryUrl?.trim() || null,
         documentationUrl: documentationUrl?.trim() || null,
-        organisationId,
         teamId,
       },
     });

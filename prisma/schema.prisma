@@ -204,7 +204,6 @@ model Organisation {
   owner    User                  @relation("OrganisationOwner", fields: [ownerId], references: [id], onDelete: Restrict)
   members  OrganisationMember[]
   teams    Team[]
-  projects Project[]
   joinRequests OrganisationJoinRequest[]
 
   @@map("organisations")
@@ -231,25 +230,26 @@ model Team {
   description    String?
   color          String?        // Hex color code for team identification
   isActive       Boolean        @default(true)
+  isPersonal     Boolean        @default(false) @map("is_personal") // Personal team flag
+  isDeletable    Boolean        @default(true) @map("is_deletable") // Can this team be deleted
   visibility     TeamVisibility @default(PRIVATE)
   allowJoinRequests Boolean     @default(true)
   maxMembers     Int?           // Optional member limit
   tags           String[]       // Team categorization
-  organisationId String         @map("organisation_id")
+  organisationId String?        @map("organisation_id") // Optional organisation
   ownerId        String         @map("owner_id")
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  organisation Organisation      @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisation Organisation?     @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   owner        User              @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Restrict)
   members      TeamMember[]
   projects     Project[]         @relation("ProjectTeam")
   joinRequests TeamJoinRequest[]
   storageResource TeamStorageResource?
   files        UserFile[]
-  managedResources Resource[] @relation("TeamManagedResource")
 
-  @@unique([name, organisationId]) // Team names must be unique within an organisation
+  @@unique([name, ownerId]) // Team names must be unique per owner
   @@map("teams")
 }
 
@@ -279,6 +279,7 @@ model Project {
   id             String          @id @default(cuid())
   name           String
   description    String?
+  development    Boolean         @default(false) // Development vs production project
   status         ProjectStatus   @default(PLANNING)
   priority       ProjectPriority @default(MEDIUM)
   budget         Decimal?        @db.Decimal(15, 2)
@@ -289,17 +290,16 @@ model Project {
   progress       Int             @default(0) // Progress percentage (0-100)
   repositoryUrl  String?         // Git repository URL
   documentationUrl String?       // Documentation URL
-  organisationId String          @map("organisation_id")
   teamId         String          @map("team_id") // Assigned team
   isActive       Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
-  organisation Organisation  @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   team         Team          @relation("ProjectTeam", fields: [teamId], references: [id], onDelete: Restrict)
   files        UserFile[]
+  resources    Resource[]    // Resources belong to projects
 
-  @@unique([name, organisationId]) // Project names must be unique within an organisation
+  @@unique([name, teamId]) // Project names must be unique within a team
   @@map("projects")
 }
 
@@ -507,12 +507,12 @@ model Resource {
   quotaLimit    BigInt?        @map("quota_limit") // Resource quota limit (bytes, requests, etc.)
   currentUsage  BigInt         @default(0) @map("current_usage") // Current usage
 
-  // Management - always owned by creator
+  // Management - resources belong to projects
   ownerId       String         @map("owner_id") // User who created the resource
-  teamId        String?        @map("team_id") // Optionally managed by a team
+  projectId     String?        @map("project_id") // Project this resource belongs to (optional during migration)
 
   // Sharing and access
-  isPublic      Boolean        @default(false) @map("is_public") // Public access within org
+  isPublic      Boolean        @default(false) @map("is_public") // Public access within project
   tags          String[]       // Categorisation tags
 
   // Lifecycle
@@ -523,7 +523,7 @@ model Resource {
 
   // Relations
   owner         User           @relation("ResourceOwner", fields: [ownerId], references: [id], onDelete: Restrict)
-  team          Team?          @relation("TeamManagedResource", fields: [teamId], references: [id], onDelete: SetNull)
+  project       Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("resources")
 }

@@ -160,7 +160,7 @@ export default async function MembersManagementPage({ params }: MembersManagemen
         {/* Members Section */}
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            Organization Members ({organisation.members.length})
+            Organisation Members ({organisation.members.length})
           </h2>
           
           {organisation.members.length > 0 ? (

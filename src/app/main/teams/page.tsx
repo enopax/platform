@@ -151,7 +151,7 @@ export default async function TeamsPage({
               <RiTeamLine className="h-6 w-6 text-gray-400 group-hover:text-brand-500 mb-2" />
               <h4 className="font-medium text-gray-900 dark:text-white">Create New Team</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Start a new team for your organization
+                Start a new team for your organisation
               </p>
             </div>
           </Link>

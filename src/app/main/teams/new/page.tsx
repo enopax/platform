@@ -11,13 +11,13 @@ export default async function CreateTeamPage() {
   const session = await auth();
   if (!session) return null;
 
-  // Get organizations where the user is a member (they can create teams in their orgs)
-  const userOrganizations = await prisma.organisation.findMany({
+  // Get organisations where the user is a member (they can create teams in their orgs)
+  const userOrganisations = await prisma.organisation.findMany({
     where: {
       OR: [
-        // Organizations they own
+        // Organisations they own
         { ownerId: session.user.id },
-        // Organizations they're a member of
+        // Organisations they're a member of
         {
           members: {
             some: {
@@ -35,21 +35,21 @@ export default async function CreateTeamPage() {
     orderBy: { name: 'asc' }
   });
 
-  if (userOrganizations.length === 0) {
+  if (userOrganisations.length === 0) {
     return (
       <div>
         <Card className="p-8 text-center">
           <RiTeamLine className="w-16 h-16 mx-auto mb-6 text-gray-400" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            No Organizations Found
+            No Organisations Found
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-            You need to be a member of an organization to create teams. 
-            Please join an organization first or ask an admin to add you to one.
+            You need to be a member of an organisation to create teams. 
+            Please join an organisation first or ask an admin to add you to one.
           </p>
-          <Link href="/main/organizations">
+          <Link href="/main/organisations">
             <Button>
-              View Organizations
+              View Organisations
             </Button>
           </Link>
         </Card>
@@ -67,7 +67,7 @@ export default async function CreateTeamPage() {
               Create New Team
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
-              Create a team to collaborate on projects within your organization
+              Create a team to collaborate on projects within your organisation
             </p>
           </div>
         </div>
@@ -77,7 +77,7 @@ export default async function CreateTeamPage() {
       <div className="max-w-2xl">
         <Card className="p-6">
           <CreateTeamForm 
-            organizations={userOrganizations}
+            organisations={userOrganisations}
             currentUserId={session.user.id}
           />
         </Card>
