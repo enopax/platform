@@ -29,6 +29,11 @@ export interface CreateTeamState {
   };
 }
 
+export interface DeleteTeamState {
+  success?: boolean;
+  error?: string;
+}
+
 export async function updateTeam(
   teamId: string,
   prevState: UpdateTeamState,
@@ -185,6 +190,30 @@ export async function createTeam(
     console.error('Failed to create team:', error);
     return {
       error: 'Failed to create team. Please try again.',
+    };
+  }
+}
+
+export async function deleteTeam(
+  teamId: string
+): Promise<DeleteTeamState> {
+  try {
+    const session = await auth();
+    if (!session) {
+      return { error: 'Authentication required' };
+    }
+
+    // Use service to delete team (soft delete)
+    await teamService.deleteTeam(teamId, session.user.id);
+
+    revalidatePath('/main/teams');
+    revalidatePath(`/main/teams/${teamId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to delete team:', error);
+    return {
+      error: error instanceof Error ? error.message : 'Failed to delete team. Please try again.',
     };
   }
 }
