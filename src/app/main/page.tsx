@@ -14,7 +14,9 @@ import {
   RiDatabaseLine,
   RiFileTextLine,
   RiImageLine,
-  RiVideoLine
+  RiVideoLine,
+  RiBuildingLine,
+  RiKeyLine
 } from '@remixicon/react';
 import Link from 'next/link';
 
@@ -116,7 +118,7 @@ export default async function DashboardPage() {
   if (!session) return null;
 
   // Fetch personal data from database
-  const [userProjects, userStorage] = await Promise.all([
+  const [userProjects, userStorage, userCounts] = await Promise.all([
     // Get user's projects through team memberships and organisation memberships
     prisma.project.findMany({
       where: {
@@ -157,8 +159,79 @@ export default async function DashboardPage() {
     }),
 
     // Get user's personal storage metrics
-    getUserStorageMetrics(session.user.id)
+    getUserStorageMetrics(session.user.id),
+
+    // Get counts for navigation cards
+    Promise.all([
+      // Count organisations where user is a member
+      prisma.organisation.count({
+        where: {
+          members: {
+            some: {
+              userId: session.user.id
+            }
+          }
+        }
+      }),
+      // Count teams where user is a member
+      prisma.team.count({
+        where: {
+          OR: [
+            {
+              members: {
+                some: {
+                  userId: session.user.id
+                }
+              }
+            },
+            {
+              organisation: {
+                members: {
+                  some: {
+                    userId: session.user.id
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }),
+      // Count projects where user has access
+      prisma.project.count({
+        where: {
+          team: {
+            OR: [
+              {
+                members: {
+                  some: {
+                    userId: session.user.id
+                  }
+                }
+              },
+              {
+                organisation: {
+                  members: {
+                    some: {
+                      userId: session.user.id
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }),
+      // Count API keys for the user
+      prisma.apiKey.count({
+        where: {
+          userId: session.user.id
+        }
+      })
+    ])
   ]);
+
+  // Destructure counts
+  const [organisationsCount, teamsCount, projectsCount, apiKeysCount] = userCounts;
 
   // Calculate aggregated personal data
   const projectsData = {
@@ -203,71 +276,79 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-        {/* File Type Breakdown */}
+        {/* Main Navigation Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Documents
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {storageData.fileTypeStats.documents}
-                </p>
+          <Link href="/main/organisations" className="group">
+            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                    Organisations
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                    {organisationsCount}
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
+                  <RiBuildingLine className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
               </div>
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <RiFileTextLine className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Images
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {storageData.fileTypeStats.images}
-                </p>
+          <Link href="/main/teams" className="group">
+            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                    Teams
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                    {teamsCount}
+                  </p>
+                </div>
+                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
+                  <RiTeamLine className="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
               </div>
-              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                <RiImageLine className="h-6 w-6 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Videos
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {storageData.fileTypeStats.videos}
-                </p>
+          <Link href="/main/projects" className="group">
+            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                    Projects
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                    {projectsCount}
+                  </p>
+                </div>
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
+                  <RiProjectorLine className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
               </div>
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <RiVideoLine className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Other Files
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {storageData.fileTypeStats.others}
-                </p>
+          <Link href="/main/developer" className="group">
+            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                    API Keys
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                    {apiKeysCount}
+                  </p>
+                </div>
+                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg group-hover:bg-orange-200 dark:group-hover:bg-orange-900/50 transition-colors">
+                  <RiKeyLine className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                </div>
               </div>
-              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                <RiFolderLine className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">

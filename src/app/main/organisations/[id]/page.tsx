@@ -50,7 +50,10 @@ export default async function MembersManagementPage({ params }: MembersManagemen
 
   // Fetch the organisation with members and join requests
   const organisation = await prisma.organisation.findUnique({
-    where: { id },
+    where: {
+      id,
+      isActive: true
+    },
     include: {
       owner: {
         select: {
@@ -100,7 +103,7 @@ export default async function MembersManagementPage({ params }: MembersManagemen
         select: {
           members: true,
           teams: true,
-          projects: true
+          joinRequests: true
         }
       }
     }

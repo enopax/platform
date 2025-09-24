@@ -25,6 +25,7 @@ export default async function OrganisationsPage() {
   // Fetch user's organisation memberships or all organisations for admin
   const organisationMemberships = isAdmin
     ? await prisma.organisation.findMany({
+        where: { isActive: true },
         include: {
           members: {
             include: {
@@ -60,7 +61,12 @@ export default async function OrganisationsPage() {
         joinedAt: org.createdAt
       })))
     : await prisma.organisationMember.findMany({
-        where: { userId: session.user.id },
+        where: {
+          userId: session.user.id,
+          organisation: {
+            isActive: true
+          }
+        },
         include: {
           organisation: {
             include: {
@@ -164,19 +170,32 @@ export default async function OrganisationsPage() {
                       day: 'numeric'
                     })}
                   </div>
-                  {role === 'OWNER' || isAdmin ? (
-                    <Link href={`/main/organisations/${organisation.id}`}>
-                      <Button variant="outline" size="sm" className="text-xs px-3 py-1">
-                        {isAdmin ? 'Manage (Admin)' : 'Manage Organisation'}
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Link href={`/main/organisations/${organisation.id}`}>
-                      <Button variant="outline" size="sm" className="text-xs px-3 py-1">
-                        View Members
-                      </Button>
-                    </Link>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {role === 'OWNER' || isAdmin ? (
+                      <Link href={`/main/organisations/${organisation.id}`}>
+                        <Button variant="outline" size="sm" className="text-xs px-3 py-1">
+                          {isAdmin ? 'Manage (Admin)' : 'Manage Organisation'}
+                        </Button>
+                      </Link>
+                    ) : (
+                      <>
+                        <Link href={`/main/organisations/${organisation.id}`}>
+                          <Button variant="outline" size="sm" className="text-xs px-3 py-1">
+                            View Members
+                          </Button>
+                        </Link>
+                        {!isAdmin && (
+                          <LeaveOrganisationButton
+                            organisationId={organisation.id}
+                            organisationName={organisation.name}
+                            size="sm"
+                            variant="outline"
+                            className="text-xs px-3 py-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          />
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </Card>
             ))}

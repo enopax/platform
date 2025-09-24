@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { auth } from '@/lib/auth';
 import { organisationService } from '@/lib/services/organisation';
 import { userService } from '@/lib/services/user';
 
@@ -30,6 +31,11 @@ export interface CreateOrganisationState {
     address?: string;
     ownerId?: string;
   };
+}
+
+export interface DeleteOrganisationState {
+  success?: boolean;
+  error?: string;
 }
 
 export async function updateOrganisation(
@@ -203,5 +209,42 @@ export async function findOrganisations(query: string) {
   } catch (error) {
     console.error('Failed to search organisations:', error);
     return [];
+  }
+}
+
+export async function deleteOrganisation(
+  organisationId: string
+): Promise<DeleteOrganisationState> {
+  try {
+    console.log('Delete organisation action called with ID:', organisationId);
+
+    const session = await auth();
+    if (!session) {
+      console.log('No session found');
+      return { error: 'Authentication required' };
+    }
+
+    console.log('User attempting deletion:', session.user.id, session.user.email);
+
+    // Use service to delete organisation (soft delete)
+    console.log('Calling organisationService.deleteOrganisation...');
+    await organisationService.deleteOrganisation(organisationId, session.user.id);
+
+    console.log('Organisation deleted successfully, revalidating paths...');
+    revalidatePath('/admin/organisations');
+    revalidatePath('/main/organisations');
+    revalidatePath(`/main/organisations/${organisationId}`);
+
+    console.log('Paths revalidated, returning success');
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to delete organisation:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    return {
+      error: error instanceof Error ? error.message : 'Failed to delete organisation. Please try again.',
+    };
   }
 }

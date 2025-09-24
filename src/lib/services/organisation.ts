@@ -95,7 +95,7 @@ export class OrganisationService {
                 select: {
                   members: true,
                   teams: true,
-                  projects: true,
+                  joinRequests: true,
                 },
               },
             },
@@ -314,6 +314,7 @@ export class OrganisationService {
             select: {
               members: true,
               teams: true,
+              joinRequests: true,
             },
           },
           createdAt: true,
@@ -323,6 +324,7 @@ export class OrganisationService {
           { name: 'asc' },
         ],
         take: limit,
+        distinct: ['id'],
       });
 
       return organisations;

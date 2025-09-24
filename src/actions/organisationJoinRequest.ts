@@ -68,6 +68,8 @@ export async function createJoinRequest(
       }
     });
 
+    console.log('Existing join request:', existingRequest);
+
     if (existingRequest) {
       if (existingRequest.status === 'PENDING') {
         return { error: 'You already have a pending request for this organisation' };
@@ -85,6 +87,12 @@ export async function createJoinRequest(
 
         revalidatePath('/main/organisations');
         return { success: true };
+      } else if (existingRequest.status === 'APPROVED') {
+        // If user had approved request but left, allow them to create new request
+        await prisma.organisationJoinRequest.delete({
+          where: { id: existingRequest.id }
+        });
+        // Continue to create new request below
       }
     }
 

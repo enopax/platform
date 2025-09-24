@@ -5,12 +5,14 @@ import Headline from '@/components/common/Headline';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
-import { 
-  RiUserLine, 
+import {
+  RiUserLine,
   RiUserAddLine,
   RiArrowLeftLine,
   RiTeamLine,
   RiBuildingLine,
+  RiSettings3Line,
+  RiEditLine,
 } from '@remixicon/react';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -21,6 +23,9 @@ import GenericTable from '@/components/GenericTable';
 import { teamMemberColumns, type TeamMemberWithActions } from '@/components/table/TeamMembers';
 import TeamStorageForm from '@/components/form/TeamStorageForm';
 import { teamStorageService } from '@/lib/services/team-storage';
+import Modal from '@/components/common/Modal';
+import TeamForm from '@/components/form/TeamForm';
+import DeleteTeamButton from '@/components/form/DeleteTeamButton';
 
 export default async function TeamMembersPage({
   params,
@@ -120,6 +125,23 @@ export default async function TeamMembersPage({
         .map(orgMember => orgMember.user)
     : [];
 
+  // Debug logging for troubleshooting
+  console.log('Team organisation members:', team.organisation?.members?.map(m => ({
+    userId: m.userId,
+    name: m.user.name,
+    email: m.user.email
+  })));
+  console.log('Current team members:', team.members.map(m => ({
+    userId: m.userId,
+    name: m.user.name,
+    email: m.user.email
+  })));
+  console.log('Available users for team:', availableUsers.map(u => ({
+    id: u.id,
+    name: u.name,
+    email: u.email
+  })));
+
 
   // Create team owner as a member entry for the table
   const ownerAsMember = {
@@ -151,26 +173,57 @@ export default async function TeamMembersPage({
     <main className="mt-4">
       <Container>
         <div className="mb-6">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                {team.color && (
-                  <div 
-                    className="w-8 h-8 rounded-full border border-gray-300"
-                    style={{ backgroundColor: team.color }}
-                  />
-                )}
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {team.name}
-                  </h1>
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <RiBuildingLine className="w-4 h-4" />
-                    {team.organisation?.name || 'Personal Team'}
-                  </div>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              {team.color && (
+                <div
+                  className="w-8 h-8 rounded-full border border-gray-300"
+                  style={{ backgroundColor: team.color }}
+                />
+              )}
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {team.name}
+                </h1>
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <RiBuildingLine className="w-4 h-4" />
+                  {team.organisation?.name || 'Personal Team'}
                 </div>
               </div>
             </div>
+
+            {isOwner && (
+              <div className="flex items-center gap-3">
+                <Modal
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <RiEditLine className="mr-2 h-4 w-4" />
+                      Edit Team
+                    </Button>
+                  }
+                  title="Edit Team"
+                  description="Update team information and settings"
+                >
+                  <TeamForm
+                    team={{
+                      ...team,
+                      owner: team.owner,
+                      organisation: team.organisation!
+                    }}
+                    organisations={team.organisation ? [team.organisation] : []}
+                    successMessage="Team updated successfully"
+                  />
+                </Modal>
+
+                <DeleteTeamButton
+                  teamId={team.id}
+                  teamName={team.name}
+                  organisationId={team.organisation?.id}
+                  size="sm"
+                  variant="outline"
+                />
+              </div>
+            )}
           </div>
         </div>
 
