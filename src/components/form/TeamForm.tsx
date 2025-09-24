@@ -242,7 +242,7 @@ export default function TeamForm({
 
       <div className="flex justify-end space-x-4 pt-6 border-t">
         <Link href={cancelUrl}>
-          <Button type="button" variant="light" disabled={isPending}>
+          <Button type="button" variant="ghost" disabled={isPending}>
             Cancel
           </Button>
         </Link>

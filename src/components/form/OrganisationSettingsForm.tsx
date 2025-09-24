@@ -198,7 +198,7 @@ export default function OrganisationSettingsForm({
 
       <div className="flex justify-end space-x-4 pt-6 border-t">
         <DialogClose asChild>
-          <Button type="button" variant="outline" disabled={isPending}>
+          <Button type="button" variant="ghost" disabled={isPending}>
             Cancel
           </Button>
         </DialogClose>
