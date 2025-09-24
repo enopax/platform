@@ -41,13 +41,15 @@ interface TeamFormProps {
   organisations: Organisation[];
   onSuccess?: () => void;
   successMessage?: string;
+  cancelUrl?: string;
 }
 
-export default function TeamForm({ 
+export default function TeamForm({
   team,
   organisations,
   onSuccess,
-  successMessage
+  successMessage,
+  cancelUrl = "/main/teams"
 }: TeamFormProps) {
   const action = team ? updateTeam : createTeam;
   const [state, formAction, isPending] = useActionState(action, initialState);
@@ -63,11 +65,11 @@ export default function TeamForm({
         onSuccess();
       } else if (isCreate) {
         setTimeout(() => {
-          router.push('/admin/team');
+          router.push(cancelUrl);
         }, 2000);
       }
     }
-  }, [state.success, router, onSuccess, isCreate]);
+  }, [state.success, router, onSuccess, isCreate, cancelUrl]);
 
   const getSuccessMessage = () => {
     if (successMessage) return successMessage;
@@ -239,7 +241,7 @@ export default function TeamForm({
       )}
 
       <div className="flex justify-end space-x-4 pt-6 border-t">
-        <Link href="/admin/team">
+        <Link href={cancelUrl}>
           <Button type="button" variant="light" disabled={isPending}>
             Cancel
           </Button>

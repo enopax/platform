@@ -51,23 +51,16 @@ export default async function EditTeamPage({ params }: EditTeamPageProps) {
       <Container>
         <div className="flex items-center justify-between mb-6">
           <Headline>Edit Team</Headline>
-          <Link href="/admin/team">
+          <Link href="/admin/teams">
             <Button variant="light">Back to Teams</Button>
           </Link>
         </div>
 
         <Card>
-          <TeamForm 
-            action={updateTeam.bind(null, team.id)}
-            initialState={{
-              success: false,
-              error: undefined,
-              fieldErrors: undefined,
-            }}
-            mode="update"
+          <TeamForm
             team={team}
-            users={users} 
-            organisations={organisations} 
+            organisations={organisations}
+            cancelUrl="/admin/teams"
           />
         </Card>
       </Container>

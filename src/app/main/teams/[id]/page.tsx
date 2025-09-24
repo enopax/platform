@@ -192,7 +192,7 @@ export default async function TeamMembersPage({
               </div>
             </div>
 
-            {isOwner && (
+            {isOwner && !team.isPersonal && (
               <div className="flex items-center gap-3">
                 <Modal
                   trigger={
@@ -215,13 +215,15 @@ export default async function TeamMembersPage({
                   />
                 </Modal>
 
-                <DeleteTeamButton
-                  teamId={team.id}
-                  teamName={team.name}
-                  organisationId={team.organisation?.id}
-                  size="sm"
-                  variant="outline"
-                />
+                {!team.isPersonal && (
+                  <DeleteTeamButton
+                    teamId={team.id}
+                    teamName={team.name}
+                    organisationId={team.organisation?.id}
+                    size="sm"
+                    variant="outline"
+                  />
+                )}
               </div>
             )}
           </div>
