@@ -3,7 +3,8 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
-import { RiUserLine, RiUserUnfollowLine } from '@remixicon/react';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { RiUserLine, RiUserUnfollowLine, RiUserForbidLine } from '@remixicon/react';
 import { useState } from 'react';
 import { kickMember } from '@/actions/organisationJoinRequest';
 
@@ -40,42 +41,55 @@ const MemberActions = ({ member }: { member: OrganisationMemberWithActions }) =>
   }
 
   const handleKick = async () => {
-    // Confirm action with user
-    if (!confirm(`Are you sure you want to remove ${member.user.name || member.user.email} from this organisation?`)) {
-      return;
-    }
-
     setProcessing(true);
     try {
       const result = await kickMember(member.organisationId, member.user.id);
       if (result.error) {
-        // Show error with better UX - could be improved with toast notifications
         console.error('Failed to remove member:', result.error);
-        alert(`Failed to remove member: ${result.error}`);
+        throw new Error(result.error);
       } else {
         // Success - refresh the page to show updated member list
         window.location.reload();
       }
     } catch (error) {
       console.error('Failed to kick member:', error);
-      alert('Failed to remove member. Please try again.');
+      throw error;
     } finally {
       setProcessing(false);
     }
   };
 
+  const memberDisplayName = member.user.name || member.user.email;
+
   return (
     <div className="flex gap-1 justify-end">
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={handleKick}
-        disabled={processing}
-        className="text-red-600 hover:bg-red-50 border-red-200"
-        title={`Remove ${member.user.name || member.user.email} from organisation`}
-      >
-        Kick
-      </Button>
+      <ConfirmDialog
+        trigger={
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={processing}
+            className="text-red-600 hover:bg-red-50 border-red-200"
+            title={`Remove ${memberDisplayName} from organisation`}
+          >
+            <RiUserForbidLine className="w-4 h-4 mr-1" />
+            Kick
+          </Button>
+        }
+        title="Remove Member from Organisation"
+        description={`Are you sure you want to remove "${memberDisplayName}" from this organisation?
+
+This will:
+• Remove them from the organisation
+• Remove them from all teams within the organisation
+• Revoke access to all organisation resources
+
+This action cannot be undone.`}
+        confirmText="Remove Member"
+        onConfirm={handleKick}
+        isLoading={processing}
+        variant="danger"
+      />
     </div>
   );
 };
