@@ -10,6 +10,8 @@ const inputStyles = tv({
     "relative block w-full appearance-none rounded-md border px-2.5 py-2 shadow-sm outline-none transition sm:text-sm",
     // border color
     "border-neutral-300 dark:border-neutral-700",
+    // text color
+    "text-neutral-900 dark:text-white",
     // placeholder color
     "placeholder-neutral-400 dark:placeholder-neutral-500",
     // background color
