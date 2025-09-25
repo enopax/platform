@@ -8,10 +8,12 @@ import { Callout } from '@/components/common/Callout';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/Select';
 import { Textarea } from '@/components/common/Textarea';
 import { Switch } from '@/components/common/Switch';
+import { Checkbox } from '@/components/common/Checkbox';
+import { Slider } from '@/components/common/Slider';
 import ClientDate from '@/components/common/ClientDate';
 import { DatePicker } from '@/components/common/DatePicker';
 import { type Project, type User, type Organisation, type Team } from '@prisma/client';
-import { RiCheckLine, RiErrorWarningLine } from '@remixicon/react';
+import { RiCheckLine, RiErrorWarningLine, RiDatabase2Line } from '@remixicon/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -19,6 +21,16 @@ import {
   createProject, type CreateProjectState,
   updateProject, type UpdateProjectState,
 } from '@/actions/project';
+
+// Storage size options for optional resource creation
+const STORAGE_OPTIONS = [
+  { value: 1, label: '1 GB', bytes: 1024 * 1024 * 1024 },
+  { value: 5, label: '5 GB', bytes: 5 * 1024 * 1024 * 1024 },
+  { value: 10, label: '10 GB', bytes: 10 * 1024 * 1024 * 1024 },
+  { value: 25, label: '25 GB', bytes: 25 * 1024 * 1024 * 1024 },
+  { value: 50, label: '50 GB', bytes: 50 * 1024 * 1024 * 1024 },
+  { value: 100, label: '100 GB', bytes: 100 * 1024 * 1024 * 1024 },
+];
 
 type ProjectWithDetails = Project & {
   team: Team & {
@@ -43,6 +55,7 @@ interface ProjectFormProps {
   onSuccess?: () => void;
   successMessage?: string;
   redirectUrl?: string;
+  currentUserId?: string;
   preselectedTeamId?: string;
 }
 
@@ -62,10 +75,17 @@ export default function ProjectForm({
   onSuccess,
   successMessage,
   redirectUrl,
+  currentUserId,
   preselectedTeamId
 }: ProjectFormProps) {
   const action = project ? updateProject : createProject;
   const [state, formAction, isPending] = useActionState(action, initialState);
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    project?.startDate ? new Date(project.startDate) : undefined
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    project?.endDate ? new Date(project.endDate) : undefined
+  );
   const router = useRouter();
 
   const isCreate = !project;
@@ -109,6 +129,11 @@ export default function ProjectForm({
       {project && (
         <input type="hidden" name="projectId" value={project.id} />
       )}
+
+      {/* Hidden field for user ID when updating */}
+      {project && currentUserId && (
+        <input type="hidden" name="userId" value={currentUserId} />
+      )}
       
 
       {state.error && (
@@ -131,8 +156,9 @@ export default function ProjectForm({
         </Callout>
       )}
 
+      {/* Essential Fields Section */}
       <div className="space-y-6">
-        {/* Project Name - Full width */}
+        {/* Project Name */}
         <div>
           <Label htmlFor="name">
             Project Name *
@@ -227,7 +253,7 @@ export default function ProjectForm({
           </p>
         </div>
 
-        {/* Description - Full width */}
+        {/* Description */}
         <div>
           <Label htmlFor="description">
             Description (Optional)
@@ -245,6 +271,35 @@ export default function ProjectForm({
             <p className="mt-1 text-sm text-red-600">{state.fieldErrors.description}</p>
           )}
         </div>
+      </div>
+
+      {/* Team Selection */}
+      <div>
+        <Label htmlFor="teamId">
+          Team *
+        </Label>
+        <Select
+          name="teamId"
+          required
+          defaultValue={project?.teamId || preselectedTeamId || teams.find(t => t.isPersonal)?.id}
+        >
+          <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.teamId}>
+            <SelectValue placeholder="Select team" />
+          </SelectTrigger>
+          <SelectContent>
+            {teams.map((team) => (
+              <SelectItem key={team.id} value={team.id}>
+                {team.name} {team.isPersonal ? '(Personal)' : ''}
+                {team.organisation && ` - ${team.organisation.name}`}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {state.fieldErrors?.teamId && (
+          <p className="mt-1 text-sm text-red-600">{state.fieldErrors.teamId}</p>
+        )}
+      </div>
+
       </div>
 
       {/* Hidden fields with smart defaults for simplified creation */}

@@ -15,6 +15,8 @@ import { type Team, type Organisation } from '@prisma/client';
 
 interface CreateResourceFormProps {
   currentUserId: string;
+  projectId?: string;
+  projectName?: string;
   teams: (Team & { organisation?: Organisation | null })[];
 }
 
@@ -69,7 +71,7 @@ const RESOURCE_TYPES = [
   },
 ];
 
-export default function CreateResourceForm({ currentUserId, teams }: CreateResourceFormProps) {
+export default function CreateResourceForm({ currentUserId, projectId, projectName, teams }: CreateResourceFormProps) {
   const router = useRouter();
   const [selectedTeamId, setSelectedTeamId] = useState<string>(
     teams.find(team => team.isPersonal)?.id || teams[0]?.id || ''
@@ -85,10 +87,14 @@ export default function CreateResourceForm({ currentUserId, teams }: CreateResou
   useEffect(() => {
     if (state.success) {
       setTimeout(() => {
-        router.push('/main/resources');
+        if (projectId) {
+          router.push(`/main/projects/${projectId}`);
+        } else {
+          router.push('/main/resources');
+        }
       }, 1500);
     }
-  }, [state.success, router]);
+  }, [state.success, router, projectId]);
 
   const selectedStorageOption = STORAGE_OPTIONS[storageSize[0]];
   const selectedResourceType = RESOURCE_TYPES.find(type => type.value === resourceType);
@@ -132,7 +138,7 @@ export default function CreateResourceForm({ currentUserId, teams }: CreateResou
           variant="success"
           icon={RiCheckLine}
         >
-          Resource created successfully! Redirecting...
+          Resource created successfully{projectName ? ` for ${projectName}` : ''}! Redirecting...
         </Callout>
       )}
 
@@ -260,6 +266,7 @@ export default function CreateResourceForm({ currentUserId, teams }: CreateResou
       <input type="hidden" name="ownerId" value={currentUserId} />
       <input type="hidden" name="type" value={resourceType} />
       <input type="hidden" name="status" value="ACTIVE" />
+      {projectId && <input type="hidden" name="projectId" value={projectId} />}
       <input type="hidden" name="teamId" value={selectedTeamId} />
       {resourceType === 'STORAGE' && (
         <input type="hidden" name="quotaLimit" value={selectedStorageOption.bytes.toString()} />

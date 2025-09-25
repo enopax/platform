@@ -91,6 +91,7 @@ export default async function CreateProjectPage({
           <ProjectForm
             teams={userTeams}
             redirectUrl="/main/projects"
+            currentUserId={session.user.id}
             preselectedTeamId={preselectedTeamId}
           />
         </Card>
