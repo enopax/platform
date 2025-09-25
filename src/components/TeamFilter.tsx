@@ -32,15 +32,14 @@ export default function TeamFilter({ teams, selectedTeamId, totalProjects }: Tea
 
   return (
     <div className="w-full sm:w-80">
-      <Select value={selectedTeamId || 'all'} onValueChange={handleTeamChange}>
+      <Select value={selectedTeamId || teams[0].id} onValueChange={handleTeamChange}>
         <SelectTrigger>
           <SelectValue placeholder="Filter by team" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Teams ({totalProjects} projects)</SelectItem>
           {teams.map((team) => (
             <SelectItem key={team.id} value={team.id}>
-              {team.name} {team.isPersonal ? '(Personal)' : ''} ({team._count.projects} projects)
+              {team.name} {team.isPersonal ? '(Personal)' : ''}
             </SelectItem>
           ))}
         </SelectContent>

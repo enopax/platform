@@ -16,10 +16,11 @@ import { User } from '@prisma/client';
 
 const navigation = [
   { name: 'Dashboard', href: '/main', icon: RiDashboardLine },
-  { name: 'Projects', href: '/main/projects', icon: RiProjectorLine },
-  { name: 'Developer', href: '/main/developer', icon: RiCodeLine },
-  { name: 'Organisations', href: '/main/organisations', icon: RiBuildingLine },
   { name: 'Teams', href: '/main/teams', icon: RiTeamLine },
+  { name: 'Projects', href: '/main/projects', icon: RiProjectorLine },
+  { name: 'Resources', href: '/main/resources', icon: RiServerLine },
+  { name: 'Organisations', href: '/main/organisations', icon: RiBuildingLine },
+  { name: 'Developer', href: '/main/developer', icon: RiCodeLine },
 ];
 
 export default function SidebarNavigation({
