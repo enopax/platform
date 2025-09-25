@@ -11,8 +11,6 @@ import { RiArrowLeftLine, RiUserAddLine, RiAlertLine, RiSettings3Line } from '@r
 import Table from '@/components/GenericTable';
 import { membershipRequestColumns, type MembershipRequestWithActions } from '@/components/table/MembershipRequests';
 import { organisationMemberColumns, type OrganisationMemberWithActions } from '@/components/table/OrganisationMembers';
-import Modal from '@/components/common/Modal';
-import OrganisationSettingsForm from '@/components/form/OrganisationSettingsForm';
 
 interface MembersManagementPageProps {
   params: Promise<{ id: string }>;
@@ -135,18 +133,12 @@ export default async function MembersManagementPage({ params }: MembersManagemen
           </div>
           <div className="flex items-center gap-3">
             {canManageMembers && (
-              <Modal
-                trigger={
-                  <Button variant="outline">
-                    <RiSettings3Line className="mr-2 h-4 w-4" />
-                    Organisation Settings
-                  </Button>
-                }
-                title="Organisation Settings"
-                description="Update your organisation information and settings"
-              >
-                <OrganisationSettingsForm organisation={organisation} />
-              </Modal>
+              <Link href={`/main/organisations/${organisation.id}/settings`}>
+                <Button variant="outline">
+                  <RiSettings3Line className="mr-2 h-4 w-4" />
+                  Organisation Settings
+                </Button>
+              </Link>
             )}
             {canManageMembers && (
               <Button>

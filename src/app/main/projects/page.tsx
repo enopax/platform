@@ -2,23 +2,32 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
-import ProjectGrid from '@/components/ProjectGrid';
+import { Input } from '@/components/common/Input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/Select';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
+import EnhancedProjectGrid from '@/components/EnhancedProjectGrid';
 import TeamFilter from '@/components/TeamFilter';
 import {
   RiAddLine,
-  RiUserLine
+  RiUserLine,
+  RiSearchLine,
+  RiFilterLine,
+  RiGridLine,
+  RiMenuLine,
+  RiSortAscLine,
+  RiMoreLine
 } from '@remixicon/react';
 import Link from 'next/link';
 
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ team?: string }>;
+  searchParams: Promise<{ team?: string; search?: string; sort?: string; status?: string }>;
 }) {
   const session = await auth();
   if (!session) return null;
 
-  const { team: selectedTeamId } = await searchParams;
+  const { team: selectedTeamId, search, sort, status } = await searchParams;
 
   // Simplified queries - only check team membership, not organisation membership
   const [allProjects, teams] = await Promise.all([
@@ -42,6 +51,16 @@ export default async function ProjectsPage({
                 projects: true
               }
             }
+          }
+        },
+        resources: {
+          where: {
+            isActive: true,
+          },
+          select: {
+            id: true,
+            name: true,
+            type: true,
           }
         }
       },
@@ -73,15 +92,55 @@ export default async function ProjectsPage({
     })
   ]);
 
-  // Filter projects based on selected team
-  const projects = selectedTeamId
+  // Filter and sort projects
+  let filteredProjects = selectedTeamId
     ? allProjects.filter(project => project.teamId === selectedTeamId)
     : allProjects;
+
+  // Apply search filter
+  if (search) {
+    const searchTerm = search.toLowerCase();
+    filteredProjects = filteredProjects.filter(project =>
+      project.name.toLowerCase().includes(searchTerm) ||
+      project.description?.toLowerCase().includes(searchTerm) ||
+      project.team.name.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  // Apply status filter
+  if (status && status !== 'all') {
+    filteredProjects = filteredProjects.filter(project => project.status === status);
+  }
+
+  // Apply sorting
+  switch (sort) {
+    case 'oldest':
+      filteredProjects.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      break;
+    case 'name':
+      filteredProjects.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case 'name-desc':
+      filteredProjects.sort((a, b) => b.name.localeCompare(a.name));
+      break;
+    case 'progress':
+      filteredProjects.sort((a, b) => (b.progress || 0) - (a.progress || 0));
+      break;
+    default: // 'newest' or undefined
+      filteredProjects.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }
+
+  const projects = filteredProjects;
 
   const selectedTeam = selectedTeamId ? teams.find(t => t.id === selectedTeamId) : null;
 
   return (
     <div>
+      {/* Breadcrumbs */}
+      <div className="mb-4">
+        <Breadcrumbs />
+      </div>
+
       {/* Page Header */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -113,8 +172,8 @@ export default async function ProjectsPage({
         </div>
       </div>
 
-      {/* Project Grid */}
-      <ProjectGrid
+      {/* Enhanced Project Grid with Smart Filtering */}
+      <EnhancedProjectGrid
         projects={projects}
         selectedTeamName={selectedTeam?.name}
       />

@@ -152,7 +152,7 @@ export default function CreateTeamForm({ organisations, currentUserId }: CreateT
       <div className="flex justify-end gap-4 pt-6 border-t">
         <Button
           type="button"
-          variant="light"
+          variant="ghost"
           onClick={() => router.back()}
           disabled={isPending}
         >

@@ -251,7 +251,7 @@ export default function EditOrganisationForm({ organisation, userId, isAdmin }: 
               Update Organisation
             </Button>
             <Link href="/main/organisations">
-              <Button variant="outline" className="px-6">
+              <Button variant="ghost" className="px-6">
                 Cancel
               </Button>
             </Link>

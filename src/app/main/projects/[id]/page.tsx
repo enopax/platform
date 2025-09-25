@@ -3,13 +3,17 @@ import { prisma } from '@/lib/prisma';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
-import ProjectForm from '@/components/form/ProjectForm';
+import Table from '@/components/GenericTable';
+import { columns as resourceColumns } from '@/components/table/Resource';
 import {
   RiArrowLeftLine,
   RiProjectorLine,
   RiTeamLine,
   RiCalendarLine,
-  RiBarChartLine
+  RiBarChartLine,
+  RiAddLine,
+  RiServerLine,
+  RiDatabase2Line
 } from '@remixicon/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -25,8 +29,33 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
 
   const { id } = await params;
 
-  // Get project with full details
-  const [projectRaw, userTeams] = await Promise.all([
+  // Function to get resource metrics for this project
+  async function getProjectResourceMetrics(projectId: string) {
+    try {
+      const storageResources = await prisma.resource.findMany({
+        where: {
+          projectId,
+          type: 'STORAGE',
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          quotaLimit: true,
+          currentUsage: true,
+          configuration: true,
+        }
+      });
+
+      return { storageResources };
+    } catch (error) {
+      console.error('Error fetching project resource metrics:', error);
+      return { storageResources: [] };
+    }
+  }
+
+  // Get project with full details including resources
+  const [projectRaw, projectResources, resourceMetrics] = await Promise.all([
     prisma.project.findUnique({
       where: { id },
       include: {
@@ -53,33 +82,70 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
         },
       },
     }),
-    // Get teams where the user is a member (they can edit projects in their teams)
-    prisma.team.findMany({
+    // Get resources for this project
+    prisma.resource.findMany({
       where: {
-        OR: [
-          // Teams they own
-          { ownerId: session.user.id },
-          // Teams they're a member of
-          {
-            members: {
-              some: {
-                userId: session.user.id
+        projectId: id,
+        isActive: true,
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            firstname: true,
+            lastname: true,
+            email: true,
+          }
+        },
+        project: {
+          select: {
+            id: true,
+            name: true,
+            team: {
+              select: {
+                id: true,
+                name: true,
+                organisationId: true,
               }
             }
           }
-        ]
+        }
       },
-      include: {
-        owner: true,
-        organisation: true,
-      },
-      orderBy: { name: 'asc' }
-    })
+      orderBy: { createdAt: 'desc' },
+    }),
+    // Get resource metrics
+    getProjectResourceMetrics(id)
   ]);
 
   if (!projectRaw) {
     notFound();
   }
+
+  // Enhance resources with metrics
+  const resourcesWithMetrics = projectResources.map(resource => {
+    if (resource.type === 'STORAGE') {
+      const storageResource = resourceMetrics.storageResources.find(sr => sr.id === resource.id);
+      if (storageResource) {
+        const totalSize = Number(storageResource.quotaLimit || 0);
+        const usedSize = Number(storageResource.currentUsage || 0);
+        const availableSize = Math.max(0, totalSize - usedSize);
+
+        return {
+          ...resource,
+          storageMetrics: {
+            totalSize,
+            usedSize,
+            availableSize,
+          },
+        };
+      }
+    }
+    return {
+      ...resource,
+      storageMetrics: null,
+    };
+  });
 
   // Check if user has access to this project (member of the team or organisation)
   const hasAccess = projectRaw.team.members.some(
@@ -146,27 +212,92 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Edit Form */}
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        {/* Main Content - Project Resources */}
+        <div className="xl:col-span-3 space-y-6">
+          {/* Resources Section */}
           <Card>
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Edit Project
-              </h2>
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-3">
+                  <RiServerLine className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Project Resources
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Manage computing resources for this project
+                  </p>
+                </div>
+              </div>
+              <Link href={`/main/projects/${project.id}/add-resource`}>
+                <Button size="sm">
+                  <RiAddLine className="mr-2 h-4 w-4" />
+                  Add Resource
+                </Button>
+              </Link>
             </div>
-            <div className="p-6">
-              <ProjectForm
-                project={project}
-                teams={userTeams}
-                successMessage="Project updated successfully!"
+
+            {resourcesWithMetrics.length > 0 ? (
+              <Table
+                pageNumber={1}
+                tableSize={resourcesWithMetrics.length}
+                tableData={resourcesWithMetrics}
+                tableColumns={resourceColumns}
+                tableMeta={{ currentUserId: session.user.id }}
               />
+            ) : (
+              <div className="p-8 text-center">
+                <RiServerLine className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  No resources yet
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Get started by creating your first resource for this project.
+                </p>
+                <Link href={`/main/projects/${project.id}/add-resource`}>
+                  <Button>
+                    <RiAddLine className="mr-2 h-4 w-4" />
+                    Create First Resource
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </Card>
+
+
+          {/* Project Actions */}
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Project Management
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Link href={`/main/projects/${project.id}/settings`} className="group">
+                <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-400 dark:hover:border-brand-500 transition-colors cursor-pointer">
+                  <RiProjectorLine className="h-6 w-6 text-gray-400 group-hover:text-brand-500 mb-2" />
+                  <h4 className="font-medium text-gray-900 dark:text-white">Project Settings</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Configure project details, status, and team assignment
+                  </p>
+                </div>
+              </Link>
+
+              <Link href={`/main/projects/${project.id}/add-resource`} className="group">
+                <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-400 dark:hover:border-brand-500 transition-colors cursor-pointer">
+                  <RiAddLine className="h-6 w-6 text-gray-400 group-hover:text-brand-500 mb-2" />
+                  <h4 className="font-medium text-gray-900 dark:text-white">Add Resource</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Create new storage or computing resources for this project
+                  </p>
+                </div>
+              </Link>
             </div>
           </Card>
         </div>
 
-        {/* Project Overview */}
-        <div className="lg:col-span-1">
+        {/* Sidebar - Project Overview */}
+        <div className="xl:col-span-1 space-y-6">
           <Card className="p-6">
             <div className="flex items-center mb-4">
               <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg mr-3">
@@ -195,8 +326,8 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
                 <span className="font-medium">{project.progress}%</span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                <div 
-                  className="bg-brand-600 dark:bg-brand-500 h-3 rounded-full transition-all duration-300" 
+                <div
+                  className="bg-brand-600 dark:bg-brand-500 h-3 rounded-full transition-all duration-300"
                   style={{ width: `${project.progress}%` }}
                 />
               </div>
@@ -205,12 +336,19 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
             {/* Stats */}
             <div className="space-y-3">
               <div className="flex items-center text-sm">
+                <RiServerLine className="h-4 w-4 mr-2 text-gray-400" />
+                <span className="text-gray-600 dark:text-gray-300">
+                  <span className="font-medium">{resourcesWithMetrics.length}</span> resources
+                </span>
+              </div>
+
+              <div className="flex items-center text-sm">
                 <RiTeamLine className="h-4 w-4 mr-2 text-gray-400" />
                 <span className="text-gray-600 dark:text-gray-300">
                   <span className="font-medium">{project.team._count.members}</span> team members
                 </span>
               </div>
-              
+
               {project.startDate && (
                 <div className="flex items-center text-sm">
                   <RiCalendarLine className="h-4 w-4 mr-2 text-gray-400" />
@@ -240,9 +378,9 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
 
               {project.repositoryUrl && (
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <a 
-                    href={project.repositoryUrl} 
-                    target="_blank" 
+                  <a
+                    href={project.repositoryUrl}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-brand-600 dark:text-brand-400 hover:underline"
                   >
@@ -253,9 +391,9 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
 
               {project.documentationUrl && (
                 <div>
-                  <a 
-                    href={project.documentationUrl} 
-                    target="_blank" 
+                  <a
+                    href={project.documentationUrl}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-brand-600 dark:text-brand-400 hover:underline"
                   >
@@ -266,15 +404,13 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
             </div>
           </Card>
 
-          <div className="mt-6">
-            <MemberList 
-              members={project.team.members || []}
-              title="Members"
-              compact={true}
-              maxHeight="max-h-80"
-              showJoinDate={false}
-            />
-          </div>
+          <MemberList
+            members={project.team.members || []}
+            title="Team Members"
+            compact={true}
+            maxHeight="max-h-80"
+            showJoinDate={false}
+          />
         </div>
       </div>
     </div>

@@ -7,10 +7,10 @@ import { Label } from '@/components/common/Label';
 import { Callout } from '@/components/common/Callout';
 import { Textarea } from '@/components/common/Textarea';
 import { Switch } from '@/components/common/Switch';
-import { DialogClose } from '@/components/common/Dialog';
 import { type Organisation } from '@prisma/client';
 import { RiCheckLine, RiErrorWarningLine } from '@remixicon/react';
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { updateOrganisation, type UpdateOrganisationState } from '@/actions/organisation';
 
 // Initial state for form
@@ -24,31 +24,37 @@ interface OrganisationSettingsFormProps {
   organisation: Organisation;
   onSuccess?: () => void;
   onClose?: () => void;
+  redirectUrl?: string;
 }
 
-export default function OrganisationSettingsForm({ 
+export default function OrganisationSettingsForm({
   organisation,
   onSuccess,
-  onClose
+  onClose,
+  redirectUrl
 }: OrganisationSettingsFormProps) {
   const [state, formAction, isPending] = useActionState(
     updateOrganisation.bind(null, organisation.id),
     initialState
   );
 
+  const router = useRouter();
+
   useEffect(() => {
     if (state.success) {
       if (onSuccess) {
         onSuccess();
       }
-      // Auto close after 2 seconds on success
+      // Auto close after 2 seconds on success, or redirect if URL provided
       setTimeout(() => {
-        if (onClose) {
+        if (redirectUrl) {
+          router.push(redirectUrl);
+        } else if (onClose) {
           onClose();
         }
       }, 2000);
     }
-  }, [state.success, onSuccess, onClose]);
+  }, [state.success, onSuccess, onClose, redirectUrl, router]);
 
   return (
     <form action={formAction} className="space-y-6">
@@ -197,11 +203,20 @@ export default function OrganisationSettingsForm({
       </div>
 
       <div className="flex justify-end space-x-4 pt-6 border-t">
-        <DialogClose asChild>
-          <Button type="button" variant="outline" disabled={isPending}>
-            Cancel
-          </Button>
-        </DialogClose>
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={isPending}
+          onClick={() => {
+            if (redirectUrl) {
+              router.push(redirectUrl.replace('/settings', ''));
+            } else {
+              router.back();
+            }
+          }}
+        >
+          Cancel
+        </Button>
         <Button type="submit" disabled={isPending || state.success}>
           {isPending ? 'Updating...' : 'Update Organisation'}
         </Button>

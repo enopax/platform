@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/common/Button';
-import { 
-  RiMoreLine, 
-  RiDeleteBinLine, 
-  RiUserStarLine, 
+import ConfirmDialog from '@/components/common/ConfirmDialog';
+import {
+  RiMoreLine,
+  RiDeleteBinLine,
+  RiUserStarLine,
   RiUserLine
 } from '@remixicon/react';
 import { updateMemberRole, removeMember } from '@/actions/teamMember';
@@ -39,18 +40,14 @@ export default function MemberActions({ teamId, member, canPromoteToLead = false
   };
 
   const handleRemoveMember = async () => {
-    if (!confirm(`Are you sure you want to remove ${member.user.name || member.user.email} from the team?`)) {
-      return;
-    }
-
     setIsLoading(true);
     try {
       const result = await removeMember(teamId, member.id);
       if (result.error) {
-        alert(result.error); // In a real app, you'd want better error handling
+        throw new Error(result.error);
       }
     } catch (error) {
-      alert('Failed to remove member');
+      throw error;
     } finally {
       setIsLoading(false);
       setShowActions(false);
@@ -97,14 +94,32 @@ export default function MemberActions({ teamId, member, canPromoteToLead = false
           )}
 
           {/* Remove Member */}
-          <button
-            onClick={handleRemoveMember}
-            disabled={isLoading}
-            className="flex items-center w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-          >
-            <RiDeleteBinLine className="w-4 h-4 mr-2" />
-            Remove from Team
-          </button>
+          <div className="w-full">
+            <ConfirmDialog
+              trigger={
+                <button
+                  disabled={isLoading}
+                  className="flex items-center w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <RiDeleteBinLine className="w-4 h-4 mr-2" />
+                  Remove from Team
+                </button>
+              }
+              title="Remove Team Member"
+              description={`Are you sure you want to remove "${member.user.name || member.user.email}" from this team?
+
+This will:
+• Remove them from the team
+• Revoke access to team resources
+• Remove their team role and permissions
+
+This action cannot be undone.`}
+              confirmText="Remove Member"
+              onConfirm={handleRemoveMember}
+              isLoading={isLoading}
+              variant="danger"
+            />
+          </div>
         </div>
       )}
 

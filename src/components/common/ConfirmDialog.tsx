@@ -122,7 +122,7 @@ export default function ConfirmDialog({
         {/* Action Buttons */}
         <div className="flex items-center gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={() => {
               setIsOpen(false);
               setInputValue('');

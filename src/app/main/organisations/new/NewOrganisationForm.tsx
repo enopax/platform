@@ -185,7 +185,7 @@ export default function NewOrganisationForm({ userId }: NewOrganisationFormProps
               Create Organisation
             </Button>
             <Link href="/main/organisations">
-              <Button variant="outline" className="px-6">
+              <Button variant="ghost" className="px-6">
                 Cancel
               </Button>
             </Link>

@@ -8,7 +8,8 @@ import {
   RiAddLine,
   RiTeamLine,
   RiCalendarLine,
-  RiBarChartLine
+  RiBarChartLine,
+  RiServerLine
 } from '@remixicon/react';
 import Link from 'next/link';
 import { type Project, type Team, type User, type Organisation } from '@prisma/client';
@@ -22,6 +23,11 @@ type ProjectWithTeam = Project & {
       projects: number;
     };
   };
+  resources?: {
+    id: string;
+    name: string;
+    type: string;
+  }[];
 };
 
 interface ProjectGridProps {
@@ -127,15 +133,47 @@ export default function ProjectGrid({ projects, selectedTeamName }: ProjectGridP
                 )}
               </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  Team: {project.team.name}
+              {/* Resources Status */}
+              <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                    <RiServerLine className="h-3 w-3 mr-1" />
+                    <span className="font-medium">{project.resources?.length || 0}</span>
+                    <span className="ml-1">resources</span>
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Team: {project.team.name}
+                  </div>
                 </div>
-                <Link href={`/main/projects/${project.id}`}>
-                  <Button variant="outline" size="sm" className="text-xs px-3 py-1">
-                    Edit Project
-                  </Button>
-                </Link>
+
+                {/* Resource types indicator */}
+                {project.resources && project.resources.length > 0 && (
+                  <div className="flex gap-1 mb-2">
+                    {Array.from(new Set(project.resources.map(r => r.type))).map((type) => (
+                      <span
+                        key={type}
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                      >
+                        {type}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                <div className="flex gap-2">
+                  <Link href={`/main/projects/${project.id}`} className="flex-1">
+                    <Button variant="outline" size="sm" className="text-xs px-3 py-1 w-full">
+                      View Details
+                    </Button>
+                  </Link>
+                  <Link href={`/main/projects/${project.id}/add-resource`}>
+                    <Button size="sm" className="text-xs px-3 py-1">
+                      <RiAddLine className="mr-1 h-3 w-3" />
+                      Add Resource
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </Card>
           ))}
