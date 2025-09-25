@@ -42,6 +42,7 @@ interface TeamFormProps {
   onSuccess?: () => void;
   successMessage?: string;
   cancelUrl?: string;
+  redirectUrl?: string;
 }
 
 export default function TeamForm({
@@ -49,7 +50,8 @@ export default function TeamForm({
   organisations,
   onSuccess,
   successMessage,
-  cancelUrl = "/main/teams"
+  cancelUrl = "/main/teams",
+  redirectUrl
 }: TeamFormProps) {
   const action = team ? updateTeam : createTeam;
   const [state, formAction, isPending] = useActionState(action, initialState);
@@ -67,9 +69,13 @@ export default function TeamForm({
         setTimeout(() => {
           router.push(cancelUrl);
         }, 2000);
+      } else if (redirectUrl) {
+        setTimeout(() => {
+          router.push(redirectUrl);
+        }, 2000);
       }
     }
-  }, [state.success, router, onSuccess, isCreate, cancelUrl]);
+  }, [state.success, router, onSuccess, isCreate, cancelUrl, redirectUrl]);
 
   const getSuccessMessage = () => {
     if (successMessage) return successMessage;

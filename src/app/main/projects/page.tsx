@@ -43,6 +43,16 @@ export default async function ProjectsPage({
               }
             }
           }
+        },
+        resources: {
+          where: {
+            isActive: true,
+          },
+          select: {
+            id: true,
+            name: true,
+            type: true,
+          }
         }
       },
       orderBy: [

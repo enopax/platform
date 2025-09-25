@@ -17,6 +17,8 @@ import { type Team } from '@prisma/client';
 
 interface CreateResourceFormProps {
   currentUserId: string;
+  projectId?: string;
+  projectName?: string;
 }
 
 // Storage size options in GB
@@ -70,7 +72,7 @@ const RESOURCE_TYPES = [
   },
 ];
 
-export default function CreateResourceForm({ currentUserId }: CreateResourceFormProps) {
+export default function CreateResourceForm({ currentUserId, projectId, projectName }: CreateResourceFormProps) {
   const router = useRouter();
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [isShared, setIsShared] = useState(false);
@@ -85,10 +87,14 @@ export default function CreateResourceForm({ currentUserId }: CreateResourceForm
   useEffect(() => {
     if (state.success) {
       setTimeout(() => {
-        router.push('/main/resources');
+        if (projectId) {
+          router.push(`/main/projects/${projectId}`);
+        } else {
+          router.push('/main/resources');
+        }
       }, 1500);
     }
-  }, [state.success, router]);
+  }, [state.success, router, projectId]);
 
   const selectedStorageOption = STORAGE_OPTIONS[storageSize[0]];
   const selectedResourceType = RESOURCE_TYPES.find(type => type.value === resourceType);
@@ -132,7 +138,7 @@ export default function CreateResourceForm({ currentUserId }: CreateResourceForm
           variant="success"
           icon={RiCheckLine}
         >
-          Resource created successfully! Redirecting...
+          Resource created successfully{projectName ? ` for ${projectName}` : ''}! Redirecting...
         </Callout>
       )}
 
@@ -273,6 +279,7 @@ export default function CreateResourceForm({ currentUserId }: CreateResourceForm
       <input type="hidden" name="ownerId" value={currentUserId} />
       <input type="hidden" name="type" value={resourceType} />
       <input type="hidden" name="status" value="ACTIVE" />
+      {projectId && <input type="hidden" name="projectId" value={projectId} />}
       {resourceType === 'STORAGE' && (
         <input type="hidden" name="quotaLimit" value={selectedStorageOption.bytes.toString()} />
       )}

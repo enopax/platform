@@ -12,7 +12,6 @@ import {
   RiTeamLine,
   RiBuildingLine,
   RiSettings3Line,
-  RiEditLine,
 } from '@remixicon/react';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -23,9 +22,6 @@ import GenericTable from '@/components/GenericTable';
 import { teamMemberColumns, type TeamMemberWithActions } from '@/components/table/TeamMembers';
 import TeamStorageForm from '@/components/form/TeamStorageForm';
 import { teamStorageService } from '@/lib/services/team-storage';
-import Modal from '@/components/common/Modal';
-import TeamForm from '@/components/form/TeamForm';
-import DeleteTeamButton from '@/components/form/DeleteTeamButton';
 
 export default async function TeamMembersPage({
   params,
@@ -192,38 +188,14 @@ export default async function TeamMembersPage({
               </div>
             </div>
 
-            {isOwner && !team.isPersonal && (
+            {canManageMembers && (
               <div className="flex items-center gap-3">
-                <Modal
-                  trigger={
-                    <Button variant="outline" size="sm">
-                      <RiEditLine className="mr-2 h-4 w-4" />
-                      Edit Team
-                    </Button>
-                  }
-                  title="Edit Team"
-                  description="Update team information and settings"
-                >
-                  <TeamForm
-                    team={{
-                      ...team,
-                      owner: team.owner,
-                      organisation: team.organisation!
-                    }}
-                    organisations={team.organisation ? [team.organisation] : []}
-                    successMessage="Team updated successfully"
-                  />
-                </Modal>
-
-                {!team.isPersonal && (
-                  <DeleteTeamButton
-                    teamId={team.id}
-                    teamName={team.name}
-                    organisationId={team.organisation?.id}
-                    size="sm"
-                    variant="outline"
-                  />
-                )}
+                <Link href={`/main/teams/${team.id}/settings`}>
+                  <Button variant="outline" size="sm">
+                    <RiSettings3Line className="mr-2 h-4 w-4" />
+                    Team Settings
+                  </Button>
+                </Link>
               </div>
             )}
           </div>

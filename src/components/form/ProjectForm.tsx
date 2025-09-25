@@ -8,10 +8,12 @@ import { Callout } from '@/components/common/Callout';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/Select';
 import { Textarea } from '@/components/common/Textarea';
 import { Switch } from '@/components/common/Switch';
+import { Checkbox } from '@/components/common/Checkbox';
+import { Slider } from '@/components/common/Slider';
 import ClientDate from '@/components/common/ClientDate';
 import { DatePicker } from '@/components/common/DatePicker';
 import { type Project, type User, type Organisation, type Team } from '@prisma/client';
-import { RiCheckLine, RiErrorWarningLine } from '@remixicon/react';
+import { RiCheckLine, RiErrorWarningLine, RiDatabase2Line } from '@remixicon/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -19,6 +21,16 @@ import {
   createProject, type CreateProjectState,
   updateProject, type UpdateProjectState,
 } from '@/actions/project';
+
+// Storage size options for optional resource creation
+const STORAGE_OPTIONS = [
+  { value: 1, label: '1 GB', bytes: 1024 * 1024 * 1024 },
+  { value: 5, label: '5 GB', bytes: 5 * 1024 * 1024 * 1024 },
+  { value: 10, label: '10 GB', bytes: 10 * 1024 * 1024 * 1024 },
+  { value: 25, label: '25 GB', bytes: 25 * 1024 * 1024 * 1024 },
+  { value: 50, label: '50 GB', bytes: 50 * 1024 * 1024 * 1024 },
+  { value: 100, label: '100 GB', bytes: 100 * 1024 * 1024 * 1024 },
+];
 
 type ProjectWithDetails = Project & {
   team: Team & {
@@ -43,6 +55,7 @@ interface ProjectFormProps {
   onSuccess?: () => void;
   successMessage?: string;
   redirectUrl?: string;
+  currentUserId?: string;
 }
 
 export default function ProjectForm({
@@ -50,7 +63,8 @@ export default function ProjectForm({
   teams,
   onSuccess,
   successMessage,
-  redirectUrl
+  redirectUrl,
+  currentUserId
 }: ProjectFormProps) {
   const action = project ? updateProject : createProject;
   const [state, formAction, isPending] = useActionState(action, initialState);
@@ -60,6 +74,10 @@ export default function ProjectForm({
   const [endDate, setEndDate] = useState<Date | undefined>(
     project?.endDate ? new Date(project.endDate) : undefined
   );
+  // Resource creation states (only for create mode)
+  const [createResource, setCreateResource] = useState(false);
+  const [resourceName, setResourceName] = useState('');
+  const [storageSize, setStorageSize] = useState([1]); // Default to 5 GB (index 1)
   const router = useRouter();
 
   const isCreate = !project;
@@ -97,11 +115,18 @@ export default function ProjectForm({
     return isCreate ? 'Create Project' : 'Update Project';
   };
 
+  const selectedStorageOption = STORAGE_OPTIONS[storageSize[0]];
+
   return (
     <form action={formAction} className="space-y-6">
       {/* Hidden field for project ID when updating */}
       {project && (
         <input type="hidden" name="projectId" value={project.id} />
+      )}
+
+      {/* Hidden field for user ID when updating */}
+      {project && currentUserId && (
+        <input type="hidden" name="userId" value={currentUserId} />
       )}
       
       {/* Hidden fields for date picker values */}
@@ -132,8 +157,9 @@ export default function ProjectForm({
         </Callout>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="md:col-span-2">
+      {/* Essential Fields Section */}
+      <div className="space-y-6">
+        <div>
           <Label htmlFor="name">
             Project Name *
           </Label>
@@ -174,22 +200,6 @@ export default function ProjectForm({
         </div>
 
         <div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="development"
-              name="development"
-              defaultChecked={project?.development ?? false}
-            />
-            <Label htmlFor="development">
-              Development Project
-            </Label>
-          </div>
-          <p className="text-sm text-gray-500 mt-1">
-            Development projects are for testing and experimentation
-          </p>
-        </div>
-
-        <div className="md:col-span-2">
           <Label htmlFor="description">
             Description
           </Label>
@@ -207,46 +217,130 @@ export default function ProjectForm({
           )}
         </div>
 
-        <div>
-          <Label htmlFor="status">
-            Status
-          </Label>
-          <Select name="status" defaultValue={project?.status || 'PLANNING'}>
-            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.status}>
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="PLANNING">Planning</SelectItem>
-              <SelectItem value="ACTIVE">Active</SelectItem>
-              <SelectItem value="ON_HOLD">On Hold</SelectItem>
-              <SelectItem value="COMPLETED">Completed</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-          {state.fieldErrors?.status && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.status}</p>
-          )}
-        </div>
+        {/* Resource Creation Option (Create Mode Only) */}
+        {isCreate && currentUserId && (
+          <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
+            <div className="flex items-start space-x-3 mb-4">
+              <Checkbox
+                id="createResource"
+                checked={createResource}
+                onCheckedChange={(checked) => setCreateResource(checked as boolean)}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <Label htmlFor="createResource" className="text-sm font-medium leading-none">
+                  Create an IPFS storage resource with this project
+                </Label>
+                <p className="text-xs text-gray-500">
+                  Get started immediately with distributed storage for your project
+                </p>
+              </div>
+            </div>
 
-        <div>
-          <Label htmlFor="priority">
-            Priority
-          </Label>
-          <Select name="priority" defaultValue={project?.priority || 'MEDIUM'}>
-            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.priority}>
-              <SelectValue placeholder="Select priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="LOW">Low</SelectItem>
-              <SelectItem value="MEDIUM">Medium</SelectItem>
-              <SelectItem value="HIGH">High</SelectItem>
-              <SelectItem value="URGENT">Urgent</SelectItem>
-            </SelectContent>
-          </Select>
-          {state.fieldErrors?.priority && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.priority}</p>
-          )}
-        </div>
+            {createResource && (
+              <div className="space-y-4 pl-7">
+                <div>
+                  <Label htmlFor="resourceName">
+                    Storage Name
+                  </Label>
+                  <Input
+                    type="text"
+                    id="resourceName"
+                    value={resourceName}
+                    onChange={(e) => setResourceName(e.target.value)}
+                    className="mt-1"
+                    placeholder="My Project Storage"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="storageSize">
+                    Storage Size: {selectedStorageOption.label}
+                  </Label>
+                  <div className="mt-3 px-2">
+                    <Slider
+                      value={storageSize}
+                      onValueChange={setStorageSize}
+                      max={STORAGE_OPTIONS.length - 1}
+                      min={0}
+                      step={1}
+                      className="w-full"
+                      ariaLabelThumb="Storage size selector"
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 mt-2 px-2">
+                    <span>1 GB</span>
+                    <span>100 GB</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Advanced Settings (Expandable) - Only show all fields if updating or if specifically requested */}
+      {isUpdate && (
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Project Settings
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <Switch
+                  id="development"
+                  name="development"
+                  defaultChecked={project?.development ?? false}
+                />
+                <Label htmlFor="development">
+                  Development Project
+                </Label>
+              </div>
+              <p className="text-sm text-gray-500">
+                Development projects are for testing and experimentation
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="status">
+                Status
+              </Label>
+              <Select name="status" defaultValue={project?.status || 'PLANNING'}>
+                <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.status}>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PLANNING">Planning</SelectItem>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+              {state.fieldErrors?.status && (
+                <p className="mt-1 text-sm text-red-600">{state.fieldErrors.status}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="priority">
+                Priority
+              </Label>
+              <Select name="priority" defaultValue={project?.priority || 'MEDIUM'}>
+                <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.priority}>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="LOW">Low</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="HIGH">High</SelectItem>
+                  <SelectItem value="URGENT">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+              {state.fieldErrors?.priority && (
+                <p className="mt-1 text-sm text-red-600">{state.fieldErrors.priority}</p>
+              )}
+            </div>
 
         <div>
           <Label htmlFor="startDate">
@@ -393,7 +487,29 @@ export default function ProjectForm({
             </div>
           </div>
         )}
-      </div>
+          </div>
+        </div>
+      )}
+
+      {/* Default values for create mode */}
+      {isCreate && (
+        <>
+          <input type="hidden" name="status" value="PLANNING" />
+          <input type="hidden" name="priority" value="MEDIUM" />
+          <input type="hidden" name="development" value="false" />
+        </>
+      )}
+
+      {/* Resource creation hidden fields */}
+      {isCreate && createResource && currentUserId && (
+        <>
+          <input type="hidden" name="createResource" value="true" />
+          <input type="hidden" name="resourceName" value={resourceName || 'Project Storage'} />
+          <input type="hidden" name="resourceType" value="STORAGE" />
+          <input type="hidden" name="quotaLimit" value={selectedStorageOption.bytes.toString()} />
+          <input type="hidden" name="resourceOwnerId" value={currentUserId} />
+        </>
+      )}
 
       {isUpdate && project && (
         <div className="border-t pt-6">
