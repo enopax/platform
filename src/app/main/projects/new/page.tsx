@@ -8,9 +8,15 @@ import { notFound } from 'next/navigation';
 import ProjectForm from '@/components/form/ProjectForm';
 import { teamService } from '@/lib/services/team';
 
-export default async function CreateProjectPage() {
+export default async function CreateProjectPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ team?: string }>;
+}) {
   const session = await auth();
   if (!session) return null;
+
+  const { team: preselectedTeamId } = await searchParams;
 
   // Ensure user has a personal team, then get all their teams
   await teamService.ensurePersonalTeam(session.user.id);
@@ -86,6 +92,7 @@ export default async function CreateProjectPage() {
             teams={userTeams}
             redirectUrl="/main/projects"
             currentUserId={session.user.id}
+            preselectedTeamId={preselectedTeamId}
           />
         </Card>
       </div>

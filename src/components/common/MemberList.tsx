@@ -24,8 +24,8 @@ interface MemberListProps {
   compact?: boolean;
 }
 
-export default function MemberList({ 
-  members, 
+export default function MemberList({
+  members,
   title = "Members",
   maxHeight = "max-h-80",
   showJoinDate = false,
@@ -53,7 +53,7 @@ export default function MemberList({
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           {title} ({members.length})
         </h3>
-        
+
         {members.length > 0 ? (
           <div className={`space-y-3 ${maxHeight} overflow-y-auto`}>
             {members.map((member) => (
@@ -111,7 +111,7 @@ export default function MemberList({
           {title} ({members.length})
         </h2>
       </div>
-      
+
       {members.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {members.map((member) => (
