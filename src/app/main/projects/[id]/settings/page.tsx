@@ -3,10 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
+import { ProjectBreadcrumbs } from '@/components/common/Breadcrumbs';
 import ProjectForm from '@/components/form/ProjectForm';
 import {
-  RiArrowLeftLine,
-  RiProjectorLine,
   RiSettingsLine
 } from '@remixicon/react';
 import Link from 'next/link';
@@ -114,41 +113,29 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
   };
 
   return (
-    <div>
-      {/* Header */}
+    <div className="max-w-7xl mx-auto">
+      {/* Breadcrumbs */}
       <div className="mb-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Link href={`/main/projects/${project.id}`}>
-            <Button variant="outline" size="sm">
-              <RiArrowLeftLine className="mr-2 h-4 w-4" />
-              Back to Project
-            </Button>
-          </Link>
-        </div>
+        <ProjectBreadcrumbs
+          projectName={project.name}
+          projectId={project.id}
+          currentPage="Settings"
+        />
+      </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg">
-                <RiSettingsLine className="w-5 h-5 text-brand-600 dark:text-brand-400" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Project Settings
-              </h1>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300">
-              Manage settings and configuration for {project.name}
-            </p>
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg">
+            <RiSettingsLine className="w-5 h-5 text-brand-600 dark:text-brand-400" />
           </div>
-          <div className="flex gap-2">
-            <Badge variant={getStatusBadgeVariant(project.status)}>
-              {project.status}
-            </Badge>
-            <Badge variant={getPriorityBadgeVariant(project.priority)}>
-              {project.priority}
-            </Badge>
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Project Settings
+          </h1>
         </div>
+        <p className="text-gray-600 dark:text-gray-300 mt-2">
+          Manage settings and configuration for {project.name}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
