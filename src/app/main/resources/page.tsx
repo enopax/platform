@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 import Table from '@/components/GenericTable';
 import { columns as resourceColumns } from '@/components/table/Resource';
 import {
@@ -166,15 +167,20 @@ export default async function ResourcesPage({
   });
 
   return (
-    <div>
-      {/* Page Header */}
+    <div className="max-w-7xl mx-auto">
+      {/* Breadcrumbs */}
       <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <Breadcrumbs />
+      </div>
+
+      {/* Page Header */}
+      <div className="mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Resources
             </h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-1">
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
               Manage your computing resources and infrastructure
             </p>
           </div>

@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import Container from '@/components/common/Container';
 import { Card } from '@/components/common/Card';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Badge } from '@/components/common/Badge';
@@ -37,17 +38,21 @@ export default async function StoragePlansPage() {
   const quota = user.storageQuota;
 
   return (
-    <main>
-      <Container className="max-w-6xl py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Storage Plans
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Choose the perfect storage plan for your IPFS storage needs.
-            Upgrade or downgrade anytime.
-          </p>
-        </div>
+    <main className="max-w-6xl mx-auto">
+      {/* Breadcrumbs */}
+      <div className="mb-6">
+        <Breadcrumbs />
+      </div>
+
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          Storage Plans
+        </h1>
+        <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+          Choose the perfect storage plan for your IPFS storage needs.
+          Upgrade or downgrade anytime.
+        </p>
+      </div>
 
         {/* Current Plan Status */}
         <Card className="mb-8 p-6">
@@ -128,7 +133,6 @@ export default async function StoragePlansPage() {
             </div>
           </div>
         </div>
-      </Container>
     </main>
   );
 }
