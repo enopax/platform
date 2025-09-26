@@ -10,6 +10,7 @@ import { AnalyticsProvider } from './AnalyticsContext';
 
 import UserBar from '@/components/UserBar';
 import Footer from '@/components/Footer';
+import CommandPaletteProvider from '@/components/CommandPaletteProvider';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -39,6 +40,7 @@ export default async function RootLayout({
             <UserBar user={session?.user} />
             {children}
             <Footer />
+            <CommandPaletteProvider />
           </div>
         </body>
       </AnalyticsProvider>
