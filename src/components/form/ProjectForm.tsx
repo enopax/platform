@@ -300,8 +300,6 @@ export default function ProjectForm({
         )}
       </div>
 
-      </div>
-
       {/* Hidden fields with smart defaults for simplified creation */}
       {isCreate && (
         <>
