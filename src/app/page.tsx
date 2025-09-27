@@ -4,7 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
-import { RiCloudLine, RiShieldCheckLine, RiGlobalLine, RiSpeedUpLine } from '@remixicon/react';
+import { RiProjectorLine, RiTeamLine, RiCodeLine, RiBuildingLine, RiDashboardLine, RiShieldCheckLine } from '@remixicon/react';
+import { prisma } from '@/lib/prisma';
 import Container from '@/components/common/Container';
 import Headline from '@/components/common/Headline';
 import { Divider } from '@/components/common/Divider';
@@ -20,34 +21,42 @@ export default async function Page() {
     redirect('/main');
   }
 
-  // Mock data for IPFS storage service
-  const storageStats = {
-    totalFiles: 2847392,
-    totalStorage: "1.2 PB",
-    activeNodes: 47,
-    globalReplication: "99.9%"
+  // Fetch real platform statistics from database
+  const [projectCount, teamCount, organisationCount, apiKeyCount] = await Promise.all([
+    prisma.project.count(),
+    prisma.team.count(),
+    prisma.organisation.count(),
+    prisma.apiKey.count(),
+  ]);
+
+  // Format the statistics for display
+  const platformStats = {
+    totalProjects: projectCount,
+    activeTeams: teamCount.toString(),
+    organisations: organisationCount,
+    apiRequests: apiKeyCount
   };
 
   const features = [
     {
-      icon: RiCloudLine,
-      title: "European Infrastructure",
-      description: "GDPR-compliant storage with EU-based servers. Enjoy free storage tiers with GitHub integration and flexible cryptocurrency payments."
+      icon: RiProjectorLine,
+      title: "Project Management",
+      description: "Organise your IPFS storage into projects with built-in resource management, team collaboration, and progress tracking."
+    },
+    {
+      icon: RiTeamLine,
+      title: "Team Collaboration",
+      description: "Create teams and organisations to manage access, share resources, and collaborate on projects with fine-grained permissions."
+    },
+    {
+      icon: RiCodeLine,
+      title: "Developer Platform",
+      description: "REST API with token authentication, comprehensive documentation, and CLI tools for seamless integration into your workflow."
     },
     {
       icon: RiShieldCheckLine,
-      title: "Multiple Upload Options",
-      description: "Upload via REST API with token authentication, intuitive drag & drop interface, or powerful CLI tools for developers."
-    },
-    {
-      icon: RiGlobalLine,
-      title: "Team & Analytics",
-      description: "Built-in project management, team collaboration tools, and comprehensive usage analytics to track your storage metrics."
-    },
-    {
-      icon: RiSpeedUpLine,
-      title: "Strategic Clustering",
-      description: "Geographically distributed IPFS nodes for optimal performance. Pay-per-use or monthly subscription pricing models available."
+      title: "Enterprise Ready",
+      description: "GDPR-compliant European infrastructure with usage analytics, storage plans, and organisation-level management capabilities."
     }
   ];
 
@@ -76,9 +85,11 @@ export default async function Page() {
                   <Button className="px-8 py-3 text-lg font-semibold bg-brand-600 hover:bg-brand-700 text-white">
                     Upload Files
                   </Button>
-                  <Button variant="outline" className="px-8 py-3 text-lg font-semibold border-brand-600 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20">
-                    View Docs
-                  </Button>
+                  <Link href="/api">
+                    <Button variant="outline" className="px-8 py-3 text-lg font-semibold border-brand-600 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20">
+                      View API Docs
+                    </Button>
+                  </Link>
                 </div>
               </span>
               <div className="relative z-10">
@@ -97,27 +108,27 @@ export default async function Page() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
               <div className="text-3xl md:text-4xl font-bold text-brand-600 dark:text-brand-400">
-                {storageStats.totalFiles.toLocaleString()}
+                {platformStats.totalProjects.toLocaleString()}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Files Stored</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Active Projects</div>
             </div>
             <div>
               <div className="text-3xl md:text-4xl font-bold text-purple-600 dark:text-purple-400">
-                {storageStats.totalStorage}
+                {platformStats.activeTeams}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Storage</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Active Teams</div>
             </div>
             <div>
               <div className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400">
-                {storageStats.activeNodes}
+                {platformStats.organisations}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Active Nodes</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Organisations</div>
             </div>
             <div>
               <div className="text-3xl md:text-4xl font-bold text-orange-600 dark:text-orange-400">
-                {storageStats.globalReplication}
+                {platformStats.apiRequests}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Uptime</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">API Keys Created</div>
             </div>
           </div>
         </Container>
@@ -178,9 +189,11 @@ export default async function Page() {
               <Button className="px-8 py-3 text-lg font-semibold bg-brand-600 hover:bg-brand-700 text-white">
                 Create Account
               </Button>
-              <Button variant="outline" className="px-8 py-3 text-lg font-semibold">
-                Contact Sales
-              </Button>
+              <Link href="/api">
+                <Button variant="outline" className="px-8 py-3 text-lg font-semibold">
+                  View API Docs
+                </Button>
+              </Link>
             </div>
           </div>
         </Container>
