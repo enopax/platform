@@ -5,7 +5,7 @@ import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import Breadcrumbs, { ProjectBreadcrumbs } from '@/components/common/Breadcrumbs';
 import Table from '@/components/GenericTable';
-import ResourcesHealthDashboard from '@/components/ResourcesHealthDashboard';
+import ResourcesHealthDashboard from '@/components/dashboard/ResourcesHealthDashboard';
 import { columns as resourceColumns } from '@/components/table/Resource';
 import {
   RiArrowLeftLine,
@@ -19,7 +19,7 @@ import {
 } from '@remixicon/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import MemberList from '@/components/MemberList';
+import MemberList from '@/components/user/MemberList';
 
 interface ProjectDetailsPageProps {
   params: Promise<{ id: string }>;

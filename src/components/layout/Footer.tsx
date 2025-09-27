@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import Container from '@/components/common/Container';
-import Logo from '@/components/Logo';
+import Logo from '@/components/layout/Logo';
 import DiscordSection from '@/components/DiscordSection';
 
 const discordUrl = process.env.NEXT_PUBLIC_DISCORD_URL as string;

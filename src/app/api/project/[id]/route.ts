@@ -4,7 +4,7 @@ import { projectService, UpdateProjectData } from '@/lib/services/project';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const projectId = params.id;
+    const { id: projectId } = await params;
 
     // Check if user can access this project
     const canAccess = await projectService.canUserAccessProject(session.user.id, projectId);
@@ -65,7 +65,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -74,7 +74,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const projectId = params.id;
+    const { id: projectId } = await params;
 
     // Parse request body
     const data: UpdateProjectData = await request.json();
@@ -120,7 +120,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -129,7 +129,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const projectId = params.id;
+    const { id: projectId } = await params;
 
     // Delete the project (soft delete)
     await projectService.deleteProject(session.user.id, projectId);

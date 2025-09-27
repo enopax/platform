@@ -27,7 +27,7 @@ import {
   RiFileZipLine,
   RiFileTextLine
 } from '@remixicon/react';
-import FileUpload from '@/components/FileUpload';
+import FileUpload from '@/components/file/FileUpload';
 
 interface FileItem {
   id: string;

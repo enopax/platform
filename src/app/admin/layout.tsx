@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
-import AdminNavigation from '@/components/AdminNavigation';
+import AdminNavigation from '@/components/navigation/AdminNavigation';
 
 export default async function Layout({
   children,
