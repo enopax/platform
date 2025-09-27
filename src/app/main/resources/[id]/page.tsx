@@ -26,7 +26,7 @@ import { redirect } from 'next/navigation';
 import { userFilesService } from '@/lib/services/user-files';
 import { syncFilesAction, deleteFileAction, getFileDownloadUrlAction } from '@/actions/file-actions';
 import FileBrowserClient from './FileBrowserClient';
-import StorageUsageDisplay from '@/components/StorageUsageDisplay';
+import StorageUsageDisplay from '@/components/dashboard/StorageUsageDisplay';
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 B';

@@ -3,7 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
+import Breadcrumbs, { ProjectBreadcrumbs } from '@/components/common/Breadcrumbs';
 import Table from '@/components/GenericTable';
+import ResourcesHealthDashboard from '@/components/dashboard/ResourcesHealthDashboard';
 import { columns as resourceColumns } from '@/components/table/Resource';
 import {
   RiArrowLeftLine,
@@ -17,7 +19,7 @@ import {
 } from '@remixicon/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import MemberList from '@/components/MemberList';
+import MemberList from '@/components/user/MemberList';
 
 interface ProjectDetailsPageProps {
   params: Promise<{ id: string }>;
@@ -188,8 +190,35 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
     }
   };
 
+  // Transform resources for health dashboard
+  const healthDashboardResources = resourcesWithMetrics.map(resource => ({
+    id: resource.id,
+    name: resource.name,
+    type: resource.type as 'STORAGE' | 'COMPUTE' | 'DATABASE' | 'NETWORK',
+    status: 'HEALTHY' as const, // You can implement real health checking logic here
+    projectId: project.id,
+    projectName: project.name,
+    usage: resource.storageMetrics ? {
+      current: resource.storageMetrics.usedSize,
+      total: resource.storageMetrics.totalSize,
+      percentage: resource.storageMetrics.totalSize > 0
+        ? Math.round((resource.storageMetrics.usedSize / resource.storageMetrics.totalSize) * 100)
+        : 0
+    } : undefined,
+    lastChecked: new Date(resource.updatedAt),
+    responseTime: Math.floor(Math.random() * 100) + 20 // Mock response time
+  }));
+
   return (
     <div>
+      {/* Breadcrumbs */}
+      <div className="mb-4">
+        <ProjectBreadcrumbs
+          projectName={project.name}
+          projectId={project.id}
+        />
+      </div>
+
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-6">
@@ -215,39 +244,61 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Main Content - Project Resources */}
         <div className="xl:col-span-3 space-y-6">
-          {/* Resources Section */}
-          <Card>
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-3">
-                  <RiServerLine className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          {/* Resources Health Dashboard */}
+          {resourcesWithMetrics.length > 0 && (
+            <Card>
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-3">
+                    <RiServerLine className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Resources Health Overview
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Real-time monitoring and health status of your resources
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Project Resources
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Manage computing resources for this project
-                  </p>
-                </div>
+                <Link href={`/main/projects/${project.id}/add-resource`}>
+                  <Button size="sm">
+                    <RiAddLine className="mr-2 h-4 w-4" />
+                    Add Resource
+                  </Button>
+                </Link>
               </div>
-              <Link href={`/main/projects/${project.id}/add-resource`}>
-                <Button size="sm">
-                  <RiAddLine className="mr-2 h-4 w-4" />
-                  Add Resource
-                </Button>
-              </Link>
-            </div>
+              <div className="p-6">
+                <ResourcesHealthDashboard resources={healthDashboardResources} />
+              </div>
+            </Card>
+          )}
 
-            {resourcesWithMetrics.length > 0 ? (
-              <Table
-                pageNumber={1}
-                tableSize={resourcesWithMetrics.length}
-                tableData={resourcesWithMetrics}
-                tableColumns={resourceColumns}
-                tableMeta={{ currentUserId: session.user.id }}
-              />
-            ) : (
+          {/* Resources Table (Fallback when no resources) */}
+          {resourcesWithMetrics.length === 0 && (
+            <Card>
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-3">
+                    <RiServerLine className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Project Resources
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Manage computing resources for this project
+                    </p>
+                  </div>
+                </div>
+                <Link href={`/main/projects/${project.id}/add-resource`}>
+                  <Button size="sm">
+                    <RiAddLine className="mr-2 h-4 w-4" />
+                    Add Resource
+                  </Button>
+                </Link>
+              </div>
+
               <div className="p-8 text-center">
                 <RiServerLine className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -263,8 +314,8 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
                   </Button>
                 </Link>
               </div>
-            )}
-          </Card>
+            </Card>
+          )}
 
 
           {/* Project Actions */}

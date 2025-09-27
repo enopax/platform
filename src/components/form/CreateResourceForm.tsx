@@ -74,7 +74,7 @@ const RESOURCE_TYPES = [
 export default function CreateResourceForm({ currentUserId, projectId, projectName, teams }: CreateResourceFormProps) {
   const router = useRouter();
   const [selectedTeamId, setSelectedTeamId] = useState<string>(
-    teams.find(team => team.isPersonal)?.id || teams[0]?.id || ''
+    Array.isArray(teams) ? (teams.find(team => team.isPersonal)?.id || teams[0]?.id || '') : ''
   );
   const [resourceType, setResourceType] = useState<ResourceType>('STORAGE');
   const [storageSize, setStorageSize] = useState([1]); // Default to 5 GB (index 1)
@@ -245,12 +245,14 @@ export default function CreateResourceForm({ currentUserId, projectId, projectNa
               <SelectValue placeholder="Select team" />
             </SelectTrigger>
             <SelectContent>
-              {teams.map((team) => (
+              {Array.isArray(teams) ? teams.map((team) => (
                 <SelectItem key={team.id} value={team.id}>
                   {team.name} {team.isPersonal ? '(Personal)' : ''}
                   {team.organisation && ` - ${team.organisation.name}`}
                 </SelectItem>
-              ))}
+              )) : (
+                <SelectItem value="" disabled>No teams available</SelectItem>
+              )}
             </SelectContent>
           </Select>
           {state.fieldErrors?.teamId && (

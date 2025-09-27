@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 import OrganisationSearchSection from './OrganisationSearchSection';
 import LeaveOrganisationButton from '@/components/form/LeaveOrganisationButton';
 import {
@@ -95,6 +96,11 @@ export default async function OrganisationsPage() {
 
   return (
     <div>
+      {/* Breadcrumbs */}
+      <div className="mb-4">
+        <Breadcrumbs />
+      </div>
+
       {/* Page Header */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
