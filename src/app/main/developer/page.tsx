@@ -10,8 +10,10 @@ import {
   RiKeyLine,
   RiAddLine,
   RiCodeLine,
-  RiShieldLine
+  RiShieldLine,
+  RiBookOpenLine
 } from '@remixicon/react';
+import Link from 'next/link';
 import CreateApiKeyForm from '@/components/form/CreateApiKeyForm';
 
 export default async function DeveloperPage({
@@ -149,9 +151,17 @@ export default async function DeveloperPage({
 
       {/* Documentation Section */}
       <Card className="p-6 mt-8">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Getting Started
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Getting Started
+          </h3>
+          <Link href="/api">
+            <Button variant="outline" size="sm">
+              <RiBookOpenLine className="mr-2 h-4 w-4" />
+              Full API Documentation
+            </Button>
+          </Link>
+        </div>
         <div className="prose dark:prose-invert max-w-none">
           <p className="text-gray-600 dark:text-gray-300 mb-4">
             Use your API keys to interact with our storage API programmatically. Here are some examples:

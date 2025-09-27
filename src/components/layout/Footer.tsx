@@ -85,9 +85,15 @@ export default function Footer() {
 
               <nav className="mt-4 flex flex-col gap-4">
                 <Link
+                  href="/api"
+                  className="transition duration-100 hover:text-brand-500 active:text-brand-600"
+                > API Documentation
+                </Link>
+
+                <Link
                   href="https://docs.ipfs.tech"
                   className="transition duration-100 hover:text-brand-500 active:text-brand-600"
-                > Documentation
+                > IPFS Documentation
                 </Link>
 
                 <Link
