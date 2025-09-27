@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { CommandPaletteProvider, useCommandPalette } from '@/hooks/useCommandPalette';
+import CommandPalette from '@/components/navigation/CommandPalette';
 
 function CommandPaletteKeyHandler() {
   const { open, close } = useCommandPalette();
@@ -21,7 +22,7 @@ function CommandPaletteKeyHandler() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, close]);
 
-  return null;
+  return <CommandPalette />;
 }
 
 export default function CommandPaletteProviderWrapper() {

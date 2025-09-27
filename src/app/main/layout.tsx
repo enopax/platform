@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
-import SidebarNavigation from '@/components/SidebarNavigation';
-import MobileNavigation from '@/components/MobileNavigation';
+import SidebarNavigation from '@/components/navigation/SidebarNavigation';
+import MobileNavigation from '@/components/navigation/MobileNavigation';
 
 export default async function Layout({
   children,

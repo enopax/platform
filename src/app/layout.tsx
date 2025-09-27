@@ -8,9 +8,9 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { AnalyticsProvider } from './AnalyticsContext';
 
-import UserBar from '@/components/UserBar';
-import Footer from '@/components/Footer';
-import CommandPaletteProvider from '@/components/CommandPaletteProvider';
+import UserBar from '@/components/layout/UserBar';
+import Footer from '@/components/layout/Footer';
+import CommandPaletteProvider from '@/components/navigation/CommandPaletteProvider';
 
 const geist = Geist({
   subsets: ['latin'],

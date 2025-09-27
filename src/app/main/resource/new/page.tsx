@@ -12,16 +12,14 @@ import {
   RiToggleLine,
   RiSettings3Line
 } from '@remixicon/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import CreateResourceForm from '@/components/form/CreateResourceForm';
 
-interface AddResourcePageProps {
-  params: Promise<{ id: string }>;
-}
-
-// This component fetches data on the client side for better UX
-export default function AddResourcePage({ params }: AddResourcePageProps) {
+export default function NewResourcePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get('project');
+
   const [project, setProject] = useState<any>(null);
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -30,19 +28,20 @@ export default function AddResourcePage({ params }: AddResourcePageProps) {
 
   useEffect(() => {
     async function loadData() {
-      try {
-        const { id } = await params;
+      if (!projectId) {
+        setLoading(false);
+        return;
+      }
 
+      try {
         // Fetch project data
-        const projectResponse = await fetch(`/api/project/${id}`);
+        const projectResponse = await fetch(`/api/project/${projectId}`);
         if (projectResponse.ok) {
           const projectData = await projectResponse.json();
-          setProject(projectData.project);
-        } else {
-          console.error('Failed to fetch project:', projectResponse.status, projectResponse.statusText);
+          setProject(projectData);
         }
 
-        // Fetch session data (simplified - you'll need to implement this)
+        // Fetch session data
         const sessionResponse = await fetch('/api/auth/session');
         if (sessionResponse.ok) {
           const sessionData = await sessionResponse.json();
@@ -53,7 +52,7 @@ export default function AddResourcePage({ params }: AddResourcePageProps) {
         const teamsResponse = await fetch('/api/team/list');
         if (teamsResponse.ok) {
           const teamsData = await teamsResponse.json();
-          setUserTeams(teamsData.teams || []);
+          setUserTeams(teamsData);
         }
       } catch (error) {
         console.error('Failed to load data:', error);
@@ -63,7 +62,22 @@ export default function AddResourcePage({ params }: AddResourcePageProps) {
     }
 
     loadData();
-  }, [params]);
+  }, [projectId]);
+
+  if (!projectId) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <Card className="p-8 text-center">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Project Required
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300">
+            Please select a project to add a resource to.
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -86,18 +100,15 @@ export default function AddResourcePage({ params }: AddResourcePageProps) {
     );
   }
 
-  if (!project || !session || !session.user?.id) {
+  if (!project || !session) {
     return (
       <div className="max-w-7xl mx-auto">
         <Card className="p-8 text-center">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            {!project ? 'Project Not Found' : 'Authentication Required'}
+            Project Not Found
           </h2>
           <p className="text-gray-600 dark:text-gray-300">
-            {!project
-              ? "The project you're looking for doesn't exist or you don't have access to it."
-              : "Please sign in to continue."
-            }
+            The project you're looking for doesn't exist or you don't have access to it.
           </p>
         </Card>
       </div>
@@ -105,17 +116,13 @@ export default function AddResourcePage({ params }: AddResourcePageProps) {
   }
 
   const handleWizardComplete = (resourceData: any) => {
-    // Handle resource creation
     console.log('Creating resource:', resourceData);
-    // You'll need to implement the actual resource creation logic here
     router.push(`/main/projects/${project.id}`);
   };
 
   const handleCancel = () => {
     router.push(`/main/projects/${project.id}`);
   };
-
-  // Remove the server-side data fetching - now handled in useEffect
 
   return (
     <div className="max-w-7xl mx-auto">

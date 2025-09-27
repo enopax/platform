@@ -5,7 +5,7 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/Select';
 import Breadcrumbs from '@/components/common/Breadcrumbs';
-import EnhancedProjectGrid from '@/components/EnhancedProjectGrid';
+import EnhancedProjectGrid from '@/components/project/EnhancedProjectGrid';
 import TeamFilter from '@/components/TeamFilter';
 import {
   RiAddLine,
