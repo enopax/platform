@@ -46,11 +46,11 @@ export default function TiltCard({ imageSrc = "/assets/images/drachenlampe.png" 
       >
         <div className="flex flex-col items-center text-center p-6">
           <div className="w-32 h-32 bg-gradient-to-br from-brand-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-            <div className="text-white text-4xl font-bold">IPFS</div>
+            <div className="text-white text-4xl font-bold">IIIII</div>
           </div>
           
           <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-200">
-            Start Storing Today
+            Best selling Product
           </h3>
           
           <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
@@ -58,7 +58,7 @@ export default function TiltCard({ imageSrc = "/assets/images/drachenlampe.png" 
           </p>
 
           <Button className="font-bold bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-700 hover:to-purple-700 text-white px-6 py-2">
-            Get Started
+            Get It!
           </Button>
         </div>
         <motion.div
