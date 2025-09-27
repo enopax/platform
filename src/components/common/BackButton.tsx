@@ -1,23 +1,19 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/common/Button';
 import { RiArrowLeftLine } from '@remixicon/react';
-import { useRouter } from 'next/navigation';
 
 interface BackButtonProps {
-  label?: string;
   href?: string;
+  children?: React.ReactNode;
   className?: string;
 }
 
-export default function BackButton({
-  label = 'Back',
-  href,
-  className = ''
-}: BackButtonProps) {
+export default function BackButton({ href, children = 'Back', className = '' }: BackButtonProps) {
   const router = useRouter();
 
-  const handleBack = () => {
+  const handleClick = () => {
     if (href) {
       router.push(href);
     } else {
@@ -29,11 +25,11 @@ export default function BackButton({
     <Button
       variant="ghost"
       size="sm"
-      onClick={handleBack}
-      className={`flex items-center gap-2 ${className}`}
+      onClick={handleClick}
+      className={`text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 ${className}`}
     >
-      <RiArrowLeftLine className="h-4 w-4" />
-      {label}
+      <RiArrowLeftLine className="mr-2 h-4 w-4" />
+      {children}
     </Button>
   );
 }

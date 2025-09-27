@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
-import SidebarNavigation from '@/components/SidebarNavigation';
+import SidebarNavigation from '@/components/navigation/SidebarNavigation';
+import MobileNavigation from '@/components/navigation/MobileNavigation';
 
 export default async function Layout({
   children,
@@ -12,8 +13,16 @@ export default async function Layout({
 
   return (
     <div className="flex min-h-screen">
-      <SidebarNavigation user={session?.user} />
-      <main className="flex-1 p-6">
+      {/* Desktop Sidebar - Hidden on mobile */}
+      <div className="hidden lg:block">
+        <SidebarNavigation user={session?.user} />
+      </div>
+
+      {/* Mobile Navigation - Visible only on mobile */}
+      <MobileNavigation user={session?.user} />
+
+      {/* Main Content */}
+      <main className="flex-1 p-6 lg:p-6 pt-0 lg:pt-6">
         {children}
       </main>
     </div>

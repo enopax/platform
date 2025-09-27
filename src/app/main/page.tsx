@@ -16,7 +16,8 @@ import {
   RiImageLine,
   RiVideoLine,
   RiBuildingLine,
-  RiKeyLine
+  RiKeyLine,
+  RiSettings3Line
 } from '@remixicon/react';
 import Link from 'next/link';
 
@@ -266,213 +267,74 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Dashboard
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300 mt-2">
-          Welcome back! Here's your personal overview and recent activity.
-        </p>
-      </div>
-
-        {/* Main Navigation Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-          <Link href="/main/organisations" className="group">
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">
-                    Organisations
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                    {organisationsCount}
-                  </p>
-                </div>
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
-                  <RiBuildingLine className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/main/teams" className="group">
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">
-                    Teams
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                    {teamsCount}
-                  </p>
-                </div>
-                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
-                  <RiTeamLine className="h-6 w-6 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/main/projects" className="group">
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">
-                    Projects
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                    {projectsCount}
-                  </p>
-                </div>
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
-                  <RiProjectorLine className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/main/developer" className="group">
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">
-                    API Keys
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                    {apiKeysCount}
-                  </p>
-                </div>
-                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg group-hover:bg-orange-200 dark:group-hover:bg-orange-900/50 transition-colors">
-                  <RiKeyLine className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                </div>
-              </div>
-            </Card>
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          {/* Personal Storage Usage */}
-          <Card className="lg:col-span-1 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              My Storage Usage
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  <span>Used Storage</span>
-                  <span>
-                    {formatBytes(storageData.used)} of {formatBytes(storageData.total)}
-                  </span>
-                </div>
-                <ProgressBar value={storagePercentage} className="h-2" />
-              </div>
-
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Total Files</span>
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {storageData.fileCount}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Storage Tier</span>
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {storageData.tier.replace('_', ' ')}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Available</span>
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {formatBytes(storageData.available)}
-                </span>
-              </div>
+      {/* Welcome Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, {session.user.name || 'there'}!
+              </h1>
+              <p className="text-gray-600 dark:text-gray-300 mt-1">
+                Here's what's happening with your projects and storage.
+              </p>
             </div>
-          </Card>
-
-          {/* My Recent Activity */}
-          <Card className="lg:col-span-2 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              My Recent Activity
-            </h3>
-            <div className="space-y-4">
-              {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className={`
-                    p-2 rounded-lg flex-shrink-0
-                    ${activity.type === 'upload' ? 'bg-green-100 dark:bg-green-900/30' : ''}
-                    ${activity.type === 'project' ? 'bg-blue-100 dark:bg-blue-900/30' : ''}
-                    ${activity.type === 'team' ? 'bg-purple-100 dark:bg-purple-900/30' : ''}
-                  `}>
-                    {activity.type === 'upload' && <RiUploadLine className="h-4 w-4 text-green-600 dark:text-green-400" />}
-                    {activity.type === 'project' && <RiProjectorLine className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
-                    {activity.type === 'team' && <RiTeamLine className="h-4 w-4 text-purple-600 dark:text-purple-400" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {activity.description}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {activity.time}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center gap-3">
+              <Link href="/main/projects/create">
+                <Button>
+                  <RiAddLine className="mr-2 h-4 w-4" />
+                  New Project
+                </Button>
+              </Link>
             </div>
-          </Card>
-        </div>
-
-        {/* Projects Section */}
-        <Card className="p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Recent Projects
-            </h3>
-            <Link href="/main/projects/new">
-              <Button variant="outline" size="sm">
-                <RiAddLine className="mr-2 h-4 w-4" />
-                New Project
-              </Button>
-            </Link>
           </div>
-          
-          <div className="space-y-4">
-            {projectsData.recent.length > 0 ? (
-              projectsData.recent.map((project) => (
-                <div key={project.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg">
-                      <RiProjectorLine className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+        </div>
+
+        {/* Activity-First Main Content */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+            {/* Recent Activity - Primary Focus */}
+            <Card className="xl:col-span-2 p-6 transition-all duration-300 hover:shadow-lg">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Recent Activity
+              </h2>
+              <Link href="/main/projects" className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300">
+                View all →
+              </Link>
+            </div>
+
+            {recentActivity.length > 0 ? (
+              <div className="space-y-4">
+                {recentActivity.map((activity, index) => (
+                  <div key={index} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-[1.02] cursor-pointer">
+                    <div className={`
+                      p-2.5 rounded-xl flex-shrink-0 transition-transform duration-200 hover:scale-110
+                      ${activity.type === 'upload' ? 'bg-emerald-100 dark:bg-emerald-900/30' : ''}
+                      ${activity.type === 'project' ? 'bg-blue-100 dark:bg-blue-900/30' : ''}
+                      ${activity.type === 'team' ? 'bg-purple-100 dark:bg-purple-900/30' : ''}
+                    `}>
+                      {activity.type === 'upload' && <RiUploadLine className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+                      {activity.type === 'project' && <RiProjectorLine className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
+                      {activity.type === 'team' && <RiTeamLine className="h-5 w-5 text-purple-600 dark:text-purple-400" />}
                     </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        {project.name}
-                      </h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={project.status === 'ACTIVE' ? 'success' : 'warning'}>
-                          {project.status}
-                        </Badge>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {project.progress}% complete
-                        </span>
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {activity.description}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {activity.time}
+                      </p>
                     </div>
                   </div>
-                  <Link href={`/main/projects/${project.id}`}>
-                    <Button variant="outline" size="sm">
-                      View Details
-                    </Button>
-                  </Link>
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
-              <div className="text-center py-8">
-                <RiProjectorLine className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  No projects yet. Create your first project to get started.
-                </p>
-                <Link href="/main/projects/new">
+              <div className="text-center py-12">
+                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                  <RiProjectorLine className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No recent activity</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">Get started by creating your first project.</p>
+                <Link href="/main/projects/create">
                   <Button>
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Create Project
@@ -480,38 +342,160 @@ export default async function DashboardPage() {
                 </Link>
               </div>
             )}
-          </div>
-        </Card>
+          </Card>
 
-        {/* Quick Actions */}
+          {/* Quick Stats & Actions Sidebar */}
+          <div className="space-y-6">
+            {/* Quick Stats */}
+            <Card className="p-6 transition-all duration-300 hover:shadow-md">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Quick Stats
+              </h3>
+              <div className="space-y-3">
+                <Link href="/main/projects" className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 hover:scale-[1.02] group">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg transition-transform duration-200 group-hover:scale-110">
+                      <RiProjectorLine className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Projects</span>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white transition-colors duration-200 group-hover:text-purple-600 dark:group-hover:text-purple-400">{projectsCount}</span>
+                </Link>
+
+                <Link href="/main/teams" className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors group">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                      <RiTeamLine className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Teams</span>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">{teamsCount}</span>
+                </Link>
+
+                <Link href="/main/organisations" className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors group">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                      <RiBuildingLine className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Organisations</span>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">{organisationsCount}</span>
+                </Link>
+              </div>
+            </Card>
+
+            {/* Personal Account Actions */}
+            <Card className="p-6 transition-all duration-300 hover:shadow-md">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Account Actions
+              </h3>
+              <div className="space-y-3">
+                <Link href="/account/upload" className="block">
+                  <Button variant="outline" size="sm" className="w-full justify-start transition-all duration-200 hover:scale-105 hover:shadow-sm">
+                    <RiUploadLine className="mr-2 h-4 w-4" />
+                    Upload Personal Files
+                  </Button>
+                </Link>
+
+                <Link href="/main/developer" className="block">
+                  <Button variant="outline" size="sm" className="w-full justify-start transition-all duration-200 hover:scale-105 hover:shadow-sm">
+                    <RiKeyLine className="mr-2 h-4 w-4" />
+                    API Keys ({apiKeysCount})
+                  </Button>
+                </Link>
+
+                <Link href="/account/settings" className="block">
+                  <Button variant="outline" size="sm" className="w-full justify-start transition-all duration-200 hover:scale-105 hover:shadow-sm">
+                    <RiSettings3Line className="mr-2 h-4 w-4" />
+                    Account Settings
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        {/* Projects Section */}
+        {projectsData.recent.length > 0 && (
+          <Card className="p-6 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Active Projects
+              </h2>
+              <Link href="/main/projects" className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300">
+                View all {projectsCount} projects →
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {projectsData.recent.map((project) => (
+                <Link key={project.id} href={`/main/projects/${project.id}`} className="group">
+                  <div className="p-5 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md transition-all duration-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg group-hover:bg-brand-200 dark:group-hover:bg-brand-900/50 transition-colors">
+                        <RiProjectorLine className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-brand-900 dark:group-hover:text-brand-100 transition-colors truncate">
+                          {project.name}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Badge variant={project.status === 'ACTIVE' ? 'success' : 'warning'}>
+                        {project.status}
+                      </Badge>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {project.progress}% complete
+                      </span>
+                    </div>
+
+                    <div className="mt-3">
+                      <ProgressBar value={project.progress || 0} className="h-1.5" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Quick Actions - Always Visible */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+            Get Started
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Link href="/main/projects/create" className="group">
+              <div className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-brand-400 dark:hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-brand-900/10 transition-all text-center">
+                <div className="p-3 bg-brand-100 dark:bg-brand-900/30 rounded-lg w-fit mx-auto mb-4 group-hover:bg-brand-200 dark:group-hover:bg-brand-900/50 transition-colors">
+                  <RiProjectorLine className="h-6 w-6 text-brand-600 dark:text-brand-400" />
+                </div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Create Project</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Start a new project with resources</p>
+              </div>
+            </Link>
+
             <Link href="/account/upload" className="group">
-              <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-400 dark:hover:border-brand-500 transition-colors text-center">
-                <RiUploadLine className="h-8 w-8 text-gray-400 group-hover:text-brand-500 mb-2 mx-auto" />
-                <h4 className="font-medium text-gray-900 dark:text-white">Upload Files</h4>
+              <div className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-brand-400 dark:hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-brand-900/10 transition-all text-center">
+                <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg w-fit mx-auto mb-4 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50 transition-colors">
+                  <RiUploadLine className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Upload Files</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Add files to IPFS storage</p>
               </div>
             </Link>
-            
-            <Link href="/main/projects/new" className="group">
-              <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-400 dark:hover:border-brand-500 transition-colors text-center">
-                <RiProjectorLine className="h-8 w-8 text-gray-400 group-hover:text-brand-500 mb-2 mx-auto" />
-                <h4 className="font-medium text-gray-900 dark:text-white">Create Project</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Start a new project</p>
+
+            <Link href="/main/teams/create" className="group">
+              <div className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-brand-400 dark:hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-brand-900/10 transition-all text-center">
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg w-fit mx-auto mb-4 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
+                  <RiTeamLine className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Create Team</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Set up team collaboration</p>
               </div>
             </Link>
-            
-            <div className="group opacity-50 cursor-not-allowed">
-              <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center">
-                <RiUserAddLine className="h-8 w-8 text-gray-400 mb-2 mx-auto" />
-                <h4 className="font-medium text-gray-900 dark:text-white">Invite Members</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Coming soon</p>
-              </div>
-            </div>
           </div>
         </Card>
     </div>
