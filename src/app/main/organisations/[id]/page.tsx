@@ -182,7 +182,7 @@ export default async function OrganisationOverviewPage({ params }: OrganisationO
               </Button>
             </Card>
             <Card className="p-4">
-              <Link href={`/main/teams/new?orga=${id}`} className="block">
+              <Link href={`/main/organisations/${id}/teams/new`} className="block">
                 <Button variant="outline" className="w-full">
                   <RiAddLine className="mr-2 h-4 w-4" />
                   Create Team
@@ -190,7 +190,7 @@ export default async function OrganisationOverviewPage({ params }: OrganisationO
               </Link>
             </Card>
             <Card className="p-4">
-              <Link href={`/main/projects/new?org=${id}`} className="block">
+              <Link href={`/main/organisations/${id}/projects/new`} className="block">
                 <Button variant="outline" className="w-full">
                   <RiAddLine className="mr-2 h-4 w-4" />
                   Create Project
@@ -252,7 +252,7 @@ export default async function OrganisationOverviewPage({ params }: OrganisationO
               <RiProjectorLine className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <p className="text-gray-500 dark:text-gray-400 mb-4">No projects yet</p>
               {canManage && (
-                <Link href={`/main/projects/new?org=${id}`}>
+                <Link href={`/main/organisations/${id}/projects/new`}>
                   <Button>
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Create First Project
@@ -315,7 +315,7 @@ export default async function OrganisationOverviewPage({ params }: OrganisationO
               <RiTeamLine className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <p className="text-gray-500 dark:text-gray-400 mb-4">No teams yet</p>
               {canManage && (
-                <Link href={`/main/teams/new?orga=${id}`}>
+                <Link href={`/main/organisations/${id}/teams/new`}>
                   <Button>
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Create First Team

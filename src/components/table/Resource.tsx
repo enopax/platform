@@ -21,6 +21,7 @@ import {
 type ResourceWithDetails = Resource & {
   owner: User;
   team?: Team | null;
+  organisation?: { id: string; name: string } | null;
   storageMetrics?: {
     totalSize: number;
     usedSize: number;
@@ -195,10 +196,18 @@ const columns: ColumnDef<ResourceWithDetails>[] = [
         true // Simplified for now
       );
 
+      const orgId = row.original.organisationId;
+      const resourceViewUrl = orgId
+        ? `/main/organisations/${orgId}/resources/${row.original.id}`
+        : `/main/resources/${row.original.id}`;
+      const resourceEditUrl = orgId
+        ? `/main/organisations/${orgId}/resources/${row.original.id}/edit`
+        : `/main/resources/${row.original.id}/edit`;
+
       return (
         <div className="flex gap-2 justify-end">
           <Tooltip content="View Files" asChild>
-            <Link href={`/main/resources/${row.original.id}`}>
+            <Link href={resourceViewUrl}>
               <Button
                 type="button"
                 variant="light"
@@ -210,7 +219,7 @@ const columns: ColumnDef<ResourceWithDetails>[] = [
           </Tooltip>
           {canManage && (
             <Tooltip content="Edit Resource" asChild>
-              <Link href={`/main/resources/${row.original.id}/edit`}>
+              <Link href={resourceEditUrl}>
                 <Button
                   type="button"
                   variant="light"

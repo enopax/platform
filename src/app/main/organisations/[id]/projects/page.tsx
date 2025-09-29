@@ -114,7 +114,7 @@ export default async function OrganisationProjectsPage({ params }: OrganisationP
           </div>
           <div className="flex items-center gap-3">
             {canManage && (
-              <Link href={`/main/projects/new?org=${id}`}>
+              <Link href={`/main/organisations/${id}/projects/new`}>
                 <Button>
                   <RiAddLine className="mr-2 h-4 w-4" />
                   Create Project
@@ -200,7 +200,7 @@ export default async function OrganisationProjectsPage({ params }: OrganisationP
               Get started by creating your first project for this organisation.
             </p>
             {canManage && (
-              <Link href={`/main/projects/new?org=${id}`}>
+              <Link href={`/main/organisations/${id}/projects/new`}>
                 <Button>
                   <RiAddLine className="mr-2 h-4 w-4" />
                   Create First Project

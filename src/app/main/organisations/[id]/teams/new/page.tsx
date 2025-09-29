@@ -7,35 +7,34 @@ import { RiTeamLine } from '@remixicon/react';
 import Link from 'next/link';
 import CreateTeamForm from '@/components/form/CreateTeamForm';
 
-export default async function CreateTeamPage() {
+interface CreateTeamPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function CreateTeamPage({ params }: CreateTeamPageProps) {
+  const { id: organisationId } = await params;
   const session = await auth();
   if (!session) return null;
 
-  // Get organisations where the user is a member (they can create teams in their orgs)
-  const userOrganisations = await prisma.organisation.findMany({
-    where: {
-      OR: [
-        // Organisations they own
-        { ownerId: session.user.id },
-        // Organisations they're a member of
-        {
-          members: {
-            some: {
-              userId: session.user.id
-            }
-          }
-        }
-      ]
-    },
+  // Get the specific organisation
+  const organisation = await prisma.organisation.findUnique({
+    where: { id: organisationId },
     select: {
       id: true,
       name: true,
       description: true,
-    },
-    orderBy: { name: 'asc' }
+      ownerId: true,
+      members: {
+        where: { userId: session.user.id }
+      }
+    }
   });
 
-  if (userOrganisations.length === 0) {
+  // Check if user is a member or owner
+  const isMember = organisation?.members.length ?? 0 > 0;
+  const isOwner = organisation?.ownerId === session.user.id;
+
+  if (!organisation || (!isMember && !isOwner)) {
     return (
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumbs */}
@@ -46,11 +45,10 @@ export default async function CreateTeamPage() {
         <Card className="p-8 text-center">
           <RiTeamLine className="w-16 h-16 mx-auto mb-6 text-gray-400" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            No Organisations Found
+            Access Denied
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-            You need to be a member of an organisation to create teams. 
-            Please join an organisation first or ask an admin to add you to one.
+            You need to be a member of this organisation to create teams.
           </p>
           <Link href="/main/organisations">
             <Button>
@@ -83,8 +81,9 @@ export default async function CreateTeamPage() {
       <div className="max-w-2xl">
         <Card className="p-6">
           <CreateTeamForm
-            organisations={userOrganisations}
+            organisations={[organisation]}
             currentUserId={session.user.id}
+            organisationId={organisationId}
           />
         </Card>
       </div>

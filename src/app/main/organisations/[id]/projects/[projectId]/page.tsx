@@ -15,37 +15,21 @@ import {
   RiBarChartLine,
   RiAddLine,
   RiServerLine,
-  RiDatabase2Line,
-  RiBuildingLine
+  RiDatabase2Line
 } from '@remixicon/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import MemberList from '@/components/user/MemberList';
 
-interface OrganisationProjectDetailsPageProps {
+interface ProjectDetailsPageProps {
   params: Promise<{ id: string; projectId: string }>;
 }
 
-export default async function OrganisationProjectDetailsPage({ params }: OrganisationProjectDetailsPageProps) {
+export default async function ProjectDetailsPage({ params }: ProjectDetailsPageProps) {
   const session = await auth();
   if (!session) return null;
 
   const { id: organisationId, projectId } = await params;
-
-  // Verify user has access to this organisation
-  const isAdmin = session.user.role === 'ADMIN';
-  const membership = isAdmin ? true : await prisma.organisationMember.findUnique({
-    where: {
-      userId_organisationId: {
-        userId: session.user.id,
-        organisationId: organisationId
-      }
-    }
-  });
-
-  if (!membership) {
-    notFound();
-  }
 
   // Function to get resource metrics for this project
   async function getProjectResourceMetrics(projectId: string) {
@@ -76,13 +60,10 @@ export default async function OrganisationProjectDetailsPage({ params }: Organis
     }
   }
 
-  // Get project with full details including teams and resources (filtered by organisation)
-  const [projectRaw, projectResources, resourceMetrics, organisation] = await Promise.all([
+  // Get project with full details including teams and resources
+  const [projectRaw, projectResources, resourceMetrics] = await Promise.all([
     prisma.project.findUnique({
-      where: {
-        id: projectId,
-        organisationId: organisationId, // Ensure project belongs to this organisation
-      },
+      where: { id: projectId },
       include: {
         organisation: {
           select: {
@@ -112,15 +93,14 @@ export default async function OrganisationProjectDetailsPage({ params }: Organis
         },
       },
     }),
-    // Get resources for this project (within organisation context)
+    // Get resources for this project
     prisma.resource.findMany({
       where: {
         allocatedProjects: {
           some: {
-            projectId: projectId
+            projectId
           }
         },
-        organisationId: organisationId, // Filter by organisation
         isActive: true,
       },
       include: {
@@ -143,18 +123,10 @@ export default async function OrganisationProjectDetailsPage({ params }: Organis
       orderBy: { createdAt: 'desc' },
     }),
     // Get resource metrics
-    getProjectResourceMetrics(projectId),
-    // Get organisation details
-    prisma.organisation.findUnique({
-      where: { id: organisationId },
-      select: {
-        id: true,
-        name: true
-      }
-    })
+    getProjectResourceMetrics(projectId)
   ]);
 
-  if (!projectRaw || !organisation) {
+  if (!projectRaw) {
     notFound();
   }
 
@@ -182,6 +154,21 @@ export default async function OrganisationProjectDetailsPage({ params }: Organis
       storageMetrics: null,
     };
   });
+
+  // Check if user has access to this project (member of organisation)
+  const isAdmin = session.user.role === 'ADMIN';
+  const membership = isAdmin ? true : await prisma.organisationMember.findUnique({
+    where: {
+      userId_organisationId: {
+        userId: session.user.id,
+        organisationId: projectRaw!.organisationId
+      }
+    }
+  });
+
+  if (!membership) {
+    notFound();
+  }
 
   // Convert Decimal to string for client components
   const project = {
@@ -215,7 +202,7 @@ export default async function OrganisationProjectDetailsPage({ params }: Organis
     id: resource.id,
     name: resource.name,
     type: resource.type as 'STORAGE' | 'COMPUTE' | 'DATABASE' | 'NETWORK',
-    status: 'HEALTHY' as const,
+    status: 'HEALTHY' as const, // You can implement real health checking logic here
     projectId: project.id,
     projectName: project.name,
     usage: resource.storageMetrics ? {
@@ -226,58 +213,32 @@ export default async function OrganisationProjectDetailsPage({ params }: Organis
         : 0
     } : undefined,
     lastChecked: new Date(resource.updatedAt),
-    responseTime: Math.floor(Math.random() * 100) + 20
+    responseTime: Math.floor(Math.random() * 100) + 20 // Mock response time
   }));
 
   return (
     <div>
-      {/* Organisation-aware Breadcrumbs */}
+      {/* Breadcrumbs */}
       <div className="mb-4">
-        <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-          <Link href="/main" className="hover:text-gray-900 dark:hover:text-gray-100 flex items-center">
-            Main
-          </Link>
-          <RiArrowLeftLine className="h-3 w-3 rotate-180" />
-          <Link href="/main/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
-            Organisations
-          </Link>
-          <RiArrowLeftLine className="h-3 w-3 rotate-180" />
-          <Link href={`/main/organisations/${organisationId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
-            {organisation.name}
-          </Link>
-          <RiArrowLeftLine className="h-3 w-3 rotate-180" />
-          <Link href={`/main/organisations/${organisationId}/projects`} className="hover:text-gray-900 dark:hover:text-gray-100">
-            Projects
-          </Link>
-          <RiArrowLeftLine className="h-3 w-3 rotate-180" />
-          <span className="text-gray-900 dark:text-gray-100 font-medium">{project.name}</span>
-        </nav>
+        <ProjectBreadcrumbs
+          projectName={project.name}
+          projectId={project.id}
+        />
       </div>
 
-      {/* Header with Organisation Context */}
+      {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-6">
           <div className="flex-1">
-            <div className="flex items-center mb-2">
-              <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg mr-3">
-                <RiProjectorLine className="w-6 h-6 text-brand-600 dark:text-brand-400" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {project.name}
-                </h1>
-                <div className="flex items-center gap-2 mt-1 text-gray-600 dark:text-gray-300">
-                  <RiBuildingLine className="h-4 w-4" />
-                  <span>{organisation.name}</span>
-                  {project.assignedTeams.length > 0 && (
-                    <>
-                      <span>•</span>
-                      <span>{project.assignedTeams.length} team{project.assignedTeams.length > 1 ? 's' : ''} assigned</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {project.name}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-1">
+              {project.organisation.name}
+              {project.assignedTeams.length > 0 && (
+                <> • {project.assignedTeams.length} team{project.assignedTeams.length > 1 ? 's' : ''} assigned</>
+              )}
+            </p>
           </div>
           <div className="flex gap-2">
             <Badge variant={getStatusBadgeVariant(project.status)}>
@@ -310,7 +271,7 @@ export default async function OrganisationProjectDetailsPage({ params }: Organis
                     </p>
                   </div>
                 </div>
-                <Link href={`/main/organisations/${organisationId}/projects/${project.id}/add-resource`}>
+                <Link href={`/main/organisations/${params.id}/projects/${project.id}/add-resource`}>
                   <Button size="sm">
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Add Resource
@@ -340,7 +301,7 @@ export default async function OrganisationProjectDetailsPage({ params }: Organis
                     </p>
                   </div>
                 </div>
-                <Link href={`/main/organisations/${organisationId}/projects/${project.id}/add-resource`}>
+                <Link href={`/main/organisations/${params.id}/projects/${project.id}/add-resource`}>
                   <Button size="sm">
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Add Resource
@@ -356,7 +317,7 @@ export default async function OrganisationProjectDetailsPage({ params }: Organis
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
                   Get started by creating your first resource for this project.
                 </p>
-                <Link href={`/main/organisations/${organisationId}/projects/${project.id}/add-resource`}>
+                <Link href={`/main/organisations/${params.id}/projects/${project.id}/add-resource`}>
                   <Button>
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Create First Resource
@@ -366,13 +327,14 @@ export default async function OrganisationProjectDetailsPage({ params }: Organis
             </Card>
           )}
 
+
           {/* Project Actions */}
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Project Management
             </h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Link href={`/main/organisations/${organisationId}/projects/${project.id}/settings`} className="group">
+              <Link href={`/main/organisations/${params.id}/projects/${project.id}/settings`} className="group">
                 <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-400 dark:hover:border-brand-500 transition-colors cursor-pointer">
                   <RiProjectorLine className="h-6 w-6 text-gray-400 group-hover:text-brand-500 mb-2" />
                   <h4 className="font-medium text-gray-900 dark:text-white">Project Settings</h4>
@@ -382,7 +344,7 @@ export default async function OrganisationProjectDetailsPage({ params }: Organis
                 </div>
               </Link>
 
-              <Link href={`/main/organisations/${organisationId}/projects/${project.id}/add-resource`} className="group">
+              <Link href={`/main/organisations/${params.id}/projects/${project.id}/add-resource`} className="group">
                 <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-400 dark:hover:border-brand-500 transition-colors cursor-pointer">
                   <RiAddLine className="h-6 w-6 text-gray-400 group-hover:text-brand-500 mb-2" />
                   <h4 className="font-medium text-gray-900 dark:text-white">Add Resource</h4>
@@ -510,21 +472,19 @@ export default async function OrganisationProjectDetailsPage({ params }: Organis
               </h2>
               <div className="space-y-4">
                 {project.assignedTeams.map(({ team }) => (
-                  <Link key={team.id} href={`/main/organisations/${organisationId}/teams/${team.id}`} className="block">
-                    <div className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                      <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                        <RiTeamLine className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <div key={team.id} className="flex items-center gap-3">
+                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                      <RiTeamLine className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 dark:text-white truncate">
+                        {team.name}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900 dark:text-white truncate">
-                          {team.name}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {team._count.members} members • Led by {team.owner.name}
-                        </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        {team._count.members} members • Led by {team.owner.name}
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             </Card>
