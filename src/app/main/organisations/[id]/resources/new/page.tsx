@@ -6,31 +6,14 @@ import { RiServerLine } from '@remixicon/react';
 import CreateResourceForm from '@/components/form/CreateResourceForm';
 import Link from 'next/link';
 
-export default async function CreateResourcePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ org?: string }>;
-}) {
+interface CreateResourcePageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function CreateResourcePage({ params }: CreateResourcePageProps) {
+  const { id: organisationId } = await params;
   const session = await auth();
   if (!session) return null;
-
-  const { org: organisationId } = await searchParams;
-
-  if (!organisationId) {
-    return (
-      <div className="max-w-2xl mx-auto text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-          Organisation Required
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Please select an organisation before creating resources.
-        </p>
-        <Link href="/main/select-organisation">
-          <Button>Select Organisation</Button>
-        </Link>
-      </div>
-    );
-  }
 
   // Verify user has access to this organisation
   const isAdmin = session.user.role === 'ADMIN';

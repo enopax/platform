@@ -119,7 +119,7 @@ export default async function OrganisationTeamsPage({ params }: OrganisationTeam
           </div>
           <div className="flex items-center gap-3">
             {canManage && (
-              <Link href={`/main/teams/new?orga=${id}`}>
+              <Link href={`/main/organisations/${id}/teams/new`}>
                 <Button>
                   <RiAddLine className="mr-2 h-4 w-4" />
                   Create Team
@@ -194,7 +194,7 @@ export default async function OrganisationTeamsPage({ params }: OrganisationTeam
               Get started by creating your first team for this organisation.
             </p>
             {canManage && (
-              <Link href={`/main/teams/new?orga=${id}`}>
+              <Link href={`/main/teams/new?organisation=${id}`}>
                 <Button>
                   <RiAddLine className="mr-2 h-4 w-4" />
                   Create First Team

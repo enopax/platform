@@ -13,19 +13,19 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 interface ProjectSettingsPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; projectId: string }>;
 }
 
 export default async function ProjectSettingsPage({ params }: ProjectSettingsPageProps) {
   const session = await auth();
   if (!session) return null;
 
-  const { id } = await params;
+  const { id: organisationId, projectId } = await params;
 
   // Get project with access verification and user teams
   const [projectRaw, userTeams] = await Promise.all([
     prisma.project.findUnique({
-      where: { id },
+      where: { id: projectId },
       include: {
         organisation: {
           select: {
@@ -174,7 +174,7 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
                 teams={userTeams}
                 successMessage="Project updated successfully!"
                 currentUserId={session.user.id}
-                redirectUrl={`/main/projects/${project.id}`}
+                redirectUrl={`/main/organisations/${params.id}/projects/${project.id}`}
               />
             </div>
           </Card>
@@ -248,13 +248,13 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
               Quick Actions
             </h3>
             <div className="space-y-2">
-              <Link href={`/main/projects/${project.id}`} className="block">
+              <Link href={`/main/organisations/${params.id}/projects/${project.id}`} className="block">
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <RiProjectorLine className="mr-2 h-4 w-4" />
                   View Project Details
                 </Button>
               </Link>
-              <Link href={`/main/projects/${project.id}/add-resource`} className="block">
+              <Link href={`/main/organisations/${params.id}/projects/${project.id}/add-resource`} className="block">
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <RiProjectorLine className="mr-2 h-4 w-4" />
                   Add Resource

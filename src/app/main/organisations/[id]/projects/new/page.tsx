@@ -8,31 +8,16 @@ import Link from 'next/link';
 import ProjectForm from '@/components/form/ProjectForm';
 import { teamService } from '@/lib/services/team';
 
-export default async function CreateProjectPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ team?: string; org?: string }>;
-}) {
+interface CreateProjectPageProps {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ team?: string }>;
+}
+
+export default async function CreateProjectPage({ params, searchParams }: CreateProjectPageProps) {
+  const { id: organisationId } = await params;
+  const { team: preselectedTeamId } = await searchParams;
   const session = await auth();
   if (!session) return null;
-
-  const { team: preselectedTeamId, org: organisationId } = await searchParams;
-
-  if (!organisationId) {
-    return (
-      <div className="max-w-2xl mx-auto text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-          Organisation Required
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Please select an organisation before creating a project.
-        </p>
-        <Link href="/main/select-organisation">
-          <Button>Select Organisation</Button>
-        </Link>
-      </div>
-    );
-  }
 
   // Verify user has access to this organisation
   const isAdmin = session.user.role === 'ADMIN';
@@ -121,7 +106,7 @@ export default async function CreateProjectPage({
         <Card>
           <ProjectForm
             teams={organisationTeams}
-            redirectUrl={`/main?org=${organisationId}`}
+            redirectUrl={`/main/organisations/${organisationId}`}
             currentUserId={session.user.id}
             preselectedTeamId={preselectedTeamId}
             organisationId={organisationId}

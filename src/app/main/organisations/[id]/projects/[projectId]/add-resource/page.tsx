@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import CreateResourceForm from '@/components/form/CreateResourceForm';
 
 interface AddResourcePageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; projectId: string }>;
 }
 
 // This component fetches data on the client side for better UX
@@ -31,10 +31,10 @@ export default function AddResourcePage({ params }: AddResourcePageProps) {
   useEffect(() => {
     async function loadData() {
       try {
-        const { id } = await params;
+        const { id: organisationId, projectId } = await params;
 
         // Fetch project data
-        const projectResponse = await fetch(`/api/project/${id}`);
+        const projectResponse = await fetch(`/api/project/${projectId}`);
         if (projectResponse.ok) {
           const projectData = await projectResponse.json();
           setProject(projectData.project);
@@ -108,11 +108,11 @@ export default function AddResourcePage({ params }: AddResourcePageProps) {
     // Handle resource creation
     console.log('Creating resource:', resourceData);
     // You'll need to implement the actual resource creation logic here
-    router.push(`/main/projects/${project.id}`);
+    router.push(`/main/organisations/${params.id}/projects/${project.id}`);
   };
 
   const handleCancel = () => {
-    router.push(`/main/projects/${project.id}`);
+    router.push(`/main/organisations/${params.id}/projects/${project.id}`);
   };
 
   // Remove the server-side data fetching - now handled in useEffect

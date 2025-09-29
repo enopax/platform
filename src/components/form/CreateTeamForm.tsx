@@ -24,9 +24,10 @@ interface Organisation {
 interface CreateTeamFormProps {
   organisations: Organisation[];
   currentUserId: string;
+  organisationId?: string;
 }
 
-export default function CreateTeamForm({ organisations, currentUserId }: CreateTeamFormProps) {
+export default function CreateTeamForm({ organisations, currentUserId, organisationId }: CreateTeamFormProps) {
   const router = useRouter();
   const [selectedOwner, setSelectedOwner] = useState<User | null>(null);
   const [state, formAction, isPending] = useActionState<CreateTeamState, FormData>(
@@ -117,23 +118,35 @@ export default function CreateTeamForm({ organisations, currentUserId }: CreateT
         </div>
 
         <div>
-          <Label htmlFor="organisationId">
-            Organisation *
-          </Label>
-          <Select name="organisationId" required>
-            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.organisationId}>
-              <SelectValue placeholder="Select organisation" />
-            </SelectTrigger>
-            <SelectContent>
-              {organisations.map((org) => (
-                <SelectItem key={org.id} value={org.id}>
-                  {org.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {state.fieldErrors?.organisationId && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.organisationId}</p>
+          {organisationId ? (
+            <>
+              <Label htmlFor="organisationId">Organisation</Label>
+              <input type="hidden" name="organisationId" value={organisationId} />
+              <div className="mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                {organisations[0]?.name}
+              </div>
+            </>
+          ) : (
+            <>
+              <Label htmlFor="organisationId">
+                Organisation *
+              </Label>
+              <Select name="organisationId" required>
+                <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.organisationId}>
+                  <SelectValue placeholder="Select organisation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {organisations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {state.fieldErrors?.organisationId && (
+                <p className="mt-1 text-sm text-red-600">{state.fieldErrors.organisationId}</p>
+              )}
+            </>
           )}
         </div>
 

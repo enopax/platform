@@ -117,11 +117,19 @@ export default function NewResourcePage() {
 
   const handleWizardComplete = (resourceData: any) => {
     console.log('Creating resource:', resourceData);
-    router.push(`/main/projects/${project.id}`);
+    if (project?.organisationId) {
+      router.push(`/main/organisations/${project.organisationId}/projects/${project.id}`);
+    } else {
+      router.push(`/main/projects/${project.id}`);
+    }
   };
 
   const handleCancel = () => {
-    router.push(`/main/projects/${project.id}`);
+    if (project?.organisationId) {
+      router.push(`/main/organisations/${project.organisationId}/projects/${project.id}`);
+    } else {
+      router.push(`/main/projects/${project.id}`);
+    }
   };
 
   return (

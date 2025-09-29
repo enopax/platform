@@ -56,13 +56,9 @@ export default function SidebarNavigation({
   const [isLoading, setIsLoading] = useState(true);
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
 
-  // Get organisation ID from either search params or pathname
+  // Get organisation ID from pathname
   const getOrganisationId = () => {
-    // First check search params (for backward compatibility)
-    const orgFromParams = searchParams.get('org');
-    if (orgFromParams) return orgFromParams;
-
-    // Then check if we're on an organisation tree page (/main/organisations/[id]/...)
+    // Check if we're on an organisation tree page (/main/organisations/[id]/...)
     const pathSegments = pathname.split('/');
     if (pathSegments[1] === 'main' && pathSegments[2] === 'organisations' && pathSegments[3]) {
       return pathSegments[3];
@@ -261,7 +257,7 @@ export default function SidebarNavigation({
               <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                 Projects
               </h3>
-              <Link href={`/main/projects/new?org=${organisationId}`}>
+              <Link href={`/main/organisations/${organisationId}/projects/new`}>
                 <Button variant="ghost" size="sm" className="p-1">
                   <RiAddLine className="h-4 w-4" />
                 </Button>
@@ -336,7 +332,7 @@ export default function SidebarNavigation({
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                   No projects yet
                 </p>
-                <Link href={`/main/projects/new?org=${organisationId}`}>
+                <Link href={`/main/organisations/${organisationId}/projects/new`}>
                   <Button size="sm">
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Create Project

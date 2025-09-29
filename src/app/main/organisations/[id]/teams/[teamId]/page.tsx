@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Container from '@/components/common/Container';
+import Headline from '@/components/common/Headline';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
@@ -21,9 +22,8 @@ import GenericTable from '@/components/GenericTable';
 import { teamMemberColumns, type TeamMemberWithActions } from '@/components/table/TeamMembers';
 import TeamStorageForm from '@/components/form/TeamStorageForm';
 import { teamStorageService } from '@/lib/services/team-storage';
-import { OrganisationTeamBreadcrumbs } from '@/components/common/Breadcrumbs';
 
-export default async function OrganisationTeamPage({
+export default async function TeamMembersPage({
   params,
 }: {
   params: Promise<{ id: string; teamId: string }>;
@@ -32,30 +32,8 @@ export default async function OrganisationTeamPage({
   const session = await auth();
   if (!session) return null;
 
-  // Check if user is admin
-  const isAdmin = session.user.role === 'ADMIN';
-
-  // Verify user has access to this organisation (unless admin)
-  if (!isAdmin) {
-    const membership = await prisma.organisationMember.findUnique({
-      where: {
-        userId_organisationId: {
-          userId: session.user.id,
-          organisationId: organisationId
-        }
-      }
-    });
-
-    if (!membership) {
-      notFound();
-    }
-  }
-
   const team = await prisma.team.findUnique({
-    where: {
-      id: teamId,
-      organisationId: organisationId // Ensure team belongs to this organisation
-    },
+    where: { id: teamId },
     include: {
       organisation: {
         select: {
@@ -114,8 +92,8 @@ export default async function OrganisationTeamPage({
   const isOwner = team.ownerId === session.user.id;
   const userMembership = team.members.find(m => m.userId === session.user.id);
   const isTeamLead = userMembership?.role === 'LEAD';
-  const canManageMembers = isAdmin || isOwner || isTeamLead;
-  const canManagePermissions = isAdmin || isOwner || (userMembership?.canLead === true);
+  const canManageMembers = isOwner || isTeamLead;
+  const canManagePermissions = isOwner || (userMembership?.canLead === true);
 
   if (!canManageMembers) {
     notFound();
@@ -142,6 +120,24 @@ export default async function OrganisationTeamPage({
         )
         .map(orgMember => orgMember.user)
     : [];
+
+  // Debug logging for troubleshooting
+  console.log('Team organisation members:', team.organisation?.members?.map(m => ({
+    userId: m.userId,
+    name: m.user.name,
+    email: m.user.email
+  })));
+  console.log('Current team members:', team.members.map(m => ({
+    userId: m.userId,
+    name: m.user.name,
+    email: m.user.email
+  })));
+  console.log('Available users for team:', availableUsers.map(u => ({
+    id: u.id,
+    name: u.name,
+    email: u.email
+  })));
+
 
   // Create team owner as a member entry for the table
   const ownerAsMember = {
@@ -173,15 +169,6 @@ export default async function OrganisationTeamPage({
     <main className="mt-4">
       <Container>
         <div className="mb-6">
-          <OrganisationTeamBreadcrumbs
-            organisationId={organisationId}
-            organisationName={team.organisation?.name || 'Organisation'}
-            teamName={team.name}
-            teamId={teamId}
-          />
-        </div>
-
-        <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               {team.color && (
@@ -203,7 +190,7 @@ export default async function OrganisationTeamPage({
 
             {canManageMembers && (
               <div className="flex items-center gap-3">
-                <Link href={`/main/organisations/${organisationId}/teams/${teamId}/settings`}>
+                <Link href={`/main/organisations/${params.id}/teams/${team.id}/settings`}>
                   <Button variant="outline" size="sm">
                     <RiSettings3Line className="mr-2 h-4 w-4" />
                     Team Settings
@@ -220,7 +207,7 @@ export default async function OrganisationTeamPage({
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Team Members ({allMembers.length})
             </h2>
-
+            
             <GenericTable
               pageNumber={1}
               tableSize={allMembers.length}
@@ -237,8 +224,8 @@ export default async function OrganisationTeamPage({
               </h2>
 
               {availableUsers.length > 0 ? (
-                <AddMemberForm
-                  teamId={team.id}
+                <AddMemberForm 
+                  teamId={team.id} 
                   availableUsers={availableUsers}
                 />
               ) : (
