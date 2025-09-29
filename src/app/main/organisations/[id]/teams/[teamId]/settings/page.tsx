@@ -17,19 +17,19 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 interface TeamSettingsPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; teamId: string }>;
 }
 
 export default async function TeamSettingsPage({ params }: TeamSettingsPageProps) {
   const session = await auth();
   if (!session) return null;
 
-  const { id } = await params;
+  const { id: organisationId, teamId } = await params;
 
   // Get team with access verification and available organisations
   const [team, userOrganisations] = await Promise.all([
     prisma.team.findUnique({
-      where: { id },
+      where: { id: teamId },
       include: {
         organisation: {
           select: {
@@ -75,7 +75,7 @@ export default async function TeamSettingsPage({ params }: TeamSettingsPageProps
         _count: {
           select: {
             members: true,
-            projects: true
+            assignedProjects: true
           }
         }
       },
@@ -110,7 +110,7 @@ export default async function TeamSettingsPage({ params }: TeamSettingsPageProps
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-6">
-          <Link href={`/main/teams/${team.id}`}>
+          <Link href={`/main/organisations/${params.id}/teams/${team.id}`}>
             <Button variant="outline" size="sm">
               <RiArrowLeftLine className="mr-2 h-4 w-4" />
               Back to Team
@@ -187,7 +187,7 @@ export default async function TeamSettingsPage({ params }: TeamSettingsPageProps
                   }}
                   organisations={userOrganisations}
                   successMessage="Team updated successfully!"
-                  redirectUrl={`/main/teams/${team.id}`}
+                  redirectUrl={`/main/organisations/${params.id}/teams/${team.id}`}
                 />
               )}
             </div>
@@ -268,7 +268,7 @@ export default async function TeamSettingsPage({ params }: TeamSettingsPageProps
               <div>
                 <span className="text-gray-500">Projects:</span>
                 <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                  {team._count.projects}
+                  {team._count.assignedProjects}
                 </span>
               </div>
 
@@ -296,7 +296,7 @@ export default async function TeamSettingsPage({ params }: TeamSettingsPageProps
               Quick Actions
             </h3>
             <div className="space-y-2">
-              <Link href={`/main/teams/${team.id}`} className="block">
+              <Link href={`/main/organisations/${params.id}/teams/${team.id}`} className="block">
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <RiTeamLine className="mr-2 h-4 w-4" />
                   View Team Members

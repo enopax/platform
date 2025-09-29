@@ -74,7 +74,7 @@ const columns: ColumnDef<TeamWithDetails>[] = [
   },
   {
     header: 'Projects',
-    accessorKey: '_count.projects',
+    accessorKey: '_count.assignedProjects',
     meta: {
       align: 'text-center',
     },
@@ -122,10 +122,15 @@ const columns: ColumnDef<TeamWithDetails>[] = [
       const isOwnerOrLead = row.original.ownerId === currentUserId || 
         row.original.members.find(m => m.userId === currentUserId)?.role === 'LEAD';
 
+      const orgId = row.original.organisationId;
+      const teamUrl = orgId
+        ? `/main/organisations/${orgId}/teams/${row.original.id}`
+        : `/main/teams/${row.original.id}`;
+
       return (
         <div className="flex gap-2 justify-end">
           <Tooltip content="View Team" asChild>
-            <Link href={`/main/teams/${row.original.id}`}>
+            <Link href={teamUrl}>
               <Button
                 type="button"
                 variant="light"

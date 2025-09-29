@@ -22,21 +22,25 @@ import { notFound } from 'next/navigation';
 import MemberList from '@/components/user/MemberList';
 
 interface ProjectDetailsPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; projectId: string }>;
 }
 
 export default async function ProjectDetailsPage({ params }: ProjectDetailsPageProps) {
   const session = await auth();
   if (!session) return null;
 
-  const { id } = await params;
+  const { id: organisationId, projectId } = await params;
 
   // Function to get resource metrics for this project
   async function getProjectResourceMetrics(projectId: string) {
     try {
       const storageResources = await prisma.resource.findMany({
         where: {
-          projectId,
+          allocatedProjects: {
+            some: {
+              projectId
+            }
+          },
           type: 'STORAGE',
           isActive: true,
         },
@@ -56,38 +60,47 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
     }
   }
 
-  // Get project with full details including resources
+  // Get project with full details including teams and resources
   const [projectRaw, projectResources, resourceMetrics] = await Promise.all([
     prisma.project.findUnique({
-      where: { id },
+      where: { id: projectId },
       include: {
-        team: {
+        organisation: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        assignedTeams: {
           include: {
-            owner: true,
-            organisation: {
+            team: {
               include: {
-                members: true
-              }
-            },
-            members: {
-              include: {
-                user: true
-              }
-            },
-            _count: {
-              select: {
-                members: true,
-                projects: true
+                owner: true,
+                members: {
+                  include: {
+                    user: true
+                  }
+                },
+                _count: {
+                  select: {
+                    members: true,
+                    assignedProjects: true
+                  }
+                }
               }
             }
-          },
+          }
         },
       },
     }),
     // Get resources for this project
     prisma.resource.findMany({
       where: {
-        projectId: id,
+        allocatedProjects: {
+          some: {
+            projectId
+          }
+        },
         isActive: true,
       },
       include: {
@@ -100,24 +113,17 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
             email: true,
           }
         },
-        project: {
+        organisation: {
           select: {
             id: true,
-            name: true,
-            team: {
-              select: {
-                id: true,
-                name: true,
-                organisationId: true,
-              }
-            }
+            name: true
           }
         }
       },
       orderBy: { createdAt: 'desc' },
     }),
     // Get resource metrics
-    getProjectResourceMetrics(id)
+    getProjectResourceMetrics(projectId)
   ]);
 
   if (!projectRaw) {
@@ -149,17 +155,18 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
     };
   });
 
-  // Check if user has access to this project (member of the team or organisation)
-  const hasAccess = projectRaw.team.members.some(
-    member => member.userId === session.user.id
-  ) || (
-    projectRaw.team.organisation &&
-    (projectRaw.team.organisation.members?.some(
-      member => member.userId === session.user.id
-    ) || projectRaw.team.organisation.ownerId === session.user.id)
-  );
+  // Check if user has access to this project (member of organisation)
+  const isAdmin = session.user.role === 'ADMIN';
+  const membership = isAdmin ? true : await prisma.organisationMember.findUnique({
+    where: {
+      userId_organisationId: {
+        userId: session.user.id,
+        organisationId: projectRaw!.organisationId
+      }
+    }
+  });
 
-  if (!hasAccess) {
+  if (!membership) {
     notFound();
   }
 
@@ -227,7 +234,10 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
               {project.name}
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
-              {project.team.organisation?.name || 'Personal Team'} • Team: {project.team.name}
+              {project.organisation.name}
+              {project.assignedTeams.length > 0 && (
+                <> • {project.assignedTeams.length} team{project.assignedTeams.length > 1 ? 's' : ''} assigned</>
+              )}
             </p>
           </div>
           <div className="flex gap-2">
@@ -261,7 +271,7 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
                     </p>
                   </div>
                 </div>
-                <Link href={`/main/projects/${project.id}/add-resource`}>
+                <Link href={`/main/organisations/${params.id}/projects/${project.id}/add-resource`}>
                   <Button size="sm">
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Add Resource
@@ -291,7 +301,7 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
                     </p>
                   </div>
                 </div>
-                <Link href={`/main/projects/${project.id}/add-resource`}>
+                <Link href={`/main/organisations/${params.id}/projects/${project.id}/add-resource`}>
                   <Button size="sm">
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Add Resource
@@ -307,7 +317,7 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
                   Get started by creating your first resource for this project.
                 </p>
-                <Link href={`/main/projects/${project.id}/add-resource`}>
+                <Link href={`/main/organisations/${params.id}/projects/${project.id}/add-resource`}>
                   <Button>
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Create First Resource
@@ -324,7 +334,7 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
               Project Management
             </h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Link href={`/main/projects/${project.id}/settings`} className="group">
+              <Link href={`/main/organisations/${params.id}/projects/${project.id}/settings`} className="group">
                 <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-400 dark:hover:border-brand-500 transition-colors cursor-pointer">
                   <RiProjectorLine className="h-6 w-6 text-gray-400 group-hover:text-brand-500 mb-2" />
                   <h4 className="font-medium text-gray-900 dark:text-white">Project Settings</h4>
@@ -334,7 +344,7 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
                 </div>
               </Link>
 
-              <Link href={`/main/projects/${project.id}/add-resource`} className="group">
+              <Link href={`/main/organisations/${params.id}/projects/${project.id}/add-resource`} className="group">
                 <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-400 dark:hover:border-brand-500 transition-colors cursor-pointer">
                   <RiAddLine className="h-6 w-6 text-gray-400 group-hover:text-brand-500 mb-2" />
                   <h4 className="font-medium text-gray-900 dark:text-white">Add Resource</h4>
@@ -396,7 +406,7 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
               <div className="flex items-center text-sm">
                 <RiTeamLine className="h-4 w-4 mr-2 text-gray-400" />
                 <span className="text-gray-600 dark:text-gray-300">
-                  <span className="font-medium">{project.team._count.members}</span> team members
+                  <span className="font-medium">{project.assignedTeams.length}</span> assigned teams
                 </span>
               </div>
 
@@ -455,13 +465,30 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
             </div>
           </Card>
 
-          <MemberList
-            members={project.team.members || []}
-            title="Team Members"
-            compact={true}
-            maxHeight="max-h-80"
-            showJoinDate={false}
-          />
+          {project.assignedTeams.length > 0 && (
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Assigned Teams
+              </h2>
+              <div className="space-y-4">
+                {project.assignedTeams.map(({ team }) => (
+                  <div key={team.id} className="flex items-center gap-3">
+                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                      <RiTeamLine className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 dark:text-white truncate">
+                        {team.name}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        {team._count.members} members • Led by {team.owner.name}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
         </div>
       </div>
     </div>

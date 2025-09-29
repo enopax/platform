@@ -7,497 +7,289 @@ import { Badge } from '@/components/common/Badge';
 import {
   RiProjectorLine,
   RiTeamLine,
-  RiFolderLine,
-  RiUploadLine,
   RiAddLine,
-  RiUserAddLine,
-  RiDatabaseLine,
-  RiFileTextLine,
-  RiImageLine,
-  RiVideoLine,
   RiBuildingLine,
-  RiKeyLine,
-  RiSettings3Line
+  RiArrowRightLine
 } from '@remixicon/react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
-// Function to format bytes for display
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
-
-// Function to get user's personal storage metrics
-async function getUserStorageMetrics(userId: string) {
-  try {
-    // Get user's storage quota and usage
-    const userQuota = await prisma.userStorageQuota.findUnique({
-      where: { userId },
-    });
-
-    // Get user's files summary
-    const fileStats = await prisma.userFile.aggregate({
-      where: { userId },
-      _sum: { fileSize: true },
-      _count: { id: true },
-    });
-
-    // Get file type breakdown
-    const filesByType = await prisma.userFile.groupBy({
-      by: ['fileType'],
-      where: { userId },
-      _count: { id: true },
-      _sum: { fileSize: true },
-    });
-
-    // Get recent storage activity
-    const recentActivity = await prisma.userStorageActivity.findMany({
-      where: { userId },
-      orderBy: { timestamp: 'desc' },
-      take: 5,
-    });
-
-    // Calculate storage metrics
-    const totalFiles = fileStats._count.id || 0;
-    const totalSize = Number(fileStats._sum.fileSize || 0);
-    const allocatedBytes = Number(userQuota?.allocatedBytes || 524288000); // Default 500MB
-    const usedBytes = Number(userQuota?.usedBytes || totalSize);
-
-    // File type breakdown
-    const fileTypeStats = {
-      documents: 0,
-      images: 0,
-      videos: 0,
-      others: 0,
-    };
-
-    filesByType.forEach((group) => {
-      const type = group.fileType.toLowerCase();
-      const count = group._count.id;
-
-      if (type.includes('pdf') || type.includes('doc') || type.includes('txt')) {
-        fileTypeStats.documents += count;
-      } else if (type.includes('image') || type.includes('jpg') || type.includes('png')) {
-        fileTypeStats.images += count;
-      } else if (type.includes('video') || type.includes('mp4') || type.includes('avi')) {
-        fileTypeStats.videos += count;
-      } else {
-        fileTypeStats.others += count;
-      }
-    });
-
-    return {
-      totalFiles,
-      totalSize,
-      allocatedBytes,
-      usedBytes,
-      availableBytes: Math.max(0, allocatedBytes - usedBytes),
-      fileTypeStats,
-      recentActivity,
-      tier: userQuota?.tier || 'FREE_500MB',
-    };
-  } catch (error) {
-    console.error('Error fetching user storage metrics:', error);
-    return {
-      totalFiles: 0,
-      totalSize: 0,
-      allocatedBytes: 524288000, // Default 500MB
-      usedBytes: 0,
-      availableBytes: 524288000,
-      fileTypeStats: { documents: 0, images: 0, videos: 0, others: 0 },
-      recentActivity: [],
-      tier: 'FREE_500MB',
-    };
-  }
-}
-
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { org?: string };
+}) {
   const session = await auth();
-  if (!session) return null;
+  if (!session) return redirect('/');
 
-  // Fetch personal data from database
-  const [userProjects, userStorage, userCounts] = await Promise.all([
-    // Get user's projects through team memberships and organisation memberships
-    prisma.project.findMany({
-      where: {
-        team: {
-          OR: [
-            {
-              // User is a member of the team
-              members: {
-                some: {
-                  userId: session.user.id
-                }
-              }
-            },
-            {
-              // User is a member of the organisation (if team belongs to one)
-              organisation: {
-                members: {
-                  some: {
-                    userId: session.user.id
-                  }
-                }
-              }
-            }
-          ]
-        }
-      },
-      select: {
-        id: true,
-        name: true,
-        status: true,
-        progress: true,
-        updatedAt: true
-      },
-      orderBy: [
-        { updatedAt: 'desc' }
-      ],
-      take: 5 // Only get 5 most recent projects for the dashboard
-    }),
+  // If no organisation is selected, redirect to organisation selection
+  if (!searchParams.org) {
+    return redirect('/main/organisations');
+  }
 
-    // Get user's personal storage metrics
-    getUserStorageMetrics(session.user.id),
+  const organisationId = searchParams.org;
 
-    // Get counts for navigation cards
-    Promise.all([
-      // Count organisations where user is a member
-      prisma.organisation.count({
-        where: {
-          members: {
-            some: {
-              userId: session.user.id
-            }
-          }
+  // Verify user has access to this organisation
+  const isAdmin = session.user.role === 'ADMIN';
+  const membership = isAdmin ? true : await prisma.organisationMember.findUnique({
+    where: {
+      userId_organisationId: {
+        userId: session.user.id,
+        organisationId: organisationId
+      }
+    }
+  });
+
+  if (!membership) {
+    return redirect('/main/select-organisation');
+  }
+
+  // Get organisation details
+  const organisation = await prisma.organisation.findUnique({
+    where: { id: organisationId },
+    include: {
+      _count: {
+        select: {
+          projects: true,
+          teams: true,
+          members: true
         }
-      }),
-      // Count teams where user is a member
-      prisma.team.count({
-        where: {
-          OR: [
-            {
-              members: {
-                some: {
-                  userId: session.user.id
-                }
-              }
-            },
-            {
-              organisation: {
-                members: {
-                  some: {
-                    userId: session.user.id
-                  }
-                }
-              }
-            }
-          ]
-        }
-      }),
-      // Count projects where user has access
-      prisma.project.count({
-        where: {
+      }
+    }
+  });
+
+  if (!organisation) {
+    return redirect('/main/select-organisation');
+  }
+
+  // Get projects in this organisation
+  const projects = await prisma.project.findMany({
+    where: {
+      organisationId,
+      isActive: true
+    },
+    include: {
+      assignedTeams: {
+        include: {
           team: {
-            OR: [
-              {
-                members: {
-                  some: {
-                    userId: session.user.id
-                  }
-                }
-              },
-              {
-                organisation: {
-                  members: {
-                    some: {
-                      userId: session.user.id
-                    }
-                  }
-                }
-              }
-            ]
+            select: {
+              id: true,
+              name: true,
+              teamType: true
+            }
           }
         }
-      }),
-      // Count API keys for the user
-      prisma.apiKey.count({
-        where: {
-          userId: session.user.id
+      },
+      _count: {
+        select: {
+          assignedTeams: true,
+          allocatedResources: true
         }
-      })
-    ])
-  ]);
-
-  // Destructure counts
-  const [organisationsCount, teamsCount, projectsCount, apiKeysCount] = userCounts;
-
-  // Calculate aggregated personal data
-  const projectsData = {
-    recent: userProjects.slice(0, 3) // Top 3 for dashboard display
-  };
-
-  // Use personal storage data
-  const storageData = {
-    used: userStorage.usedBytes,
-    total: userStorage.allocatedBytes,
-    available: userStorage.availableBytes,
-    fileCount: userStorage.totalFiles,
-    tier: userStorage.tier,
-    fileTypeStats: userStorage.fileTypeStats
-  };
-
-  // Generate recent activity from personal storage activity
-  const recentActivity = [
-    ...userProjects.slice(0, 2).map(project => ({
-      type: 'project' as const,
-      description: `Updated ${project.name}`,
-      time: new Date(project.updatedAt).toLocaleDateString()
-    })),
-    ...userStorage.recentActivity.slice(0, 3).map(activity => ({
-      type: 'upload' as const,
-      description: activity.fileName ? `${activity.action} ${activity.fileName}` : `File ${activity.action}`,
-      time: new Date(activity.timestamp).toLocaleDateString()
-    }))
-  ];
-
-  const storagePercentage = storageData.total > 0 ? (storageData.used / storageData.total) * 100 : 0;
+      }
+    },
+    orderBy: { updatedAt: 'desc' }
+  });
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Welcome Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
+      {/* Header with Organisation Context */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="flex items-center mb-2">
+              <RiBuildingLine className="h-6 w-6 text-brand-600 dark:text-brand-400 mr-2" />
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, {session.user.name || 'there'}!
+                {organisation.name}
               </h1>
-              <p className="text-gray-600 dark:text-gray-300 mt-1">
-                Here's what's happening with your projects and storage.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link href="/main/projects/create">
-                <Button>
-                  <RiAddLine className="mr-2 h-4 w-4" />
-                  New Project
-                </Button>
+              <Link
+                href="/main/select-organisation"
+                className="ml-4 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center"
+              >
+                Switch <RiArrowRightLine className="ml-1 h-4 w-4" />
               </Link>
             </div>
+            <p className="text-gray-600 dark:text-gray-300">
+              Select a project to manage teams, resources, and files
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href={`/main/projects/new?org=${organisation.id}`}>
+              <Button>
+                <RiAddLine className="mr-2 h-4 w-4" />
+                New Project
+              </Button>
+            </Link>
           </div>
         </div>
 
-        {/* Activity-First Main Content */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
-            {/* Recent Activity - Primary Focus */}
-            <Card className="xl:col-span-2 p-6 transition-all duration-300 hover:shadow-lg">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Recent Activity
-              </h2>
-              <Link href="/main/projects" className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300">
-                View all →
-              </Link>
-            </div>
-
-            {recentActivity.length > 0 ? (
-              <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-[1.02] cursor-pointer">
-                    <div className={`
-                      p-2.5 rounded-xl flex-shrink-0 transition-transform duration-200 hover:scale-110
-                      ${activity.type === 'upload' ? 'bg-emerald-100 dark:bg-emerald-900/30' : ''}
-                      ${activity.type === 'project' ? 'bg-blue-100 dark:bg-blue-900/30' : ''}
-                      ${activity.type === 'team' ? 'bg-purple-100 dark:bg-purple-900/30' : ''}
-                    `}>
-                      {activity.type === 'upload' && <RiUploadLine className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
-                      {activity.type === 'project' && <RiProjectorLine className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
-                      {activity.type === 'team' && <RiTeamLine className="h-5 w-5 text-purple-600 dark:text-purple-400" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {activity.description}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {activity.time}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+        {/* Organisation Stats */}
+        <div className="grid grid-cols-3 gap-6 mb-8">
+          <Card className="p-4">
+            <div className="flex items-center">
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-4">
+                <RiProjectorLine className="h-6 w-6 text-purple-600 dark:text-purple-400" />
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                  <RiProjectorLine className="h-8 w-8 text-gray-400" />
+              <div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {organisation._count.projects}
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No recent activity</h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">Get started by creating your first project.</p>
-                <Link href="/main/projects/create">
-                  <Button>
-                    <RiAddLine className="mr-2 h-4 w-4" />
-                    Create Project
-                  </Button>
-                </Link>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Projects</div>
               </div>
-            )}
-          </Card>
-
-          {/* Quick Stats & Actions Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Stats */}
-            <Card className="p-6 transition-all duration-300 hover:shadow-md">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Quick Stats
-              </h3>
-              <div className="space-y-3">
-                <Link href="/main/projects" className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 hover:scale-[1.02] group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg transition-transform duration-200 group-hover:scale-110">
-                      <RiProjectorLine className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Projects</span>
-                  </div>
-                  <span className="text-sm font-bold text-gray-900 dark:text-white transition-colors duration-200 group-hover:text-purple-600 dark:group-hover:text-purple-400">{projectsCount}</span>
-                </Link>
-
-                <Link href="/main/teams" className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                      <RiTeamLine className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Teams</span>
-                  </div>
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">{teamsCount}</span>
-                </Link>
-
-                <Link href="/main/organisations" className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                      <RiBuildingLine className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Organisations</span>
-                  </div>
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">{organisationsCount}</span>
-                </Link>
-              </div>
-            </Card>
-
-            {/* Personal Account Actions */}
-            <Card className="p-6 transition-all duration-300 hover:shadow-md">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Account Actions
-              </h3>
-              <div className="space-y-3">
-                <Link href="/account/upload" className="block">
-                  <Button variant="outline" size="sm" className="w-full justify-start transition-all duration-200 hover:scale-105 hover:shadow-sm">
-                    <RiUploadLine className="mr-2 h-4 w-4" />
-                    Upload Personal Files
-                  </Button>
-                </Link>
-
-                <Link href="/main/developer" className="block">
-                  <Button variant="outline" size="sm" className="w-full justify-start transition-all duration-200 hover:scale-105 hover:shadow-sm">
-                    <RiKeyLine className="mr-2 h-4 w-4" />
-                    API Keys ({apiKeysCount})
-                  </Button>
-                </Link>
-
-                <Link href="/account/settings" className="block">
-                  <Button variant="outline" size="sm" className="w-full justify-start transition-all duration-200 hover:scale-105 hover:shadow-sm">
-                    <RiSettings3Line className="mr-2 h-4 w-4" />
-                    Account Settings
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          </div>
-        </div>
-
-        {/* Projects Section */}
-        {projectsData.recent.length > 0 && (
-          <Card className="p-6 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Active Projects
-              </h2>
-              <Link href="/main/projects" className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300">
-                View all {projectsCount} projects →
-              </Link>
             </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center">
+              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg mr-4">
+                <RiTeamLine className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {organisation._count.teams}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Teams</div>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-4">
+                <RiProjectorLine className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {organisation._count.members}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Members</div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {projectsData.recent.map((project) => (
-                <Link key={project.id} href={`/main/projects/${project.id}`} className="group">
-                  <div className="p-5 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md transition-all duration-200">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg group-hover:bg-brand-200 dark:group-hover:bg-brand-900/50 transition-colors">
-                        <RiProjectorLine className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+      {/* Projects Grid */}
+      {projects.length > 0 ? (
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Projects ({projects.length})
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project) => (
+              <Card key={project.id} className="p-6 hover:shadow-lg transition-all group cursor-pointer">
+                <Link href={`/main/organisations/${organisation.id}/projects/${project.id}`} className="block">
+                  {/* Project Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center min-w-0 flex-1">
+                      <div className="p-3 bg-brand-100 dark:bg-brand-900/30 rounded-xl mr-4 flex-shrink-0 group-hover:bg-brand-200 dark:group-hover:bg-brand-900/50 transition-colors">
+                        <RiProjectorLine className="w-6 h-6 text-brand-600 dark:text-brand-400" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-brand-900 dark:group-hover:text-brand-100 transition-colors truncate">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-gray-900 dark:text-white truncate text-lg group-hover:text-brand-900 dark:group-hover:text-brand-100 transition-colors">
                           {project.name}
                         </h3>
+                        <Badge variant={project.status === 'ACTIVE' ? 'success' : 'warning'} className="mt-1">
+                          {project.status}
+                        </Badge>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="flex items-center justify-between">
-                      <Badge variant={project.status === 'ACTIVE' ? 'success' : 'warning'}>
-                        {project.status}
-                      </Badge>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {project.progress}% complete
+                  {/* Description */}
+                  {project.description && (
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+                      {project.description}
+                    </p>
+                  )}
+
+                  {/* Progress */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Progress</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {project.progress}%
                       </span>
                     </div>
+                    <ProgressBar value={project.progress || 0} className="h-2" />
+                  </div>
 
-                    <div className="mt-3">
-                      <ProgressBar value={project.progress || 0} className="h-1.5" />
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center mb-1">
+                        <RiTeamLine className="h-4 w-4 text-green-600 dark:text-green-400 mr-1" />
+                      </div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {project._count.assignedTeams}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Teams
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center mb-1">
+                        <RiProjectorLine className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-1" />
+                      </div>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {project._count.allocatedResources}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Resources
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Teams */}
+                  {project.assignedTeams.length > 0 && (
+                    <div className="mb-4">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Teams:</div>
+                      <div className="flex flex-wrap gap-1">
+                        {project.assignedTeams.slice(0, 3).map((assignment) => (
+                          <Badge key={assignment.team.id} variant="outline" className="text-xs">
+                            {assignment.team.name}
+                          </Badge>
+                        ))}
+                        {project.assignedTeams.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{project.assignedTeams.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Enter Button */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Updated {new Date(project.updatedAt).toLocaleDateString('en-GB')}
+                    </div>
+                    <div className="flex items-center text-sm text-brand-600 dark:text-brand-400 group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors">
+                      Open <RiArrowRightLine className="ml-1 h-4 w-4" />
                     </div>
                   </div>
                 </Link>
-              ))}
-            </div>
-          </Card>
-        )}
-
-        {/* Quick Actions - Always Visible */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-            Get Started
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Link href="/main/projects/create" className="group">
-              <div className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-brand-400 dark:hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-brand-900/10 transition-all text-center">
-                <div className="p-3 bg-brand-100 dark:bg-brand-900/30 rounded-lg w-fit mx-auto mb-4 group-hover:bg-brand-200 dark:group-hover:bg-brand-900/50 transition-colors">
-                  <RiProjectorLine className="h-6 w-6 text-brand-600 dark:text-brand-400" />
-                </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Create Project</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Start a new project with resources</p>
-              </div>
-            </Link>
-
-            <Link href="/account/upload" className="group">
-              <div className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-brand-400 dark:hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-brand-900/10 transition-all text-center">
-                <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg w-fit mx-auto mb-4 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50 transition-colors">
-                  <RiUploadLine className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Upload Files</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Add files to IPFS storage</p>
-              </div>
-            </Link>
-
-            <Link href="/main/teams/create" className="group">
-              <div className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-brand-400 dark:hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-brand-900/10 transition-all text-center">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg w-fit mx-auto mb-4 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
-                  <RiTeamLine className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Create Team</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Set up team collaboration</p>
-              </div>
-            </Link>
+              </Card>
+            ))}
           </div>
+        </div>
+      ) : (
+        <Card className="p-12 text-center">
+          <RiProjectorLine className="mx-auto h-16 w-16 text-gray-400 mb-6" />
+          <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-3">
+            No Projects Yet
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-md mx-auto">
+            Create your first project in {organisation.name} to start managing teams, resources, and files.
+          </p>
+          <Link href={`/main/projects/new?org=${organisation.id}`}>
+            <Button size="lg">
+              <RiAddLine className="mr-2 h-5 w-5" />
+              Create First Project
+            </Button>
+          </Link>
         </Card>
+      )}
     </div>
   );
 }

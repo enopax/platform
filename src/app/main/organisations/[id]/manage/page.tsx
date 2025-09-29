@@ -66,7 +66,7 @@ export default async function ManageOrganisationPage({ params }: ManageOrganisat
         select: {
           members: true,
           teams: true,
-          projects: true,
+          assignedProjects: true,
           joinRequests: true
         }
       }

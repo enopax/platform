@@ -26,14 +26,14 @@ import { teamStorageService } from '@/lib/services/team-storage';
 export default async function TeamMembersPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; teamId: string }>;
 }) {
-  const { id } = await params;
+  const { id: organisationId, teamId } = await params;
   const session = await auth();
   if (!session) return null;
 
   const team = await prisma.team.findUnique({
-    where: { id },
+    where: { id: teamId },
     include: {
       organisation: {
         select: {
@@ -190,7 +190,7 @@ export default async function TeamMembersPage({
 
             {canManageMembers && (
               <div className="flex items-center gap-3">
-                <Link href={`/main/teams/${team.id}/settings`}>
+                <Link href={`/main/organisations/${params.id}/teams/${team.id}/settings`}>
                   <Button variant="outline" size="sm">
                     <RiSettings3Line className="mr-2 h-4 w-4" />
                     Team Settings

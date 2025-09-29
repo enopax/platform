@@ -76,15 +76,17 @@ export default async function Page() {
             <div className="absolute mb-40 top-40 inset-0 flex flex-col justify-between items-center gap-32 lg:flex-row md:top-0">
               <span className="max-w-2xl relative z-10 text-center lg:text-left">
                 <h1 className="text-5xl md:text-7xl font-bold text-brand-500">
-                  IPFS Storage
+                  Web3 Infrastructure
                 </h1>
                 <p className="mt-6 text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-2xl">
                   European-hosted, decentralized storage platform. Upload via API, drag & drop interface, or CLI. Perfect for digital service providers, journalists, and gaming assets.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Button className="px-8 py-3 text-lg font-semibold bg-brand-600 hover:bg-brand-700 text-white">
-                    Upload Files
-                  </Button>
+                  <Link href="/main">
+                    <Button className="px-8 py-3 text-lg font-semibold bg-brand-600 hover:bg-brand-700 text-white">
+                      Start Now
+                    </Button>
+                  </Link>
                   <Link href="/api">
                     <Button variant="outline" className="px-8 py-3 text-lg font-semibold border-brand-600 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20">
                       View API Docs
@@ -186,9 +188,11 @@ export default async function Page() {
               Start with free storage, scale with flexible pricing. PayPal, Stripe, and crypto payments accepted.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="px-8 py-3 text-lg font-semibold bg-brand-600 hover:bg-brand-700 text-white">
-                Create Account
-              </Button>
+              <Link href="/signup">
+                <Button className="px-8 py-3 text-lg font-semibold bg-brand-600 hover:bg-brand-700 text-white">
+                  Create an Account
+                </Button>
+              </Link>
               <Link href="/api">
                 <Button variant="outline" className="px-8 py-3 text-lg font-semibold">
                   View API Docs

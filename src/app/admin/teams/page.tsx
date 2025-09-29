@@ -24,7 +24,7 @@ export default async function TeamAdminPage({
       _count: {
         select: {
           members: true,
-          projects: true,
+          assignedProjects: true,
         },
       },
     },

@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import CreateResourceForm from '@/components/form/CreateResourceForm';
 
 interface AddResourcePageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; projectId: string }>;
 }
 
 // This component fetches data on the client side for better UX
@@ -31,10 +31,10 @@ export default function AddResourcePage({ params }: AddResourcePageProps) {
   useEffect(() => {
     async function loadData() {
       try {
-        const { id } = await params;
+        const { id: organisationId, projectId } = await params;
 
         // Fetch project data
-        const projectResponse = await fetch(`/api/project/${id}`);
+        const projectResponse = await fetch(`/api/project/${projectId}`);
         if (projectResponse.ok) {
           const projectData = await projectResponse.json();
           setProject(projectData.project);
@@ -108,11 +108,11 @@ export default function AddResourcePage({ params }: AddResourcePageProps) {
     // Handle resource creation
     console.log('Creating resource:', resourceData);
     // You'll need to implement the actual resource creation logic here
-    router.push(`/main/projects/${project.id}`);
+    router.push(`/main/organisations/${params.id}/projects/${project.id}`);
   };
 
   const handleCancel = () => {
-    router.push(`/main/projects/${project.id}`);
+    router.push(`/main/organisations/${params.id}/projects/${project.id}`);
   };
 
   // Remove the server-side data fetching - now handled in useEffect
@@ -224,16 +224,19 @@ export default function AddResourcePage({ params }: AddResourcePageProps) {
 
               <div className="space-y-3 text-sm">
                 <div>
-                  <span className="text-gray-500">Team:</span>
+                  <span className="text-gray-500">Teams:</span>
                   <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                    {project.team?.name || 'Unknown'}
+                    {project.assignedTeams?.length > 0
+                      ? project.assignedTeams.map(at => at.team.name).join(', ')
+                      : 'Unassigned'
+                    }
                   </span>
                 </div>
 
                 <div>
                   <span className="text-gray-500">Organisation:</span>
                   <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                    {project.team?.organisation?.name || 'Personal Team'}
+                    {project.organisation?.name || 'Unknown'}
                   </span>
                 </div>
 
