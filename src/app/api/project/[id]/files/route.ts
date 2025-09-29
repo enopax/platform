@@ -51,7 +51,7 @@ export async function GET(
       project: {
         id: project.id,
         name: project.name,
-        team: project.team,
+        assignedTeams: project.assignedTeams,
         organisation: project.organisation,
       },
     });

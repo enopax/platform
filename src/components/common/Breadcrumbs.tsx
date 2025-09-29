@@ -13,7 +13,7 @@ interface BreadcrumbsProps {
   items?: BreadcrumbItem[];
 }
 
-// Custom breadcrumbs for project pages
+// Custom breadcrumbs for project pages (global context)
 export function ProjectBreadcrumbs({
   projectName,
   projectId,
@@ -27,7 +27,7 @@ export function ProjectBreadcrumbs({
     <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
       <Link href="/main" className="hover:text-gray-900 dark:hover:text-gray-100 flex items-center">
         <RiHomeLine className="h-4 w-4 mr-1" />
-        Dashboard
+        Main
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
       <Link href="/main/projects" className="hover:text-gray-900 dark:hover:text-gray-100">
@@ -36,6 +36,141 @@ export function ProjectBreadcrumbs({
       <RiArrowRightLine className="h-3 w-3" />
       <Link href={`/main/projects/${projectId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {projectName}
+      </Link>
+      {currentPage && (
+        <>
+          <RiArrowRightLine className="h-3 w-3" />
+          <span className="text-gray-900 dark:text-gray-100 font-medium">{currentPage}</span>
+        </>
+      )}
+    </nav>
+  );
+}
+
+// Custom breadcrumbs for organisation-specific project pages
+export function OrganisationProjectBreadcrumbs({
+  organisationId,
+  organisationName,
+  projectName,
+  projectId,
+  currentPage
+}: {
+  organisationId: string;
+  organisationName: string;
+  projectName: string;
+  projectId: string;
+  currentPage?: string;
+}) {
+  return (
+    <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+      <Link href="/main" className="hover:text-gray-900 dark:hover:text-gray-100">
+        Main
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href="/main/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
+        Organisations
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href={`/main/organisations/${organisationId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+        {organisationName}
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href={`/main/organisations/${organisationId}/projects`} className="hover:text-gray-900 dark:hover:text-gray-100">
+        Projects
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href={`/main/organisations/${organisationId}/projects/${projectId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+        {projectName}
+      </Link>
+      {currentPage && (
+        <>
+          <RiArrowRightLine className="h-3 w-3" />
+          <span className="text-gray-900 dark:text-gray-100 font-medium">{currentPage}</span>
+        </>
+      )}
+    </nav>
+  );
+}
+
+// Custom breadcrumbs for organisation-specific team pages
+export function OrganisationTeamBreadcrumbs({
+  organisationId,
+  organisationName,
+  teamName,
+  teamId,
+  currentPage
+}: {
+  organisationId: string;
+  organisationName: string;
+  teamName: string;
+  teamId: string;
+  currentPage?: string;
+}) {
+  return (
+    <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+      <Link href="/main" className="hover:text-gray-900 dark:hover:text-gray-100">
+        Main
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href="/main/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
+        Organisations
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href={`/main/organisations/${organisationId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+        {organisationName}
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href={`/main/organisations/${organisationId}/teams`} className="hover:text-gray-900 dark:hover:text-gray-100">
+        Teams
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href={`/main/organisations/${organisationId}/teams/${teamId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+        {teamName}
+      </Link>
+      {currentPage && (
+        <>
+          <RiArrowRightLine className="h-3 w-3" />
+          <span className="text-gray-900 dark:text-gray-100 font-medium">{currentPage}</span>
+        </>
+      )}
+    </nav>
+  );
+}
+
+// Custom breadcrumbs for organisation-specific resource pages
+export function OrganisationResourceBreadcrumbs({
+  organisationId,
+  organisationName,
+  resourceName,
+  resourceId,
+  currentPage
+}: {
+  organisationId: string;
+  organisationName: string;
+  resourceName: string;
+  resourceId: string;
+  currentPage?: string;
+}) {
+  return (
+    <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+      <Link href="/main" className="hover:text-gray-900 dark:hover:text-gray-100">
+        Main
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href="/main/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
+        Organisations
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href={`/main/organisations/${organisationId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+        {organisationName}
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href={`/main/organisations/${organisationId}/resources`} className="hover:text-gray-900 dark:hover:text-gray-100">
+        Resources
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href={`/main/organisations/${organisationId}/resources/${resourceId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+        {resourceName}
       </Link>
       {currentPage && (
         <>
@@ -57,7 +192,7 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
     <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
       <Link href="/main" className="hover:text-gray-900 dark:hover:text-gray-100 flex items-center">
         <RiHomeLine className="h-4 w-4 mr-1" />
-        Dashboard
+        Main
       </Link>
       {breadcrumbItems.map((item, index) => (
         <div key={index} className="flex items-center space-x-2">
@@ -79,12 +214,23 @@ function generateBreadcrumbsFromPath(pathname: string): BreadcrumbItem[] {
   const segments = pathname.split('/').filter(segment => segment && segment !== 'main');
   const breadcrumbs: BreadcrumbItem[] = [];
 
+  // Check if this is an organisation-specific route
+  const isOrgRoute = segments[0] === 'organisations' && segments.length > 1;
+
   for (let i = 0; i < segments.length; i++) {
     const segment = segments[i];
     const isLast = i === segments.length - 1;
 
-    // Skip IDs (typically UUIDs or numeric IDs)
+    // Skip IDs (typically UUIDs or numeric IDs) but handle organisation names
     if (segment.match(/^[a-f0-9-]{36}$/) || segment.match(/^\d+$/)) {
+      // For organisation routes, show organisation name for the ID segment
+      if (isOrgRoute && i === 1) {
+        // This would be the organisation ID - in real app you'd fetch the name
+        breadcrumbs.push({
+          label: 'Organisation', // In real app, fetch actual name
+          href: isLast ? undefined : `/main/${segments.slice(0, i + 1).join('/')}`
+        });
+      }
       continue;
     }
 

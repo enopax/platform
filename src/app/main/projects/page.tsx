@@ -22,45 +22,75 @@ import Link from 'next/link';
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ team?: string; search?: string; sort?: string; status?: string }>;
+  searchParams: Promise<{ team?: string; search?: string; sort?: string; status?: string; org?: string }>;
 }) {
   const session = await auth();
   if (!session) return null;
 
-  const { team: selectedTeamId, search, sort, status } = await searchParams;
+  const { team: selectedTeamId, search, sort, status, org: organisationId } = await searchParams;
 
-  // Simplified queries - only check team membership, not organisation membership
+  // Get user's organisation memberships to filter projects
+  const isAdmin = session.user.role === 'ADMIN';
+  const userOrganisations = isAdmin
+    ? await prisma.organisation.findMany({
+        where: { isActive: true },
+        select: { id: true }
+      })
+    : await prisma.organisationMember.findMany({
+        where: { userId: session.user.id },
+        select: { organisationId: true }
+      });
+
+  const organisationIds = isAdmin
+    ? userOrganisations.map(org => org.id)
+    : (userOrganisations as { organisationId: string }[]).map(m => m.organisationId);
+
+  // Build where clause for projects
+  const projectWhereClause = {
+    organisationId: organisationId ? organisationId : { in: organisationIds },
+    isActive: true
+  };
+
+  // Query projects with organisation-centric model
   const [allProjects, teams] = await Promise.all([
     prisma.project.findMany({
-      where: {
-        team: {
-          OR: [
-            { ownerId: session.user.id },
-            { members: { some: { userId: session.user.id } } }
-          ]
-        }
-      },
+      where: projectWhereClause,
       include: {
-        team: {
+        organisation: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        assignedTeams: {
           include: {
-            owner: true,
-            organisation: true,
-            _count: {
-              select: {
-                members: true,
-                projects: true
+            team: {
+              include: {
+                owner: true,
+                _count: {
+                  select: {
+                    members: true,
+                    assignedProjects: true
+                  }
+                }
               }
             }
           }
         },
-        resources: {
+        allocatedResources: {
           where: {
-            isActive: true,
+            resource: {
+              isActive: true
+            }
           },
           select: {
-            id: true,
-            name: true,
-            type: true,
+            resource: {
+              select: {
+                id: true,
+                name: true,
+                type: true
+              }
+            }
           }
         }
       },
@@ -68,25 +98,29 @@ export default async function ProjectsPage({
         { updatedAt: 'desc' }
       ]
     }),
+    // Get teams from user's organisations for filtering
     prisma.team.findMany({
       where: {
-        OR: [
-          { ownerId: session.user.id },
-          { members: { some: { userId: session.user.id } } }
-        ]
+        organisationId: { in: organisationIds },
+        isActive: true
       },
       include: {
         owner: true,
-        organisation: true,
+        organisation: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
         _count: {
           select: {
             members: true,
-            projects: true
+            assignedProjects: true
           }
         }
       },
       orderBy: [
-        { isPersonal: 'desc' },
+        { teamType: 'asc' },
         { name: 'asc' }
       ]
     })
@@ -94,7 +128,9 @@ export default async function ProjectsPage({
 
   // Filter and sort projects
   let filteredProjects = selectedTeamId
-    ? allProjects.filter(project => project.teamId === selectedTeamId)
+    ? allProjects.filter(project =>
+        project.assignedTeams.some(at => at.team.id === selectedTeamId)
+      )
     : allProjects;
 
   // Apply search filter
@@ -103,7 +139,8 @@ export default async function ProjectsPage({
     filteredProjects = filteredProjects.filter(project =>
       project.name.toLowerCase().includes(searchTerm) ||
       project.description?.toLowerCase().includes(searchTerm) ||
-      project.team.name.toLowerCase().includes(searchTerm)
+      project.organisation.name.toLowerCase().includes(searchTerm) ||
+      project.assignedTeams.some(at => at.team.name.toLowerCase().includes(searchTerm))
     );
   }
 
@@ -163,7 +200,7 @@ export default async function ProjectsPage({
             selectedTeamId={selectedTeamId}
             totalProjects={allProjects.length}
           />
-          <Link href="/main/projects/new">
+          <Link href={`/main/projects/new${organisationId ? `?org=${organisationId}` : ''}`}>
             <Button className="w-full sm:w-auto">
               <RiAddLine className="mr-2 h-4 w-4" />
               Create Project
@@ -184,7 +221,7 @@ export default async function ProjectsPage({
           Quick Actions
         </h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Link href="/main/projects/new" className="group">
+          <Link href={`/main/projects/new${organisationId ? `?org=${organisationId}` : ''}`} className="group">
             <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-400 dark:hover:border-brand-500 transition-colors cursor-pointer">
               <RiAddLine className="h-6 w-6 text-gray-400 group-hover:text-brand-500 mb-2" />
               <h4 className="font-medium text-gray-900 dark:text-white">Create New Project</h4>

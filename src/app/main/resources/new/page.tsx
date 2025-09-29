@@ -1,24 +1,69 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Card } from '@/components/common/Card';
+import { Button } from '@/components/common/Button';
 import { RiServerLine } from '@remixicon/react';
 import CreateResourceForm from '@/components/form/CreateResourceForm';
-import { teamService } from '@/lib/services/team';
+import Link from 'next/link';
 
-export default async function CreateResourcePage() {
+export default async function CreateResourcePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ org?: string }>;
+}) {
   const session = await auth();
   if (!session) return null;
 
-  // Ensure user has a personal team, then get all their teams
-  await teamService.ensurePersonalTeam(session.user.id);
+  const { org: organisationId } = await searchParams;
 
-  // Get teams where the user is owner or member
-  const userTeams = await prisma.team.findMany({
+  if (!organisationId) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-12">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          Organisation Required
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
+          Please select an organisation before creating resources.
+        </p>
+        <Link href="/main/select-organisation">
+          <Button>Select Organisation</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  // Verify user has access to this organisation
+  const isAdmin = session.user.role === 'ADMIN';
+  const membership = isAdmin ? true : await prisma.organisationMember.findUnique({
     where: {
-      OR: [
-        { ownerId: session.user.id },
-        { members: { some: { userId: session.user.id } } }
-      ]
+      userId_organisationId: {
+        userId: session.user.id,
+        organisationId: organisationId
+      }
+    }
+  });
+
+  if (!membership) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-12">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          Access Denied
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
+          You don't have access to this organisation.
+        </p>
+        <Link href="/main/select-organisation">
+          <Button>Select Organisation</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  // Get teams in this organisation
+  const organisationTeams = await prisma.team.findMany({
+    where: {
+      organisationId: organisationId,
+      isActive: true
     },
     include: {
       organisation: {
@@ -29,7 +74,7 @@ export default async function CreateResourcePage() {
       }
     },
     orderBy: [
-      { isPersonal: 'desc' }, // Personal team first
+      { teamType: 'asc' }, // Admin teams first
       { name: 'asc' }
     ]
   });
@@ -55,7 +100,7 @@ export default async function CreateResourcePage() {
         <Card className="p-6">
           <CreateResourceForm
             currentUserId={session.user.id}
-            teams={userTeams}
+            teams={organisationTeams}
           />
         </Card>
       </div>

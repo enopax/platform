@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { projectService, UpdateProjectData } from '@/lib/services/project';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
@@ -15,16 +16,58 @@ export async function GET(
 
     const { id: projectId } = await params;
 
-    // Check if user can access this project
-    const canAccess = await projectService.canUserAccessProject(session.user.id, projectId);
-    if (!canAccess) {
-      return NextResponse.json({ error: 'Project not found or access denied' }, { status: 404 });
-    }
+    // Get project with organisation-centric structure
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        organisation: {
+          select: {
+            id: true,
+            name: true,
+          }
+        },
+        assignedTeams: {
+          include: {
+            team: {
+              include: {
+                owner: true,
+                _count: {
+                  select: {
+                    members: true,
+                    assignedProjects: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        allocatedResources: {
+          select: {
+            resource: {
+              select: {
+                id: true,
+                name: true,
+                type: true
+              }
+            }
+          }
+        }
+      }
+    });
 
-    // Get project details
-    const project = await projectService.getProjectById(projectId);
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // Check if user has access - member of assigned teams or organisation
+    const isAdmin = session.user.role === 'ADMIN';
+    const hasAccess = isAdmin ||
+      project.assignedTeams.some(at =>
+        at.team.members?.some(member => member.userId === session.user.id)
+      );
+
+    if (!hasAccess) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     return NextResponse.json({
@@ -44,12 +87,11 @@ export async function GET(
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
         organisationId: project.organisationId,
-        teamId: project.teamId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
         organisation: project.organisation,
-        team: project.team,
+        assignedTeams: project.assignedTeams,
         fileCount: project.fileCount,
       },
     });
@@ -99,12 +141,11 @@ export async function PUT(
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
         organisationId: project.organisationId,
-        teamId: project.teamId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
         organisation: project.organisation,
-        team: project.team,
+        assignedTeams: project.assignedTeams,
         fileCount: project.fileCount,
       },
     });

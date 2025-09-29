@@ -137,9 +137,6 @@ export async function register(state: object | null, formData: FormData) {
       }
     });
 
-    // Create personal team for the new user
-    await teamService.ensurePersonalTeam(user.id);
-
     // Create initial storage quota for the user
     await createOrUpdateUserStorageQuota(user.id, StorageTier.FREE_500MB);
 

@@ -74,7 +74,7 @@ const columns: ColumnDef<TeamWithDetails>[] = [
   },
   {
     header: 'Projects',
-    accessorKey: '_count.projects',
+    accessorKey: '_count.assignedProjects',
     meta: {
       align: 'text-center',
     },

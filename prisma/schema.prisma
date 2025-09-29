@@ -19,12 +19,21 @@ enum UserRole {
 enum OrganisationRole {
   MEMBER
   MANAGER
+  ADMIN      // Organisation administrators with elevated privileges
   OWNER
 }
 
 enum TeamRole {
   MEMBER
   LEAD
+  ADMIN      // Team administrator
+}
+
+enum TeamType {
+  ADMIN      // Organisation administration team
+  DEV        // Development team
+  GUEST      // Guest access team
+  CUSTOM     // Custom team type
 }
 
 enum ProjectStatus {
@@ -192,19 +201,50 @@ model Organisation {
   name        String
   description String?
   website     String?
-  address     String?
+
+  // Address Information
+  streetAddress String?   @map("street_address")
+  city          String?
+  state         String?
+  postalCode    String?   @map("postal_code")
+  country       String?   @default("United Kingdom")
+
+  // Contact Information
   phone       String?
   email       String?
   logo        String?
-  isActive    Boolean   @default(true)
+
+  // Billing Information
+  vatNumber       String?   @map("vat_number")
+  taxId           String?   @map("tax_id")
+  billingEmail    String?   @map("billing_email")
+
+  // Payment Methods (encrypted JSON)
+  paymentMethods  Json?     @map("payment_methods") // Encrypted credit card info
+
+  // Subscription and Billing
+  subscriptionId    String?   @map("subscription_id")
+  subscriptionTier  String?   @map("subscription_tier") @default("FREE")
+  subscriptionEnds  DateTime? @map("subscription_ends")
+
+  // Organisation Settings
+  isActive        Boolean   @default(true) @map("is_active")
+  maxTeams        Int?      @map("max_teams") @default(10)
+  maxProjects     Int?      @map("max_projects") @default(50)
+  maxMembers      Int?      @map("max_members") @default(100)
+
+  // Ownership
   ownerId     String    @map("owner_id")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  owner    User                  @relation("OrganisationOwner", fields: [ownerId], references: [id], onDelete: Restrict)
-  members  OrganisationMember[]
-  teams    Team[]
-  joinRequests OrganisationJoinRequest[]
+  // Relations
+  owner         User                        @relation("OrganisationOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  members       OrganisationMember[]
+  teams         Team[]
+  projects      Project[]                   // Projects now belong directly to organisations
+  resources     Resource[]                  // Resources now belong directly to organisations
+  joinRequests  OrganisationJoinRequest[]
 
   @@map("organisations")
 }
@@ -228,28 +268,30 @@ model Team {
   id             String         @id @default(cuid())
   name           String
   description    String?
+  teamType       TeamType       @default(CUSTOM) @map("team_type") // Type of team (ADMIN, DEV, GUEST, CUSTOM)
   color          String?        // Hex color code for team identification
   isActive       Boolean        @default(true)
   isPersonal     Boolean        @default(false) @map("is_personal") // Personal team flag
   isDeletable    Boolean        @default(true) @map("is_deletable") // Can this team be deleted
+  isDefault      Boolean        @default(false) @map("is_default") // Default organisation team
   visibility     TeamVisibility @default(PRIVATE)
   allowJoinRequests Boolean     @default(true)
   maxMembers     Int?           // Optional member limit
-  tags           String[]       // Team categorization
-  organisationId String?        @map("organisation_id") // Optional organisation
+  tags           String[]       // Team categorisation
+  organisationId String         @map("organisation_id") // Required organisation
   ownerId        String         @map("owner_id")
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  organisation Organisation?     @relation(fields: [organisationId], references: [id], onDelete: SetNull)
-  owner        User              @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Restrict)
-  members      TeamMember[]
-  projects     Project[]         @relation("ProjectTeam")
-  joinRequests TeamJoinRequest[]
+  organisation   Organisation      @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  owner          User              @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  members        TeamMember[]
+  assignedProjects ProjectTeam[]   // Projects assigned to this team
+  joinRequests   TeamJoinRequest[]
   storageResource TeamStorageResource?
-  files        UserFile[]
+  files          UserFile[]
 
-  @@unique([name, ownerId]) // Team names must be unique per owner
+  @@unique([name, organisationId]) // Team names must be unique per organisation
   @@map("teams")
 }
 
@@ -283,24 +325,40 @@ model Project {
   status         ProjectStatus   @default(PLANNING)
   priority       ProjectPriority @default(MEDIUM)
   budget         Decimal?        @db.Decimal(15, 2)
-  currency       String?         @default("USD")
+  currency       String?         @default("GBP")
   startDate      DateTime?
   endDate        DateTime?
   actualEndDate  DateTime?
   progress       Int             @default(0) // Progress percentage (0-100)
   repositoryUrl  String?         // Git repository URL
   documentationUrl String?       // Documentation URL
-  teamId         String          @map("team_id") // Assigned team
+  organisationId String          @map("organisation_id") // Projects belong to organisations
   isActive       Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
-  team         Team          @relation("ProjectTeam", fields: [teamId], references: [id], onDelete: Restrict)
-  files        UserFile[]
-  resources    Resource[]    // Resources belong to projects
+  organisation     Organisation      @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  assignedTeams    ProjectTeam[]     // Teams assigned to this project
+  allocatedResources ProjectResource[] // Resources allocated to this project
+  files            UserFile[]
 
-  @@unique([name, teamId]) // Project names must be unique within a team
+  @@unique([name, organisationId]) // Project names must be unique within organisation
   @@map("projects")
+}
+
+model ProjectTeam {
+  id        String   @id @default(cuid())
+  projectId String   @map("project_id")
+  teamId    String   @map("team_id")
+  assignedBy String  @map("assigned_by") // User who assigned the team
+  assignedAt DateTime @default(now()) @map("assigned_at")
+  role       String?  // Team role in project (lead, support, etc.)
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, teamId])
+  @@map("project_teams")
 }
 
 model OrganisationJoinRequest {
@@ -507,12 +565,12 @@ model Resource {
   quotaLimit    BigInt?        @map("quota_limit") // Resource quota limit (bytes, requests, etc.)
   currentUsage  BigInt         @default(0) @map("current_usage") // Current usage
 
-  // Management - resources belong to projects
-  ownerId       String         @map("owner_id") // User who created the resource
-  projectId     String         @map("project_id") // Project this resource belongs to (required)
+  // Management - resources belong to organisations
+  ownerId         String         @map("owner_id") // User who created the resource
+  organisationId  String         @map("organisation_id") // Organisation this resource belongs to
 
   // Sharing and access
-  isPublic      Boolean        @default(false) @map("is_public") // Public access within project
+  isPublic      Boolean        @default(false) @map("is_public") // Public access within organisation
   tags          String[]       // Categorisation tags
 
   // Lifecycle
@@ -522,10 +580,26 @@ model Resource {
   deletedAt     DateTime?      @map("deleted_at") // Soft delete
 
   // Relations
-  owner         User           @relation("ResourceOwner", fields: [ownerId], references: [id], onDelete: Restrict)
-  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner           User              @relation("ResourceOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  organisation    Organisation      @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  allocatedProjects ProjectResource[] // Projects this resource is allocated to
 
   @@map("resources")
+}
+
+model ProjectResource {
+  id          String   @id @default(cuid())
+  projectId   String   @map("project_id")
+  resourceId  String   @map("resource_id")
+  allocatedBy String   @map("allocated_by") // User who allocated the resource
+  allocatedAt DateTime @default(now()) @map("allocated_at")
+  quotaLimit  BigInt?  @map("quota_limit") // Project-specific quota limit
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  resource    Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, resourceId])
+  @@map("project_resources")
 }
 
 model ApiKey {

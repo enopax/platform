@@ -75,7 +75,7 @@ export default async function TeamSettingsPage({ params }: TeamSettingsPageProps
         _count: {
           select: {
             members: true,
-            projects: true
+            assignedProjects: true
           }
         }
       },
@@ -268,7 +268,7 @@ export default async function TeamSettingsPage({ params }: TeamSettingsPageProps
               <div>
                 <span className="text-gray-500">Projects:</span>
                 <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                  {team._count.projects}
+                  {team._count.assignedProjects}
                 </span>
               </div>
 
