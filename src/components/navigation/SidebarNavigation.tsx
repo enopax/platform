@@ -33,27 +33,26 @@ type Project = {
 type Organisation = {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   _count?: {
     projects: number;
     teams: number;
     members: number;
   };
+  projects?: Project[];
 };
 
 export default function SidebarNavigation({
   user,
+  organisations: initialOrganisations = [],
 }: {
-  user: Partial<User>,
+  user: Partial<User>;
+  organisations?: Organisation[];
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { open } = useCommandPalette();
 
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [organisation, setOrganisation] = useState<Organisation | null>(null);
-  const [organisations, setOrganisations] = useState<Organisation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
 
   // Get organisation ID from pathname
@@ -69,57 +68,12 @@ export default function SidebarNavigation({
 
   const organisationId = getOrganisationId();
 
-  // Fetch user organisations and selected organisation data
-  useEffect(() => {
-    async function fetchOrganisations() {
-      try {
-        // Fetch all user's organisations
-        const response = await fetch('/api/organisations');
-        if (response.ok) {
-          const data = await response.json();
-          setOrganisations(data.organisations || []);
-        }
-      } catch (error) {
-        console.error('Error fetching organisations:', error);
-      }
-    }
+  // Find current organisation and its projects from server-provided data
+  const organisation = organisationId
+    ? initialOrganisations.find(org => org.id === organisationId) || null
+    : null;
 
-    fetchOrganisations();
-  }, []);
-
-  // Fetch projects and organisation data for selected organisation
-  useEffect(() => {
-    if (!organisationId) {
-      setIsLoading(false);
-      return;
-    }
-
-    async function fetchData() {
-      try {
-        setIsLoading(true);
-
-        // Fetch organisation info
-        const orgResponse = await fetch(`/api/organisations/${organisationId}`);
-        if (orgResponse.ok) {
-          const orgData = await orgResponse.json();
-          setOrganisation(orgData);
-        }
-
-        // Fetch projects in this organisation
-        const projectsResponse = await fetch(`/api/organisations/${organisationId}/projects`);
-        if (projectsResponse.ok) {
-          const projectsData = await projectsResponse.json();
-          setProjects(projectsData.projects || []);
-        }
-      } catch (error) {
-        console.error('Error fetching sidebar data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [organisationId]);
+  const projects = organisation?.projects || [];
 
   const isActivePath = (href: string) => {
     if (href === '/main') {
@@ -178,9 +132,9 @@ export default function SidebarNavigation({
           {/* Dropdown */}
           {showOrgDropdown && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-              {organisations.length > 0 ? (
+              {initialOrganisations.length > 0 ? (
                 <>
-                  {organisations.map((org) => (
+                  {initialOrganisations.map((org) => (
                     <Link
                       key={org.id}
                       href={`/main/organisations/${org.id}`}
@@ -264,15 +218,7 @@ export default function SidebarNavigation({
               </Link>
             </div>
 
-            {isLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="animate-pulse">
-                    <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded"></div>
-                  </div>
-                ))}
-              </div>
-            ) : projects.length > 0 ? (
+            {projects.length > 0 ? (
               <div className="space-y-1">
                 {projects.map((project) => {
                   // Determine if we're in organisation context based on current path
