@@ -7,21 +7,25 @@ import { findProjects } from '@/actions/project';
 // Extended Project type with search results
 interface SearchableProject extends Project {
   id: string;
-  team: {
+  organisation: {
+    id: string;
     name: string;
-    organisation?: {
-      name: string;
-    } | null;
-    owner: {
-      name: string | null;
-      firstname: string | null;
-      lastname: string | null;
-      email: string;
-    };
-    _count: {
-      members: number;
-    };
   };
+  assignedTeams: {
+    team: {
+      id: string;
+      name: string;
+      owner: {
+        name: string | null;
+        firstname: string | null;
+        lastname: string | null;
+        email: string;
+      };
+      _count: {
+        members: number;
+      };
+    };
+  }[];
 }
 
 interface ProjectSearchProps extends Omit<GenericSearchProps<SearchableProject>, 'searchFunction' | 'getDisplayName' | 'getSecondaryText' | 'getBadgeText' | 'getBadgeVariant'> {
@@ -40,11 +44,12 @@ export default function ProjectSearch({
 
   const getSecondaryText = (project: SearchableProject): string | null => {
     if (project.description) {
-      return project.description.length > 60 
-        ? `${project.description.substring(0, 60)}...` 
+      return project.description.length > 60
+        ? `${project.description.substring(0, 60)}...`
         : project.description;
     }
-    return `${project.team.organisation?.name || 'Personal Team'} • Team: ${project.team.name}`;
+    const teamNames = project.assignedTeams.map(at => at.team.name).join(', ');
+    return `${project.organisation.name} • Teams: ${teamNames || 'Unassigned'}`;
   };
 
   const getBadgeText = (project: SearchableProject): string => {

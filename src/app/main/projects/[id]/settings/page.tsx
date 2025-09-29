@@ -6,7 +6,8 @@ import { Badge } from '@/components/common/Badge';
 import { ProjectBreadcrumbs } from '@/components/common/Breadcrumbs';
 import ProjectForm from '@/components/form/ProjectForm';
 import {
-  RiSettingsLine
+  RiSettingsLine,
+  RiProjectorLine
 } from '@remixicon/react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -26,19 +27,29 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
     prisma.project.findUnique({
       where: { id },
       include: {
-        team: {
+        organisation: {
+          select: {
+            id: true,
+            name: true,
+          }
+        },
+        assignedTeams: {
           include: {
-            owner: true,
-            organisation: {
+            team: {
               include: {
-                members: true
-              }
+                owner: true,
+                organisation: {
+                  include: {
+                    members: true
+                  }
+                },
+                members: {
+                  include: {
+                    user: true
+                  }
+                }
+              },
             },
-            members: {
-              include: {
-                user: true
-              }
-            }
           },
         },
       },
@@ -71,14 +82,14 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
     notFound();
   }
 
-  // Check if user has access to this project (member of the team or organisation)
-  const hasAccess = projectRaw.team.members.some(
-    member => member.userId === session.user.id
+  // Check if user has access to this project (member of assigned teams or organisation)
+  const hasAccess = projectRaw.assignedTeams.some(
+    at => at.team.members.some(member => member.userId === session.user.id)
   ) || (
-    projectRaw.team.organisation &&
-    (projectRaw.team.organisation.members?.some(
+    projectRaw.organisation &&
+    projectRaw.organisation.members?.some(
       member => member.userId === session.user.id
-    ) || projectRaw.team.organisation.ownerId === session.user.id)
+    )
   );
 
   if (!hasAccess) {
@@ -183,16 +194,19 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
 
             <div className="space-y-3 text-sm">
               <div>
-                <span className="text-gray-500">Team:</span>
+                <span className="text-gray-500">Teams:</span>
                 <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                  {project.team.name}
+                  {project.assignedTeams.length > 0
+                    ? project.assignedTeams.map(at => at.team.name).join(', ')
+                    : 'Unassigned'
+                  }
                 </span>
               </div>
 
               <div>
                 <span className="text-gray-500">Organisation:</span>
                 <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                  {project.team.organisation?.name || 'Personal Team'}
+                  {project.organisation.name}
                 </span>
               </div>
 

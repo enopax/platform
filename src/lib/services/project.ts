@@ -1,5 +1,6 @@
 import { PrismaClient, ProjectStatus, ProjectPriority } from '@prisma/client';
 import { teamService } from './team';
+import { organisationService } from './organisation';
 
 const prisma = new PrismaClient();
 
@@ -15,7 +16,8 @@ export interface CreateProjectData {
   progress?: number;
   repositoryUrl?: string;
   documentationUrl?: string;
-  teamId: string;
+  organisationId: string;
+  assignedTeamIds?: string[];
 }
 
 export interface UpdateProjectData {
@@ -31,7 +33,8 @@ export interface UpdateProjectData {
   progress?: number;
   repositoryUrl?: string;
   documentationUrl?: string;
-  teamId?: string;
+  organisationId?: string;
+  assignedTeamIds?: string[];
 }
 
 export interface ProjectInfo {
@@ -48,18 +51,24 @@ export interface ProjectInfo {
   progress: number;
   repositoryUrl?: string;
   documentationUrl?: string;
-  teamId: string;
+  organisationId: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  team: {
+  organisation: {
     id: string;
     name: string;
-    organisation?: {
+  };
+  assignedTeams: {
+    team: {
       id: string;
       name: string;
-    } | null;
-  };
+      owner: {
+        id: string;
+        name: string | null;
+      };
+    };
+  }[];
   fileCount?: number;
 }
 
@@ -67,22 +76,26 @@ export class ProjectService {
 
   async createProject(userId: string, data: CreateProjectData): Promise<ProjectInfo> {
     try {
-      // Verify user is a member of the team
-      const isTeamMember = await teamService.isUserMember(userId, data.teamId);
-      if (!isTeamMember) {
-        throw new Error('You are not a member of the specified team');
+      // Verify user is a member of the organisation
+      const isOrganisationMember = await organisationService.isUserMember(userId, data.organisationId);
+      if (!isOrganisationMember) {
+        throw new Error('You are not a member of the specified organisation');
       }
 
-      // Get team details to check organisation
-      const team = await teamService.getTeamById(data.teamId);
-      if (!team) {
-        throw new Error('Team not found');
-      }
-
-      // Check if project name is already taken within the team
-      const isNameAvailable = await this.validateProjectName(data.name, data.teamId);
+      // Check if project name is already taken within the organisation
+      const isNameAvailable = await this.validateProjectName(data.name, data.organisationId);
       if (!isNameAvailable) {
-        throw new Error('Project name is already taken within this team');
+        throw new Error('Project name is already taken within this organisation');
+      }
+
+      // Verify assigned teams belong to the organisation if provided
+      if (data.assignedTeamIds && data.assignedTeamIds.length > 0) {
+        for (const teamId of data.assignedTeamIds) {
+          const team = await teamService.getTeamById(teamId);
+          if (!team || team.organisationId !== data.organisationId) {
+            throw new Error(`Team ${teamId} does not belong to the specified organisation`);
+          }
+        }
       }
 
       const project = await prisma.project.create({
@@ -92,29 +105,105 @@ export class ProjectService {
           status: data.status || ProjectStatus.PLANNING,
           priority: data.priority || ProjectPriority.MEDIUM,
           budget: data.budget,
-          currency: data.currency || 'USD',
+          currency: data.currency || 'GBP',
           startDate: data.startDate,
           endDate: data.endDate,
           progress: data.progress || 0,
           repositoryUrl: data.repositoryUrl,
           documentationUrl: data.documentationUrl,
-          teamId: data.teamId,
+          organisationId: data.organisationId,
         },
         include: {
-          team: {
+          organisation: {
             select: {
               id: true,
               name: true,
-              organisation: {
+            }
+          },
+          assignedTeams: {
+            include: {
+              team: {
                 select: {
                   id: true,
                   name: true,
+                  owner: {
+                    select: {
+                      id: true,
+                      name: true,
+                    }
+                  }
                 }
               }
             }
           }
         }
       });
+
+      // Assign teams to project if provided
+      if (data.assignedTeamIds && data.assignedTeamIds.length > 0) {
+        await prisma.projectTeam.createMany({
+          data: data.assignedTeamIds.map(teamId => ({
+            projectId: project.id,
+            teamId,
+            assignedBy: userId,
+          }))
+        });
+
+        // Refetch the project with assigned teams
+        const updatedProject = await prisma.project.findUnique({
+          where: { id: project.id },
+          include: {
+            organisation: {
+              select: {
+                id: true,
+                name: true,
+              }
+            },
+            assignedTeams: {
+              include: {
+                team: {
+                  select: {
+                    id: true,
+                    name: true,
+                    owner: {
+                      select: {
+                        id: true,
+                        name: true,
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        if (!updatedProject) {
+          throw new Error('Failed to retrieve updated project');
+        }
+
+        return {
+          id: updatedProject.id,
+          name: updatedProject.name,
+          description: updatedProject.description,
+          status: updatedProject.status,
+          priority: updatedProject.priority,
+          budget: updatedProject.budget ? Number(updatedProject.budget) : undefined,
+          currency: updatedProject.currency,
+          startDate: updatedProject.startDate,
+          endDate: updatedProject.endDate,
+          actualEndDate: updatedProject.actualEndDate,
+          progress: updatedProject.progress,
+          repositoryUrl: updatedProject.repositoryUrl,
+          documentationUrl: updatedProject.documentationUrl,
+          organisationId: updatedProject.organisationId,
+          isActive: updatedProject.isActive,
+          createdAt: updatedProject.createdAt,
+          updatedAt: updatedProject.updatedAt,
+          organisation: updatedProject.organisation,
+          assignedTeams: updatedProject.assignedTeams,
+        };
+      }
 
       return {
         id: project.id,
@@ -130,11 +219,12 @@ export class ProjectService {
         progress: project.progress,
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
-        teamId: project.teamId,
+        organisationId: project.organisationId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
-        team: project.team,
+        organisation: project.organisation,
+        assignedTeams: project.assignedTeams,
       };
     } catch (error) {
       console.error('Failed to create project:', error);
@@ -147,14 +237,24 @@ export class ProjectService {
       const project = await prisma.project.findUnique({
         where: { id: projectId },
         include: {
-          team: {
+          organisation: {
             select: {
               id: true,
               name: true,
-              organisation: {
+            }
+          },
+          assignedTeams: {
+            include: {
+              team: {
                 select: {
                   id: true,
                   name: true,
+                  owner: {
+                    select: {
+                      id: true,
+                      name: true,
+                    }
+                  }
                 }
               }
             }
@@ -183,11 +283,12 @@ export class ProjectService {
         progress: project.progress,
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
-        teamId: project.teamId,
+        organisationId: project.organisationId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
-        team: project.team,
+        organisation: project.organisation,
+        assignedTeams: project.assignedTeams,
         fileCount: project._count.files,
       };
     } catch (error) {
@@ -196,23 +297,37 @@ export class ProjectService {
     }
   }
 
-  async getTeamProjects(teamId: string): Promise<ProjectInfo[]> {
+  async getProjectsForTeam(teamId: string): Promise<ProjectInfo[]> {
     try {
       const projects = await prisma.project.findMany({
         where: {
-          teamId,
+          assignedTeams: {
+            some: {
+              teamId: teamId
+            }
+          },
           isActive: true
         },
         orderBy: { createdAt: 'desc' },
         include: {
-          team: {
+          organisation: {
             select: {
               id: true,
               name: true,
-              organisation: {
+            }
+          },
+          assignedTeams: {
+            include: {
+              team: {
                 select: {
                   id: true,
                   name: true,
+                  owner: {
+                    select: {
+                      id: true,
+                      name: true,
+                    }
+                  }
                 }
               }
             }
@@ -239,15 +354,16 @@ export class ProjectService {
         progress: project.progress,
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
-        teamId: project.teamId,
+        organisationId: project.organisationId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
-        team: project.team,
+        organisation: project.organisation,
+        assignedTeams: project.assignedTeams,
         fileCount: project._count.files,
       }));
     } catch (error) {
-      console.error('Failed to get team projects:', error);
+      console.error('Failed to get projects for team:', error);
       throw error;
     }
   }
@@ -256,21 +372,29 @@ export class ProjectService {
     try {
       const projects = await prisma.project.findMany({
         where: {
-          team: {
-            organisationId: organisationId
-          },
+          organisationId: organisationId,
           isActive: true
         },
         orderBy: { createdAt: 'desc' },
         include: {
-          team: {
+          organisation: {
             select: {
               id: true,
               name: true,
-              organisation: {
+            }
+          },
+          assignedTeams: {
+            include: {
+              team: {
                 select: {
                   id: true,
                   name: true,
+                  owner: {
+                    select: {
+                      id: true,
+                      name: true,
+                    }
+                  }
                 }
               }
             }
@@ -297,11 +421,12 @@ export class ProjectService {
         progress: project.progress,
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
-        teamId: project.teamId,
+        organisationId: project.organisationId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
-        team: project.team,
+        organisation: project.organisation,
+        assignedTeams: project.assignedTeams,
         fileCount: project._count.files,
       }));
     } catch (error) {
@@ -496,11 +621,11 @@ export class ProjectService {
     }
   }
 
-  async validateProjectName(name: string, teamId: string, excludeId?: string): Promise<boolean> {
+  async validateProjectName(name: string, organisationId: string, excludeId?: string): Promise<boolean> {
     try {
       const whereClause: any = {
         name,
-        teamId,
+        organisationId,
         isActive: true,
       };
 
@@ -565,25 +690,31 @@ export class ProjectService {
           repositoryUrl: true,
           documentationUrl: true,
           isActive: true,
-          team: {
+          organisation: {
             select: {
+              id: true,
               name: true,
-              organisation: {
+            },
+          },
+          assignedTeams: {
+            select: {
+              team: {
                 select: {
+                  id: true,
                   name: true,
-                },
-              },
-              owner: {
-                select: {
-                  name: true,
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                },
-              },
-              _count: {
-                select: {
-                  members: true,
+                  owner: {
+                    select: {
+                      name: true,
+                      firstname: true,
+                      lastname: true,
+                      email: true,
+                    },
+                  },
+                  _count: {
+                    select: {
+                      members: true,
+                    },
+                  },
                 },
               },
             },

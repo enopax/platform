@@ -231,16 +231,18 @@ export default function NewResourcePage() {
 
               <div className="space-y-3 text-sm">
                 <div>
-                  <span className="text-gray-500">Team:</span>
+                  <span className="text-gray-500">Teams:</span>
                   <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                    {project.team?.name || 'Unknown'}
+                    {project.assignedTeams?.length > 0
+                      ? project.assignedTeams.map(at => at.team.name).join(', ')
+                      : 'No teams assigned'}
                   </span>
                 </div>
 
                 <div>
                   <span className="text-gray-500">Organisation:</span>
                   <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                    {project.team?.organisation?.name || 'Personal Team'}
+                    {project.organisation?.name || 'Unknown'}
                   </span>
                 </div>
 

@@ -57,6 +57,7 @@ interface ProjectFormProps {
   redirectUrl?: string;
   currentUserId?: string;
   preselectedTeamId?: string;
+  organisationId?: string;
 }
 
 // Project type options based on cloud provider research
@@ -76,7 +77,8 @@ export default function ProjectForm({
   successMessage,
   redirectUrl,
   currentUserId,
-  preselectedTeamId
+  preselectedTeamId,
+  organisationId
 }: ProjectFormProps) {
   const action = project ? updateProject : createProject;
   const [state, formAction, isPending] = useActionState(action, initialState);
@@ -182,23 +184,19 @@ export default function ProjectForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label htmlFor="teamId">
-              Team *
+              Assign Team (Optional)
             </Label>
             <Select
               name="teamId"
-              defaultValue={
-                project?.teamId ||
-                preselectedTeamId ||
-                teams.find(team => team.isPersonal)?.id ||
-                teams[0]?.id ||
-                ''
-              }
-              required
+              defaultValue={project?.teamId || preselectedTeamId || ''}
             >
               <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.teamId}>
-                <SelectValue placeholder="Select team" />
+                <SelectValue placeholder="Select team or skip for now" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__NONE__">
+                  <span className="text-gray-500 italic">Skip for now</span>
+                </SelectItem>
                 {teams.map((team) => (
                   <SelectItem key={team.id} value={team.id}>
                     {team.name} {team.isPersonal ? '(Personal)' : ''}
@@ -273,32 +271,6 @@ export default function ProjectForm({
         </div>
       </div>
 
-      {/* Team Selection */}
-      <div>
-        <Label htmlFor="teamId">
-          Team *
-        </Label>
-        <Select
-          name="teamId"
-          required
-          defaultValue={project?.teamId || preselectedTeamId || teams.find(t => t.isPersonal)?.id}
-        >
-          <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.teamId}>
-            <SelectValue placeholder="Select team" />
-          </SelectTrigger>
-          <SelectContent>
-            {teams.map((team) => (
-              <SelectItem key={team.id} value={team.id}>
-                {team.name} {team.isPersonal ? '(Personal)' : ''}
-                {team.organisation && ` - ${team.organisation.name}`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {state.fieldErrors?.teamId && (
-          <p className="mt-1 text-sm text-red-600">{state.fieldErrors.teamId}</p>
-        )}
-      </div>
 
       {/* Hidden fields with smart defaults for simplified creation */}
       {isCreate && (
@@ -307,6 +279,9 @@ export default function ProjectForm({
           <input type="hidden" name="priority" value="MEDIUM" />
           <input type="hidden" name="progress" value="0" />
           <input type="hidden" name="currency" value="USD" />
+          {organisationId && (
+            <input type="hidden" name="organisationId" value={organisationId} />
+          )}
         </>
       )}
 

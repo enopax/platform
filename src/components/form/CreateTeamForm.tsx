@@ -89,6 +89,34 @@ export default function CreateTeamForm({ organisations, currentUserId }: CreateT
 
         {/* Organisation */}
         <div>
+          <Label htmlFor="level">
+            Level *
+          </Label>
+          <Select name="level" required>
+            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.level}>
+              <SelectValue placeholder="Select access level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem key="ADMIN" value="ADMIN">
+                Admin
+              </SelectItem>
+              <SelectItem key="DEV" value="DEV">
+                Developer
+              </SelectItem>
+              <SelectItem key="GUEST" value="GUEST">
+                Guest
+              </SelectItem>
+              <SelectItem key="CUSTOM" value="CUSTOM">
+                Custom
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          {state.fieldErrors?.level && (
+            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.level}</p>
+          )}
+        </div>
+
+        <div>
           <Label htmlFor="organisationId">
             Organisation *
           </Label>

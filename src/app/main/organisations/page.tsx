@@ -13,7 +13,8 @@ import {
   RiTeamLine,
   RiProjectorLine,
   RiSettings4Line,
-  RiSearchLine
+  RiSearchLine,
+  RiArrowRightLine
 } from '@remixicon/react';
 import Link from 'next/link';
 
@@ -121,115 +122,99 @@ export default async function OrganisationsPage() {
         </div>
       </div>
 
-      {/* My Organisations Section */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-          {isAdmin ? 'All Organisations' : 'My Organisations'} ({organisationMemberships.length})
-        </h2>
-
-        {organisationMemberships.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {organisationMemberships.map(({ organisation, role, joinedAt }) => (
-              <Card key={organisation.id} className="p-4 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-3">
+      {organisationMemberships.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {organisationMemberships.map(({ organisation, role, joinedAt }) => (
+            <Card key={organisation.id} className="p-6 hover:shadow-lg transition-all group cursor-pointer">
+              <Link href={`/main/organisations/${organisation.id}`} className="block">
+                {/* Organisation Header */}
+                <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center min-w-0 flex-1">
-                    <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg mr-3 flex-shrink-0">
-                      <RiBuildingLine className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                    <div className="p-3 bg-brand-100 dark:bg-brand-900/30 rounded-xl mr-4 flex-shrink-0 group-hover:bg-brand-200 dark:group-hover:bg-brand-900/50 transition-colors">
+                      <RiBuildingLine className="w-6 h-6 text-brand-600 dark:text-brand-400" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                      <h3 className="font-semibold text-gray-900 dark:text-white truncate text-lg group-hover:text-brand-900 dark:group-hover:text-brand-100 transition-colors">
                         {organisation.name}
                       </h3>
-                      <Badge variant={getRoleBadgeVariant(role)} className="mt-1 text-xs">
+                      <Badge variant={getRoleBadgeVariant(role)} className="mt-1">
                         {role}
                       </Badge>
                     </div>
                   </div>
                 </div>
 
+                {/* Description */}
                 {organisation.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
                     {organisation.description}
                   </p>
                 )}
 
-                {/* Organisation Stats - Horizontal on smaller cards */}
-                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
-                  <div className="flex items-center">
-                    <RiUserLine className="h-3 w-3 mr-1" />
-                    <span className="font-medium">{organisation._count.members}</span>
-                    <span className="ml-1">members</span>
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <RiProjectorLine className="h-4 w-4 text-purple-600 dark:text-purple-400 mr-1" />
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {organisation._count.projects}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Projects
+                    </div>
                   </div>
-                  <div className="flex items-center">
-                    <RiTeamLine className="h-3 w-3 mr-1" />
-                    <span className="font-medium">{organisation._count.teams}</span>
-                    <span className="ml-1">teams</span>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <RiTeamLine className="h-4 w-4 text-green-600 dark:text-green-400 mr-1" />
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {organisation._count.teams}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Teams
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <RiUserLine className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-1" />
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {organisation._count.members}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Members
+                    </div>
                   </div>
                 </div>
 
-
-                <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                {/* Enter Button */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Joined {new Date(joinedAt).toLocaleDateString('en-US', {
+                    Joined {new Date(joinedAt).toLocaleDateString('en-GB', {
                       year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
+                      month: 'short'
                     })}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {role === 'OWNER' || isAdmin ? (
-                      <Link href={`/main/organisations/${organisation.id}`}>
-                        <Button variant="outline" size="sm" className="text-xs px-3 py-1">
-                          {isAdmin ? 'Manage (Admin)' : 'Manage Organisation'}
-                        </Button>
-                      </Link>
-                    ) : (
-                      <>
-                        <Link href={`/main/organisations/${organisation.id}`}>
-                          <Button variant="outline" size="sm" className="text-xs px-3 py-1">
-                            View Members
-                          </Button>
-                        </Link>
-                        {!isAdmin && (
-                          <LeaveOrganisationButton
-                            organisationId={organisation.id}
-                            organisationName={organisation.name}
-                            size="sm"
-                            variant="outline"
-                            className="text-xs px-3 py-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          />
-                        )}
-                      </>
-                    )}
+                  <div className="flex items-center text-sm text-brand-600 dark:text-brand-400 group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors">
+                    Details <RiArrowRightLine className="ml-1 h-4 w-4" />
                   </div>
                 </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="p-12 text-center">
-            <RiBuildingLine className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No organisations yet
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
-              You're not part of any organisations yet. Create your first organisation or search for existing ones to join.
-            </p>
-            <div className="flex justify-center gap-4">
-              <Link href="/main/organisations/new">
-                <Button>
-                  <RiAddLine className="mr-2 h-4 w-4" />
-                  Create Organisation
-                </Button>
               </Link>
-              <Button variant="outline">
-                <RiSearchLine className="mr-2 h-4 w-4" />
-                Find Organisations
-              </Button>
-            </div>
-          </Card>
-        )}
-      </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card className="p-12 text-center mb-8">
+          <RiBuildingLine className="mx-auto h-16 w-16 text-gray-400 mb-6" />
+          <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-3">
+            No Organisations Yet
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-md mx-auto">
+            You're not part of any organisations yet. Create your first organisation to get started with project management and team collaboration.
+          </p>
+        </Card>
+      )}
 
       {/* Organisation Search Section */}
       <OrganisationSearchSection />

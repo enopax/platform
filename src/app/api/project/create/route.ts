@@ -33,12 +33,11 @@ export async function POST(request: NextRequest) {
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
         organisationId: project.organisationId,
-        teamId: project.teamId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
         organisation: project.organisation,
-        team: project.team,
+        assignedTeams: project.assignedTeams,
         fileCount: project.fileCount,
       },
     });

@@ -72,7 +72,7 @@ export default async function TeamsPage({
       _count: {
         select: {
           members: true,
-          projects: true,
+          assignedProjects: true,
         },
       },
     },

@@ -208,12 +208,7 @@ export async function createProject(
     }
 
 
-    if (!teamId) {
-      return {
-        error: 'Team is required',
-        fieldErrors: { teamId: 'Team is required' }
-      };
-    }
+    // Team is now optional
 
     // Validate dates
     const startDate = startDateStr ? new Date(startDateStr) : null;
@@ -261,34 +256,52 @@ export async function createProject(
     }
 
 
-    // Validate team exists
-    const teamExists = await prisma.team.findUnique({
-      where: { id: teamId }
-    });
+    // Validate team exists (only if team is provided and not "skip")
+    let organisationId = null;
+    if (teamId && teamId.trim() && teamId !== '__NONE__') {
+      const teamExists = await prisma.team.findUnique({
+        where: { id: teamId },
+        select: { id: true, organisationId: true }
+      });
 
-    if (!teamExists) {
-      return {
-        error: 'Selected team does not exist',
-        fieldErrors: { teamId: 'Selected team does not exist' }
-      };
+      if (!teamExists) {
+        return {
+          error: 'Selected team does not exist',
+          fieldErrors: { teamId: 'Selected team does not exist' }
+        };
+      }
+      organisationId = teamExists.organisationId;
     }
 
-    // Check for duplicate project name within the team
+    // For now, we need to get organisationId from somewhere if no team is provided
+    // This should be passed from the form
+    if (!organisationId) {
+      const orgId = formData.get('organisationId') as string;
+      if (!orgId) {
+        return {
+          error: 'Organisation context is required',
+          fieldErrors: { name: 'Organisation context is required' }
+        };
+      }
+      organisationId = orgId;
+    }
+
+    // Check for duplicate project name within the organisation
     const duplicateProject = await prisma.project.findFirst({
       where: {
         name: name.trim(),
-        teamId
+        organisationId
       }
     });
 
     if (duplicateProject) {
       return {
-        error: 'A project with this name already exists in this team',
-        fieldErrors: { name: 'A project with this name already exists in this team' }
+        error: 'A project with this name already exists in this organisation',
+        fieldErrors: { name: 'A project with this name already exists in this organisation' }
       };
     }
 
-    await prisma.project.create({
+    const project = await prisma.project.create({
       data: {
         name: name.trim(),
         description: description?.trim() || null,
@@ -303,9 +316,19 @@ export async function createProject(
         progress,
         repositoryUrl: repositoryUrl?.trim() || null,
         documentationUrl: documentationUrl?.trim() || null,
-        teamId,
+        organisationId,
       },
     });
+
+    // If a team was provided (and not "skip"), create the project-team relationship
+    if (teamId && teamId.trim() && teamId !== '__NONE__') {
+      await prisma.projectTeam.create({
+        data: {
+          projectId: project.id,
+          teamId: teamId.trim(),
+        },
+      });
+    }
 
     revalidatePath('/admin/project');
     revalidatePath('/main');

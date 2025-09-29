@@ -98,7 +98,7 @@ export default async function MembersManagementPage({ params }: MembersManagemen
         select: {
           members: true,
           teams: true,
-          projects: true
+          assignedProjects: true
         }
       }
     }

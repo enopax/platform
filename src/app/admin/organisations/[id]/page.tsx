@@ -43,7 +43,7 @@ export default async function EditOrganisationPage({ params }: EditOrganisationP
           select: {
             members: true,
             teams: true,
-            projects: true
+            assignedProjects: true
           }
         }
       },

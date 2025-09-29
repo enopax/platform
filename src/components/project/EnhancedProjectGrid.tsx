@@ -21,24 +21,31 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { type Project, type Team, type User, type Organisation } from '@prisma/client';
 
-type ProjectWithTeam = Project & {
-  team: Team & {
-    owner: User;
-    organisation?: Organisation | null;
-    _count: {
-      members: number;
-      projects: number;
-    };
-  };
-  resources?: {
+type ProjectWithTeamsAndResources = Project & {
+  organisation: {
     id: string;
     name: string;
-    type: string;
+  };
+  assignedTeams: {
+    team: Team & {
+      owner: User;
+      _count: {
+        members: number;
+        assignedProjects: number;
+      };
+    };
+  }[];
+  allocatedResources?: {
+    resource: {
+      id: string;
+      name: string;
+      type: string;
+    };
   }[];
 };
 
 interface EnhancedProjectGridProps {
-  projects: ProjectWithTeam[];
+  projects: ProjectWithTeamsAndResources[];
   selectedTeamName?: string;
 }
 
@@ -52,7 +59,8 @@ export default function EnhancedProjectGrid({ projects, selectedTeamName }: Enha
     .filter(project =>
       project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       project.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.team.name.toLowerCase().includes(searchTerm.toLowerCase())
+      project.organisation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.assignedTeams.some(at => at.team.name.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .sort((a, b) => {
       switch (sortBy) {
@@ -179,7 +187,7 @@ export default function EnhancedProjectGrid({ projects, selectedTeamName }: Enha
                       {project.name}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {project.team.organisation?.name || 'Personal Team'}
+                      {project.organisation.name}
                     </p>
                   </div>
                 </div>
@@ -219,7 +227,7 @@ export default function EnhancedProjectGrid({ projects, selectedTeamName }: Enha
                   <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
                     <div className="flex items-center">
                       <RiTeamLine className="h-3 w-3 mr-1" />
-                      <span className="font-medium">{project.team._count.members}</span>
+                      <span className="font-medium">{project.assignedTeams.reduce((total, at) => total + at.team._count.members, 0)}</span>
                       <span className="ml-1">members</span>
                     </div>
                     {project.startDate && (
@@ -242,18 +250,18 @@ export default function EnhancedProjectGrid({ projects, selectedTeamName }: Enha
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                         <RiServerLine className="h-3 w-3 mr-1" />
-                        <span className="font-medium">{project.resources?.length || 0}</span>
+                        <span className="font-medium">{project.allocatedResources?.length || 0}</span>
                         <span className="ml-1">resources</span>
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        Team: {project.team.name}
+                        Teams: {project.assignedTeams.length > 0 ? project.assignedTeams.map(at => at.team.name).join(', ') : 'Unassigned'}
                       </div>
                     </div>
 
                     {/* Resource types indicator */}
-                    {project.resources && project.resources.length > 0 && (
+                    {project.allocatedResources && project.allocatedResources.length > 0 && (
                       <div className="flex gap-1 mb-2">
-                        {Array.from(new Set(project.resources.map(r => r.type))).map((type) => (
+                        {Array.from(new Set(project.allocatedResources.map(r => r.resource.type))).map((type) => (
                           <span
                             key={type}
                             className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
@@ -301,11 +309,11 @@ export default function EnhancedProjectGrid({ projects, selectedTeamName }: Enha
                   <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                     <div className="flex items-center">
                       <RiTeamLine className="h-3 w-3 mr-1" />
-                      <span>{project.team._count.members}</span>
+                      <span>{project.assignedTeams.reduce((total, at) => total + at.team._count.members, 0)}</span>
                     </div>
                     <div className="flex items-center">
                       <RiServerLine className="h-3 w-3 mr-1" />
-                      <span>{project.resources?.length || 0}</span>
+                      <span>{project.allocatedResources?.length || 0}</span>
                     </div>
                   </div>
 
