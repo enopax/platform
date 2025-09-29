@@ -1,8 +1,8 @@
-# IPFS Storage Web Application
+# Infrastructure Deployment Platform
 
-**Next.js 15 + TypeScript Web Interface for IPFS Distributed Storage Cluster**
+**Next.js 15 + TypeScript Web Application**
 
-A modern, production-ready web application providing a user-friendly interface for managing files in an IPFS storage cluster with comprehensive testing and unified API architecture.
+A modern web application for deploying and managing infrastructure services with a single click. Deploy IPFS storage clusters, databases, and other services through an intuitive web interface.
 
 ---
 
