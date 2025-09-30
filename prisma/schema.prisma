@@ -198,7 +198,7 @@ model Authenticator {
 
 model Organisation {
   id          String    @id @default(cuid())
-  name        String
+  name        String    @unique
   description String?
   website     String?
 

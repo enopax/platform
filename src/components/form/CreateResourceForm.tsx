@@ -87,14 +87,24 @@ export default function CreateResourceForm({ currentUserId, projectId, projectNa
   useEffect(() => {
     if (state.success) {
       setTimeout(() => {
-        if (projectId) {
-          router.push(`/main/projects/${projectId}`);
+        // Get organisation from the team's organisation
+        const selectedTeam = teams.find(t => t.id === selectedTeamId);
+        const orgName = selectedTeam?.organisation?.name;
+
+        if (projectId && orgName) {
+          // Redirect to project page if created from project context
+          router.push(`/main/organisations/${orgName}/projects/${projectId}`);
+        } else if (orgName) {
+          // Redirect to organisation resources if no project context
+          router.push(`/main/organisations/${orgName}/resources`);
         } else {
+          // Fallback to general resources page
           router.push('/main/resources');
         }
+        router.refresh();
       }, 1500);
     }
-  }, [state.success, router, projectId]);
+  }, [state.success, router, projectId, selectedTeamId, teams]);
 
   const selectedStorageOption = STORAGE_OPTIONS[storageSize[0]];
   const selectedResourceType = RESOURCE_TYPES.find(type => type.value === resourceType);

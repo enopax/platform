@@ -81,7 +81,7 @@ export default function OrganisationDashboard({ user }: { user: any }) {
     async function fetchOrganisationData() {
       setDataLoading(true);
       try {
-        const response = await fetch(`/api/organisations/${selectedOrganisation.id}/dashboard`);
+        const response = await fetch(`/api/organisations/${organisation.name}/dashboard`);
         if (response.ok) {
           const data = await response.json();
           setOrganisationData(data);
@@ -253,7 +253,7 @@ export default function OrganisationDashboard({ user }: { user: any }) {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {organisationData.projects.slice(0, 3).map((project) => (
-                  <Link key={project.id} href={`/main/organisations/${selectedOrganisation.id}/projects/${project.id}`} className="group">
+                  <Link key={project.id} href={`/main/organisations/${organisation.name}`} className="group">
                     <div className="p-5 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md transition-all duration-200">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg">

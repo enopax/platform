@@ -146,22 +146,87 @@ export async function updateProject(
       };
     }
 
-    // Use service to update project
-    await projectService.updateProject(userId, projectId, {
-      name: name.trim(),
-      description: description?.trim() || undefined,
-      development,
-      status,
-      priority,
-      budget,
-      currency: currency || 'USD',
-      startDate,
-      endDate,
-      actualEndDate,
-      progress,
-      repositoryUrl: repositoryUrl?.trim() || undefined,
-      documentationUrl: documentationUrl?.trim() || undefined,
-      teamId,
+    // Get current project to check organisation
+    const currentProject = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { organisationId: true }
+    });
+
+    if (!currentProject) {
+      return {
+        error: 'Project not found',
+        fieldErrors: { name: 'Project not found' }
+      };
+    }
+
+    // Validate team if provided
+    if (teamId && teamId.trim() && teamId !== '__NONE__') {
+      const teamExists = await prisma.team.findUnique({
+        where: { id: teamId },
+        select: { id: true, organisationId: true }
+      });
+
+      if (!teamExists) {
+        return {
+          error: 'Selected team does not exist',
+          fieldErrors: { teamId: 'Selected team does not exist' }
+        };
+      }
+
+      if (teamExists.organisationId !== currentProject.organisationId) {
+        return {
+          error: 'Team must belong to the same organisation as the project',
+          fieldErrors: { teamId: 'Team must belong to the same organisation as the project' }
+        };
+      }
+    }
+
+    // Update project
+    await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        name: name.trim(),
+        description: description?.trim() || null,
+        development,
+        status,
+        priority,
+        budget,
+        currency: currency || 'USD',
+        startDate,
+        endDate,
+        actualEndDate,
+        progress,
+        repositoryUrl: repositoryUrl?.trim() || null,
+        documentationUrl: documentationUrl?.trim() || null,
+      }
+    });
+
+    // Handle team assignment
+    if (teamId && teamId.trim() && teamId !== '__NONE__') {
+      // Remove existing team assignments
+      await prisma.projectTeam.deleteMany({
+        where: { projectId }
+      });
+
+      // Add new team assignment
+      await prisma.projectTeam.create({
+        data: {
+          projectId,
+          teamId: teamId.trim(),
+          assignedBy: userId,
+        }
+      });
+    } else if (teamId === '__NONE__') {
+      // Remove all team assignments if explicitly unassigning
+      await prisma.projectTeam.deleteMany({
+        where: { projectId }
+      });
+    }
+
+    // Get organisation name for revalidation
+    const org = await prisma.organisation.findUnique({
+      where: { id: currentProject.organisationId },
+      select: { name: true }
     });
 
     revalidatePath('/admin/project');
@@ -169,6 +234,9 @@ export async function updateProject(
     revalidatePath('/main');
     revalidatePath('/main/projects');
     revalidatePath(`/main/projects/${projectId}`);
+    if (org) {
+      revalidatePath(`/main/organisations/${org.name}/projects/${projectId}`);
+    }
 
     return { success: true };
   } catch (error) {
@@ -198,8 +266,15 @@ export async function createProject(
     const repositoryUrl = formData.get('repositoryUrl') as string;
     const documentationUrl = formData.get('documentationUrl') as string;
     const teamId = formData.get('teamId') as string;
+    const currentUserId = formData.get('currentUserId') as string;
 
     // Basic validation
+    if (!currentUserId) {
+      return {
+        error: 'User authentication required',
+        fieldErrors: { name: 'User authentication required' }
+      };
+    }
     if (!name || name.trim().length < 2) {
       return {
         error: 'Project name must be at least 2 characters long',
@@ -326,6 +401,7 @@ export async function createProject(
         data: {
           projectId: project.id,
           teamId: teamId.trim(),
+          assignedBy: currentUserId,
         },
       });
     }

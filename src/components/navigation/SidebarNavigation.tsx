@@ -55,9 +55,9 @@ export default function SidebarNavigation({
 
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
 
-  // Get organisation ID from pathname
-  const getOrganisationId = () => {
-    // Check if we're on an organisation tree page (/main/organisations/[id]/...)
+  // Get organisation name from pathname
+  const getOrganisationName = () => {
+    // Check if we're on an organisation tree page (/main/organisations/[orgName]/...)
     const pathSegments = pathname.split('/');
     if (pathSegments[1] === 'main' && pathSegments[2] === 'organisations' && pathSegments[3]) {
       return pathSegments[3];
@@ -66,11 +66,12 @@ export default function SidebarNavigation({
     return null;
   };
 
-  const organisationId = getOrganisationId();
+  const organisationName = getOrganisationName();
+  const organisationId = organisationName; // Keep for backward compatibility in checks
 
   // Find current organisation and its projects from server-provided data
-  const organisation = organisationId
-    ? initialOrganisations.find(org => org.id === organisationId) || null
+  const organisation = organisationName
+    ? initialOrganisations.find(org => org.name === organisationName) || null
     : null;
 
   const projects = organisation?.projects || [];
@@ -137,7 +138,7 @@ export default function SidebarNavigation({
                   {initialOrganisations.map((org) => (
                     <Link
                       key={org.id}
-                      href={`/main/organisations/${org.id}`}
+                      href={`/main/organisations/${org.name}`}
                       onClick={() => setShowOrgDropdown(false)}
                       className={`
                         block p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors
@@ -211,7 +212,7 @@ export default function SidebarNavigation({
               <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                 Projects
               </h3>
-              <Link href={`/main/organisations/${organisationId}/projects/new`}>
+              <Link href={`/main/organisations/${organisationName}/projects/new`}>
                 <Button variant="ghost" size="sm" className="p-1">
                   <RiAddLine className="h-4 w-4" />
                 </Button>
@@ -226,11 +227,11 @@ export default function SidebarNavigation({
 
                   // Use organisation-specific links when in organisation context, global links otherwise
                   const projectPath = isInOrgContext
-                    ? `/main/organisations/${organisationId}/projects/${project.id}`
+                    ? `/main/organisations/${organisationName}/projects/${project.id}`
                     : `/main/projects/${project.id}`;
 
                   const globalProjectPath = `/main/projects/${project.id}`;
-                  const orgProjectPath = `/main/organisations/${organisationId}/projects/${project.id}`;
+                  const orgProjectPath = `/main/organisations/${organisationName}/projects/${project.id}`;
                   const isActive = pathname.startsWith(orgProjectPath) || pathname.startsWith(globalProjectPath);
 
                   return (
@@ -278,7 +279,7 @@ export default function SidebarNavigation({
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                   No projects yet
                 </p>
-                <Link href={`/main/organisations/${organisationId}/projects/new`}>
+                <Link href={`/main/organisations/${organisationName}/projects/new`}>
                   <Button size="sm">
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Create Project
@@ -299,26 +300,26 @@ export default function SidebarNavigation({
                   {
                     name: 'Teams',
                     icon: RiTeamLine,
-                    href: `/main/organisations/${organisationId}/teams`,
-                    active: pathname.startsWith(`/main/organisations/${organisationId}/teams`)
+                    href: `/main/organisations/${organisationName}/teams`,
+                    active: pathname.startsWith(`/main/organisations/${organisationName}/teams`)
                   },
                   {
                     name: 'Resources',
                     icon: RiServerLine,
-                    href: `/main/organisations/${organisationId}/resources`,
-                    active: pathname.startsWith(`/main/organisations/${organisationId}/resources`)
+                    href: `/main/organisations/${organisationName}/resources`,
+                    active: pathname.startsWith(`/main/organisations/${organisationName}/resources`)
                   },
                   {
                     name: 'Members',
                     icon: RiUserLine,
-                    href: `/main/organisations/${organisationId}/members`,
-                    active: pathname.startsWith(`/main/organisations/${organisationId}/members`)
+                    href: `/main/organisations/${organisationName}/members`,
+                    active: pathname.startsWith(`/main/organisations/${organisationName}/members`)
                   },
                   {
                     name: 'Settings',
                     icon: RiSettings3Line,
-                    href: `/main/organisations/${organisationId}/settings`,
-                    active: pathname.startsWith(`/main/organisations/${organisationId}/settings`)
+                    href: `/main/organisations/${organisationName}/settings`,
+                    active: pathname.startsWith(`/main/organisations/${organisationName}/settings`)
                   },
                 ].map((item) => (
                   <Link
@@ -343,31 +344,6 @@ export default function SidebarNavigation({
                     />
                     <span>{item.name}</span>
                   </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Project Navigation (when inside a project) */}
-          {pathname.includes('/projects/') && pathname.split('/')[3] && (
-            <div className="border-t border-gray-200 dark:border-gray-700 px-3 py-4">
-              <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-                Project Tools
-              </h4>
-              <div className="space-y-1">
-                {[
-                  { name: 'Teams', icon: RiTeamLine, href: '#teams' },
-                  { name: 'Resources', icon: RiServerLine, href: '#resources' },
-                  { name: 'Files', icon: RiFileTextLine, href: '#files' },
-                  { name: 'Analytics', icon: RiBarChartLine, href: '#analytics' },
-                ].map((item) => (
-                  <button
-                    key={item.name}
-                    className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800/50 dark:hover:text-white rounded-lg transition-colors"
-                  >
-                    <item.icon className="mr-3 h-4 w-4 text-gray-400" />
-                    <span>{item.name}</span>
-                  </button>
                 ))}
               </div>
             </div>

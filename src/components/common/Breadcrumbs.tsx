@@ -71,15 +71,15 @@ export function OrganisationProjectBreadcrumbs({
         Organisations
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/main/organisations/${organisationName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {organisationName}
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationId}/projects`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/main/organisations/${organisationName}/projects`} className="hover:text-gray-900 dark:hover:text-gray-100">
         Projects
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationId}/projects/${projectId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/main/organisations/${organisationName}/projects/${projectId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {projectName}
       </Link>
       {currentPage && (
@@ -116,15 +116,15 @@ export function OrganisationTeamBreadcrumbs({
         Organisations
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/main/organisations/${organisationName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {organisationName}
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationId}/teams`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/main/organisations/${organisationName}/teams`} className="hover:text-gray-900 dark:hover:text-gray-100">
         Teams
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationId}/teams/${teamId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/main/organisations/${organisationName}/teams/${teamId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {teamName}
       </Link>
       {currentPage && (
@@ -161,15 +161,15 @@ export function OrganisationResourceBreadcrumbs({
         Organisations
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/main/organisations/${organisationName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {organisationName}
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationId}/resources`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/main/organisations/${organisationName}/resources`} className="hover:text-gray-900 dark:hover:text-gray-100">
         Resources
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationId}/resources/${resourceId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/main/organisations/${organisationName}/resources/${resourceId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {resourceName}
       </Link>
       {currentPage && (

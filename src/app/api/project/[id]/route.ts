@@ -31,6 +31,11 @@ export async function GET(
             team: {
               include: {
                 owner: true,
+                members: {
+                  select: {
+                    userId: true
+                  }
+                },
                 _count: {
                   select: {
                     members: true,
@@ -59,12 +64,25 @@ export async function GET(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Check if user has access - member of assigned teams or organisation
+    // Check if user has access - member of assigned teams or organisation member
     const isAdmin = session.user.role === 'ADMIN';
-    const hasAccess = isAdmin ||
-      project.assignedTeams.some(at =>
-        at.team.members?.some(member => member.userId === session.user.id)
-      );
+
+    // Check if user is a member of the organisation
+    const isOrgMember = await prisma.organisationMember.findUnique({
+      where: {
+        userId_organisationId: {
+          userId: session.user.id,
+          organisationId: project.organisationId
+        }
+      }
+    });
+
+    // Check if user is a member of any assigned teams
+    const isTeamMember = project.assignedTeams.some(at =>
+      at.team.members?.some(member => member.userId === session.user.id)
+    );
+
+    const hasAccess = isAdmin || isOrgMember || isTeamMember;
 
     if (!hasAccess) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });

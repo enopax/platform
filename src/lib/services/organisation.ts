@@ -84,6 +84,35 @@ export class OrganisationService {
     }
   }
 
+  async getOrganisationByName(name: string): Promise<OrganisationInfo | null> {
+    try {
+      const organisation = await prisma.organisation.findUnique({
+        where: { name },
+        include: {
+          _count: {
+            select: {
+              members: true,
+              teams: true,
+            },
+          },
+        },
+      });
+
+      if (!organisation) {
+        return null;
+      }
+
+      return {
+        ...organisation,
+        memberCount: organisation._count.members,
+        teamCount: organisation._count.teams,
+      };
+    } catch (error) {
+      console.error('Failed to get organisation by name:', error);
+      throw error;
+    }
+  }
+
   async getUserOrganisations(userId: string): Promise<OrganisationInfo[]> {
     try {
       const memberships = await prisma.organisationMember.findMany({
