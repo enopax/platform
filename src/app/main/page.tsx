@@ -17,17 +17,19 @@ import { redirect } from 'next/navigation';
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { org?: string };
+  searchParams: Promise<{ org?: string }>;
 }) {
   const session = await auth();
   if (!session) return redirect('/');
 
+  const params = await searchParams;
+
   // If no organisation is selected, redirect to organisation selection
-  if (!searchParams.org) {
+  if (!params.org) {
     return redirect('/main/organisations');
   }
 
-  const organisationId = searchParams.org;
+  const organisationId = params.org;
 
   // Verify user has access to this organisation
   const isAdmin = session.user.role === 'ADMIN';

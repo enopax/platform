@@ -92,7 +92,7 @@ export default function SidebarNavigation({
             <span className="text-sm font-bold text-white">IIIII</span>
           </div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Dashboard
+            Main
           </h1>
         </div>
       </div>

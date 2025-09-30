@@ -27,7 +27,31 @@ export default async function OrganisationTeamsPage({ params }: OrganisationTeam
   // Get organisation by name
   const organisation = await prisma.organisation.findUnique({
     where: { name: orgName },
-    select: { id: true, name: true }
+    include: {
+      teams: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          color: true,
+          createdAt: true,
+          updatedAt: true,
+          _count: {
+            select: {
+              members: true
+            }
+          },
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          }
+        },
+        orderBy: { updatedAt: 'desc' }
+      }
+    }
   });
   if (!organisation) notFound();
   const id = organisation.id;
@@ -57,42 +81,6 @@ export default async function OrganisationTeamsPage({ params }: OrganisationTeam
   // Only owners, managers, and admins can access management actions
   const canManage = isOwner || isManager || isAdmin;
 
-  // Fetch the organisation with teams
-  const organisation = await prisma.organisation.findUnique({
-    where: {
-      id,
-      isActive: true
-    },
-    include: {
-      teams: {
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          color: true,
-          createdAt: true,
-          updatedAt: true,
-          _count: {
-            select: {
-              members: true
-            }
-          },
-          owner: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        },
-        orderBy: { updatedAt: 'desc' }
-      }
-    }
-  });
-
-  if (!organisation) {
-    notFound();
-  }
 
   return (
     <main className="mt-4">

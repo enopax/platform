@@ -25,37 +25,8 @@ export default async function OrganisationProjectsPage({ params }: OrganisationP
   const session = await auth();
   if (!session) return null;
 
-  // Check if user is admin
-  const isAdmin = session.user.role === 'ADMIN';
-
-  // Check if user is a member of this organisation
-  const membership = await prisma.organisationMember.findUnique({
-    where: {
-      userId_organisationId: {
-        userId: session.user.id,
-        organisationId: id
-      }
-    }
-  });
-
-  const isOwner = membership?.role === 'OWNER';
-  const isManager = membership?.role === 'MANAGER';
-  const isMember = !!membership;
-
-  // Anyone can view the page, but need to be a member or admin to see details
-  if (!isMember && !isAdmin) {
-    notFound();
-  }
-
-  // Only owners, managers, and admins can access management actions
-  const canManage = isOwner || isManager || isAdmin;
-
-  // Fetch the organisation with projects
   const organisation = await prisma.organisation.findUnique({
-    where: {
-      id,
-      isActive: true
-    },
+    where: { name: orgName },
     include: {
       projects: {
         select: {
@@ -76,10 +47,32 @@ export default async function OrganisationProjectsPage({ params }: OrganisationP
       }
     }
   });
+  if (!organisation) notFound();
 
-  if (!organisation) {
+  // Check if user is admin
+  const isAdmin = session.user.role === 'ADMIN';
+
+  // Check if user is a member of this organisation
+  const membership = await prisma.organisationMember.findUnique({
+    where: {
+      userId_organisationId: {
+        userId: session.user.id,
+        organisationId: organisation.id
+      }
+    }
+  });
+
+  const isOwner = membership?.role === 'OWNER';
+  const isManager = membership?.role === 'MANAGER';
+  const isMember = !!membership;
+
+  // Anyone can view the page, but need to be a member or admin to see details
+  if (!isMember && !isAdmin) {
     notFound();
   }
+
+  // Only owners, managers, and admins can access management actions
+  const canManage = isOwner || isManager || isAdmin;
 
   return (
     <main className="mt-4">
@@ -95,7 +88,7 @@ export default async function OrganisationProjectsPage({ params }: OrganisationP
             Organisations
           </Link>
           <RiArrowRightLine className="h-3 w-3" />
-          <Link href={`/main/organisations/${id}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+          <Link href={`/main/organisations/${orgName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
             {organisation.name}
           </Link>
           <RiArrowRightLine className="h-3 w-3" />
