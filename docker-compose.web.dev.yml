@@ -1,0 +1,30 @@
+services:
+  # Development mode - includes containerized Next.js app
+
+  nextjs-app:
+    profiles: ["full"]
+    build:
+      context: ./next-app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://yannik:yannik123@postgres:5432/pinning
+    volumes:
+      # Mount source code for hot reloading
+      - ./next-app:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - postgres
+    networks:
+      - web-network
+      - monitoring-network
+
+# nginx:
+  #   volumes:
+  #     - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+  #   depends_on:
+  #   #  - nextjs-app
+  #     - postgres

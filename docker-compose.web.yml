@@ -1,0 +1,89 @@
+services:
+  # ========================================
+  # WEB APPLICATION STACK
+  # ========================================
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: yannik
+      POSTGRES_PASSWORD: yannik123
+      POSTGRES_DB: pinning
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yannik -d pinning"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - web-network
+
+  # Nginx reverse proxy (removed from dev stack)
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./nginx/ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - postgres
+  #   networks:
+  #     - web-network
+
+  # ========================================
+  # MONITORING STACK
+  # ========================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - web-network
+      - monitoring-network
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - web-network
+      - monitoring-network
+
+  # ========================================
+  # API DOCUMENTATION
+  # ========================================
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui:latest
+    environment:
+      - SWAGGER_JSON_URL=http://localhost/api/openapi.json
+      - BASE_URL=/
+    ports:
+      - "3002:8080"
+    networks:
+      - web-network
+
+volumes:
+  postgres-data:
+  grafana-data:
+
+networks:
+  web-network:
+    driver: bridge
+  monitoring-network:
+    driver: bridge

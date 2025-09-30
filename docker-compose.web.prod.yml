@@ -1,0 +1,52 @@
+services:
+  # Production mode - includes containerised Next.js app
+
+  nextjs-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://yannik:yannik123@postgres:5432/pinning?schema=public
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_URL=${AUTH_URL:-http://localhost:3000}
+      - AUTH_TRUST_HOST=true
+      - NEXT_PUBLIC_META_DESC=${NEXT_PUBLIC_META_DESC:-IPFS Storage Platform}
+      - NEXT_PUBLIC_DISCORD_URL=${NEXT_PUBLIC_DISCORD_URL:-}
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - EMAIL_SERVER=${EMAIL_SERVER:-}
+      - EMAIL_FROM=${EMAIL_FROM:-}
+    env_file:
+      - .env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/auth/session', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - web-network
+      - monitoring-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - nextjs-app
+      - postgres
+      - swagger-ui
+    restart: unless-stopped
+    networks:
+      - web-network
