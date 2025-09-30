@@ -102,25 +102,19 @@ echo ""
 
 # Step 6: Run migrations
 echo -e "${BLUE}Step 6/6: Running database migrations${NC}"
-if command -v npx &> /dev/null; then
-    # Get DATABASE_URL and replace 'postgres' hostname with 'localhost' for host execution
-    DATABASE_URL=$(grep "^DATABASE_URL=" .env.production | cut -d'=' -f2- | tr -d '"' | sed 's/@postgres:/@localhost:/g')
-    export DATABASE_URL
+echo "Running migrations inside container..."
 
-    echo "Running migrations..."
-    npx prisma migrate deploy
-
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✓ Migrations completed${NC}"
-    else
-        echo -e "${YELLOW}⚠️  Migrations failed or not needed${NC}"
-        echo -e "   You can run migrations manually inside the container:"
-        echo -e "   docker-compose -f docker-compose.web.yml exec nextjs-app npx prisma migrate deploy"
-    fi
+# Run migrations inside the Docker container where 'postgres' hostname is valid
+if docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml exec -T nextjs-app npx prisma migrate deploy; then
+    echo -e "${GREEN}✓ Migrations completed${NC}"
 else
-    echo -e "${YELLOW}⚠️  Node.js/npx not found - skipping migrations${NC}"
-    echo -e "   Run migrations inside container:"
-    echo -e "   docker-compose -f docker-compose.web.yml exec nextjs-app sh -c 'npm install prisma && npx prisma migrate deploy'"
+    echo -e "${RED}❌ Migrations failed${NC}"
+    echo -e "${YELLOW}Try running manually:${NC}"
+    echo -e "   docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml exec nextjs-app npx prisma migrate deploy"
+    echo ""
+    echo -e "${YELLOW}Or reset the database:${NC}"
+    echo -e "   docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml exec nextjs-app npx prisma migrate reset --force"
+    exit 1
 fi
 echo ""
 
