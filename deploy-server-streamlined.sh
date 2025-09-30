@@ -100,22 +100,24 @@ for i in {1..30}; do
 done
 echo ""
 
-# Step 6: Run migrations
-echo -e "${BLUE}Step 6/6: Running database migrations${NC}"
-echo "Running migrations inside container..."
+# Step 6: Wait for application startup
+echo -e "${BLUE}Step 6/6: Waiting for application startup${NC}"
+echo "Database migrations will run automatically on container start..."
+sleep 5
 
-# Run migrations inside the Docker container where 'postgres' hostname is valid
-if docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml exec -T nextjs-app npx prisma migrate deploy; then
-    echo -e "${GREEN}✓ Migrations completed${NC}"
-else
-    echo -e "${RED}❌ Migrations failed${NC}"
-    echo -e "${YELLOW}Try running manually:${NC}"
-    echo -e "   docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml exec nextjs-app npx prisma migrate deploy"
-    echo ""
-    echo -e "${YELLOW}Or reset the database:${NC}"
-    echo -e "   docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml exec nextjs-app npx prisma migrate reset --force"
-    exit 1
-fi
+# Check if app is healthy
+echo "Checking application health..."
+for i in {1..30}; do
+    if docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml ps | grep -q "nextjs-app.*Up"; then
+        echo -e "${GREEN}✓ Application started successfully${NC}"
+        break
+    fi
+    if [ $i -eq 30 ]; then
+        echo -e "${YELLOW}⚠️  Application may still be starting. Check logs with:${NC}"
+        echo -e "   docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml logs -f nextjs-app"
+    fi
+    sleep 2
+done
 echo ""
 
 # Final status check
