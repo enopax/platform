@@ -103,18 +103,24 @@ echo ""
 # Step 6: Run migrations
 echo -e "${BLUE}Step 6/6: Running database migrations${NC}"
 if command -v npx &> /dev/null; then
-    DATABASE_URL=$(grep "^DATABASE_URL=" .env.production | cut -d'=' -f2- | tr -d '"')
+    # Get DATABASE_URL and replace 'postgres' hostname with 'localhost' for host execution
+    DATABASE_URL=$(grep "^DATABASE_URL=" .env.production | cut -d'=' -f2- | tr -d '"' | sed 's/@postgres:/@localhost:/g')
     export DATABASE_URL
+
+    echo "Running migrations..."
     npx prisma migrate deploy
 
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓ Migrations completed${NC}"
     else
         echo -e "${YELLOW}⚠️  Migrations failed or not needed${NC}"
+        echo -e "   You can run migrations manually inside the container:"
+        echo -e "   docker-compose -f docker-compose.web.yml exec nextjs-app npx prisma migrate deploy"
     fi
 else
     echo -e "${YELLOW}⚠️  Node.js/npx not found - skipping migrations${NC}"
-    echo -e "   Run migrations manually: npx prisma migrate deploy"
+    echo -e "   Run migrations inside container:"
+    echo -e "   docker-compose -f docker-compose.web.yml exec nextjs-app sh -c 'npm install prisma && npx prisma migrate deploy'"
 fi
 echo ""
 
