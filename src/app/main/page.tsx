@@ -178,7 +178,7 @@ export default async function DashboardPage({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
               <Card key={project.id} className="p-6 hover:shadow-lg transition-all group cursor-pointer">
-                <Link href={`/main/organisations/${organisation.id}/projects/${project.id}`} className="block">
+                <Link href={`/main/organisations/${organisation.name}/projects/${project.id}`} className="block">
                   {/* Project Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center min-w-0 flex-1">

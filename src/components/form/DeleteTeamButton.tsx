@@ -12,6 +12,7 @@ interface DeleteTeamButtonProps {
   teamId: string;
   teamName: string;
   organisationId?: string;
+  organisationName?: string;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'outline' | 'light';
   className?: string;
@@ -21,6 +22,7 @@ export default function DeleteTeamButton({
   teamId,
   teamName,
   organisationId,
+  organisationName,
   size = 'sm',
   variant = 'outline',
   className = ''
@@ -41,7 +43,10 @@ export default function DeleteTeamButton({
         throw new Error(result.error);
       } else {
         // Navigate to teams list or organisation page
-        if (organisationId) {
+        if (organisationName) {
+          router.push(`/main/organisations/${organisationName}`);
+        } else if (organisationId) {
+          // Fallback for backward compatibility
           router.push(`/main/organisations/${organisationId}`);
         } else {
           router.push('/main/teams');

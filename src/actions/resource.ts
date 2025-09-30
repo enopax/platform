@@ -182,6 +182,10 @@ export async function createResource(
       };
     }
 
+    // Get organisation ID from the team
+    const organisationId = team.organisationId;
+
+    // Create the resource
     const resource = await prisma.resource.create({
       data: {
         name: name.trim(),
@@ -191,15 +195,34 @@ export async function createResource(
         endpoint: endpoint?.trim() || null,
         quotaLimit,
         ownerId,
-        projectId: projectId?.trim() || null,
+        organisationId,
         isPublic,
         tags,
-        // Note: teamId might need schema update to be directly stored
-        // For now storing team information through validation above
       },
     });
 
+    // If a project was provided, link the resource to the project
+    if (projectId && projectId.trim()) {
+      try {
+        await prisma.projectResource.create({
+          data: {
+            projectId: projectId.trim(),
+            resourceId: resource.id,
+            allocatedBy: ownerId,
+          },
+        });
+        console.log(`✅ Resource ${resource.id} linked to project ${projectId}`);
+      } catch (linkError) {
+        console.error('Failed to link resource to project:', linkError);
+        // Still consider it a success since the resource was created
+      }
+    }
+
     revalidatePath('/main/resources');
+    if (projectId) {
+      revalidatePath(`/main/organisations/${organisationId}/projects/${projectId.trim()}`);
+      console.log(`🔄 Revalidated project path for org ${organisationId}, project ${projectId.trim()}`);
+    }
 
     return { success: true };
   } catch (error) {

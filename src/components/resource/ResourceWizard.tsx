@@ -1,10 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useActionState } from 'react';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import { ProgressBar } from '@/components/common/ProgressBar';
+import { Callout } from '@/components/common/Callout';
+import { createResource, type CreateResourceState } from '@/actions/resource';
 import {
   RiArrowLeftLine,
   RiArrowRightLine,
@@ -14,7 +18,8 @@ import {
   RiCodeLine,
   RiCheckLine,
   RiStarFill,
-  RiInformationLine
+  RiInformationLine,
+  RiErrorWarningLine
 } from '@remixicon/react';
 
 interface ResourceTemplate {
@@ -92,27 +97,44 @@ const RESOURCE_TEMPLATES: ResourceTemplate[] = [
 ];
 
 interface ResourceWizardProps {
-  projectId: string;
-  projectName: string;
+  projectId?: string;
+  projectName?: string;
   currentUserId: string;
+  teams: any[];
   onCancel: () => void;
-  onComplete: (resourceData: any) => void;
+  onComplete?: (resourceData: any) => void;
 }
+
+const STORAGE_SIZE_MAP = [
+  { value: 1, bytes: 1024 * 1024 * 1024 },
+  { value: 5, bytes: 5 * 1024 * 1024 * 1024 },
+  { value: 10, bytes: 10 * 1024 * 1024 * 1024 },
+  { value: 25, bytes: 25 * 1024 * 1024 * 1024 },
+  { value: 50, bytes: 50 * 1024 * 1024 * 1024 },
+  { value: 100, bytes: 100 * 1024 * 1024 * 1024 },
+];
 
 export default function ResourceWizard({
   projectId,
   projectName,
   currentUserId,
+  teams,
   onCancel,
   onComplete
 }: ResourceWizardProps) {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedTemplate, setSelectedTemplate] = useState<ResourceTemplate | null>(null);
   const [customConfig, setCustomConfig] = useState({
     name: '',
     description: '',
-    storageSize: 5
+    storageSize: 5,
+    teamId: teams.find(t => t.isPersonal)?.id || teams[0]?.id || ''
   });
+  const [state, formAction, isPending] = useActionState<CreateResourceState, FormData>(
+    createResource,
+    {}
+  );
 
   const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
@@ -132,37 +154,81 @@ export default function ResourceWizard({
   const handleTemplateSelect = (template: ResourceTemplate) => {
     setSelectedTemplate(template);
     setCustomConfig({
-      name: `${projectName} - ${template.name}`,
+      ...customConfig,
+      name: projectName ? `${projectName} - ${template.name}` : template.name,
       description: template.description,
       storageSize: template.config.storageSize || 5
     });
   };
 
-  const handleComplete = () => {
-    if (selectedTemplate) {
-      const resourceData = {
-        templateId: selectedTemplate.id,
-        type: selectedTemplate.type,
-        ...customConfig,
-        projectId,
-        ownerId: currentUserId
-      };
-      onComplete(resourceData);
+  useEffect(() => {
+    if (state.success) {
+      const selectedTeam = teams.find(t => t.id === customConfig.teamId);
+      const orgName = selectedTeam?.organisation?.name;
+
+      setTimeout(() => {
+        if (projectId && orgName) {
+          router.push(`/main/organisations/${orgName}/projects/${projectId}`);
+        } else if (orgName) {
+          router.push(`/main/organisations/${orgName}/resources`);
+        } else {
+          router.push('/main/resources');
+        }
+        router.refresh();
+      }, 1500);
     }
-  };
+  }, [state.success, router, projectId, customConfig.teamId, teams]);
 
   return (
-    <Card className="p-8">
-      {/* Progress Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Add Resource to {projectName}
-          </h2>
-          <Badge variant="outline">
-            Step {currentStep} of {totalSteps}
-          </Badge>
-        </div>
+    <form action={formAction}>
+      <input type="hidden" name="name" value={customConfig.name} />
+      <input type="hidden" name="description" value={customConfig.description} />
+      <input type="hidden" name="type" value={selectedTemplate?.type || ''} />
+      <input type="hidden" name="status" value="ACTIVE" />
+      <input type="hidden" name="ownerId" value={currentUserId} />
+      <input type="hidden" name="teamId" value={customConfig.teamId} />
+      {selectedTemplate && (
+        <input
+          type="hidden"
+          name="quotaLimit"
+          value={STORAGE_SIZE_MAP.find(s => s.value === customConfig.storageSize)?.bytes.toString() || ''}
+        />
+      )}
+      {projectId && <input type="hidden" name="projectId" value={projectId} />}
+
+      <Card className="p-8">
+        {state.success && (
+          <Callout
+            title="Success"
+            variant="success"
+            icon={RiCheckLine}
+            className="mb-6"
+          >
+            Resource created successfully{projectName ? ` for ${projectName}` : ''}! Redirecting...
+          </Callout>
+        )}
+
+        {state.error && (
+          <Callout
+            title="Creation Failed"
+            variant="error"
+            icon={RiErrorWarningLine}
+            className="mb-6"
+          >
+            {state.error}
+          </Callout>
+        )}
+
+        {/* Progress Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {projectName ? `Add Resource to ${projectName}` : 'Create New Resource'}
+            </h2>
+            <Badge variant="outline">
+              Step {currentStep} of {totalSteps}
+            </Badge>
+          </div>
 
         <ProgressBar value={progress} className="mb-4" />
 
@@ -432,8 +498,11 @@ export default function ResourceWizard({
                   Ready to Create
                 </h4>
                 <p className="text-sm text-green-700 dark:text-green-300">
-                  Your resource will be created and automatically assigned to {projectName}.
-                  You can modify these settings later if needed.
+                  {projectName
+                    ? `Your resource will be created and automatically assigned to ${projectName}.`
+                    : 'Your resource will be created for your organisation.'
+                  }
+                  {' '}You can modify these settings later if needed.
                 </p>
               </div>
             </div>
@@ -441,37 +510,42 @@ export default function ResourceWizard({
         </div>
       )}
 
-      {/* Navigation */}
-      <div className="flex items-center justify-between pt-8 border-t border-gray-200 dark:border-gray-700">
-        <Button
-          variant="light"
-          onClick={currentStep === 1 ? onCancel : handlePrevious}
-          className="flex items-center"
-        >
-          <RiArrowLeftLine className="w-4 h-4 mr-2" />
-          {currentStep === 1 ? 'Cancel' : 'Previous'}
-        </Button>
+        {/* Navigation */}
+        <div className="flex items-center justify-between pt-8 border-t border-gray-200 dark:border-gray-700">
+          <Button
+            type="button"
+            variant="light"
+            onClick={currentStep === 1 ? onCancel : handlePrevious}
+            className="flex items-center"
+            disabled={isPending}
+          >
+            <RiArrowLeftLine className="w-4 h-4 mr-2" />
+            {currentStep === 1 ? 'Cancel' : 'Previous'}
+          </Button>
 
-        {currentStep < totalSteps ? (
-          <Button
-            onClick={handleNext}
-            disabled={currentStep === 1 && !selectedTemplate}
-            className="flex items-center"
-          >
-            Next
-            <RiArrowRightLine className="w-4 h-4 ml-2" />
-          </Button>
-        ) : (
-          <Button
-            onClick={handleComplete}
-            disabled={!customConfig.name.trim()}
-            className="flex items-center"
-          >
-            <RiCheckLine className="w-4 h-4 mr-2" />
-            Create Resource
-          </Button>
-        )}
-      </div>
-    </Card>
+          {currentStep < totalSteps ? (
+            <Button
+              type="button"
+              onClick={handleNext}
+              disabled={currentStep === 1 && !selectedTemplate}
+              className="flex items-center"
+            >
+              Next
+              <RiArrowRightLine className="w-4 h-4 ml-2" />
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              disabled={!customConfig.name.trim() || isPending}
+              isLoading={isPending}
+              className="flex items-center"
+            >
+              <RiCheckLine className="w-4 h-4 mr-2" />
+              {isPending ? 'Creating...' : 'Create Resource'}
+            </Button>
+          )}
+        </div>
+      </Card>
+    </form>
   );
 }
