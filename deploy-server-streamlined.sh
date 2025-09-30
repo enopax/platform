@@ -15,6 +15,17 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+# Parse arguments
+FORCE_REBUILD=false
+for arg in "$@"; do
+  case $arg in
+    --force-rebuild)
+      FORCE_REBUILD=true
+      shift
+      ;;
+  esac
+done
+
 # Step 1: Pre-flight checks
 echo -e "${BLUE}Step 1/6: Pre-flight checks${NC}"
 if ! command -v docker &> /dev/null; then
@@ -74,8 +85,32 @@ echo ""
 
 # Step 4: Build application
 echo -e "${BLUE}Step 4/6: Building application${NC}"
-echo "This may take a few minutes..."
-docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml build nextjs-app
+
+# Check if schema.prisma or migrations changed
+SCHEMA_CHANGED=false
+if [ -f ".last_deploy_hash" ]; then
+    LAST_HASH=$(cat .last_deploy_hash)
+    CURRENT_HASH=$(find prisma -type f -exec md5sum {} \; 2>/dev/null | md5sum | awk '{print $1}')
+    if [ "$LAST_HASH" != "$CURRENT_HASH" ]; then
+        SCHEMA_CHANGED=true
+        echo -e "${YELLOW}⚠️  Database schema changes detected${NC}"
+    fi
+else
+    SCHEMA_CHANGED=true
+fi
+
+# Build with or without cache
+if [ "$FORCE_REBUILD" = true ] || [ "$SCHEMA_CHANGED" = true ]; then
+    echo "Building with --no-cache (schema changes or forced rebuild)..."
+    docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml build --no-cache nextjs-app
+
+    # Save current schema hash
+    find prisma -type f -exec md5sum {} \; 2>/dev/null | md5sum | awk '{print $1}' > .last_deploy_hash
+else
+    echo "Building with cache (no schema changes detected)..."
+    docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml build nextjs-app
+fi
+
 echo -e "${GREEN}✓ Application built${NC}"
 echo ""
 

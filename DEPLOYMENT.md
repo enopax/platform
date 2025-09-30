@@ -1,13 +1,66 @@
-# Production Deployment Guide
+# Deployment Guide
 
-This guide covers deploying the IPFS Storage Platform to a production server using Docker.
+## Quick Deploy to Demo Server
+
+### Method 1: Automatic (GitHub Actions)
+Simply push to the `deploy/demo-v1` branch:
+```bash
+git push origin deploy/demo-v1
+```
+
+GitHub Actions will automatically:
+- SSH into your demo server
+- Pull latest changes
+- Rebuild the application (with cache intelligence)
+- Run database migrations
+- Restart services
+
+### Method 2: Manual Deployment
+SSH into your server and run:
+```bash
+cd /root/IIIII
+git pull origin deploy/demo-v1
+./deploy-server-streamlined.sh
+```
+
+### Method 3: Force Full Rebuild
+If you have major schema changes or want a clean rebuild:
+```bash
+./deploy-server-streamlined.sh --force-rebuild
+```
+
+---
+
+## How It Works
+
+### Intelligent Build Caching
+The deployment script automatically detects changes to Prisma schema and migrations:
+- **Schema changed**: Rebuilds with `--no-cache` to regenerate Prisma Client
+- **No schema changes**: Uses Docker cache for faster builds
+- **Force rebuild**: Use `--force-rebuild` flag to bypass cache detection
+
+### Automatic Database Migrations
+Migrations run automatically on container startup via `docker-entrypoint.sh`:
+1. Container starts
+2. Runs `npx prisma migrate deploy`
+3. Starts Next.js application
+
+### Zero-Downtime Deployments
+The script:
+1. Stops old containers
+2. Rebuilds application (if needed)
+3. Starts new containers with health checks
+4. Waits for database readiness
+5. Migrations run automatically on container start
+
+---
 
 ## Prerequisites
 
 - Docker Engine 20.10+
 - Docker Compose v2.0+
 - Git
-- At least 4GB RAM and 20GB disk space
+- At least 2GB RAM and 20GB disk space
 - Domain name (optional, for SSL/TLS)
 
 ## Quick Start
@@ -19,6 +72,9 @@ cd IIIII
 
 # Switch to deployment branch
 git checkout deploy/demo-v1
+
+# Navigate to project
+cd next-app
 
 # Create production environment file
 cp .env.production.example .env.production
@@ -69,7 +125,7 @@ Copy the output to your `.env.production` file as `AUTH_SECRET`.
 
 Update the PostgreSQL credentials in both:
 - `.env.production` (DATABASE_URL)
-- `docker-compose.web.yml` (postgres service)
+- `../docker-compose.web.yml` (postgres service)
 
 **IMPORTANT**: Use strong passwords in production!
 

@@ -1,0 +1,22 @@
+name: Deploy to Demo Server
+
+on:
+  push:
+    branches:
+      - deploy/demo-v1
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DEMO_SERVER_HOST }}
+          username: ${{ secrets.DEMO_SERVER_USER }}
+          key: ${{ secrets.DEMO_SERVER_SSH_KEY }}
+          script: |
+            cd /root/IIIII
+            git pull origin deploy/demo-v1
+            ./deploy-server-streamlined.sh --force-rebuild
