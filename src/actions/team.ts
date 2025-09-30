@@ -183,7 +183,10 @@ export async function createTeam(
       color: color?.trim() || undefined,
       organisationId,
     });
-    revalidatePath('/main/teams');
+
+    // Revalidate organisation-based paths
+    revalidatePath('/main/organisations');
+    revalidatePath('/main/organisations/[orgName]/teams', 'page');
 
     return { success: true };
   } catch (error) {
@@ -206,8 +209,10 @@ export async function deleteTeam(
     // Use service to delete team (soft delete)
     await teamService.deleteTeam(teamId, session.user.id);
 
-    revalidatePath('/main/teams');
-    revalidatePath(`/main/teams/${teamId}`);
+    // Revalidate organisation-based paths
+    revalidatePath('/main/organisations');
+    revalidatePath('/main/organisations/[orgName]/teams', 'page');
+    revalidatePath('/main/organisations/[orgName]/teams/[teamId]', 'page');
 
     return { success: true };
   } catch (error) {

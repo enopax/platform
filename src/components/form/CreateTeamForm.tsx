@@ -25,9 +25,10 @@ interface CreateTeamFormProps {
   organisations: Organisation[];
   currentUserId: string;
   organisationId?: string;
+  orgName?: string;
 }
 
-export default function CreateTeamForm({ organisations, currentUserId, organisationId }: CreateTeamFormProps) {
+export default function CreateTeamForm({ organisations, currentUserId, organisationId, orgName }: CreateTeamFormProps) {
   const router = useRouter();
   const [selectedOwner, setSelectedOwner] = useState<User | null>(null);
   const [state, formAction, isPending] = useActionState<CreateTeamState, FormData>(
@@ -39,10 +40,13 @@ export default function CreateTeamForm({ organisations, currentUserId, organisat
   useEffect(() => {
     if (state.success) {
       setTimeout(() => {
-        router.push('/main/teams');
+        const redirectUrl = orgName
+          ? `/main/organisations/${orgName}/teams`
+          : '/main/organisations';
+        router.push(redirectUrl);
       }, 1500);
     }
-  }, [state.success, router]);
+  }, [state.success, router, orgName]);
 
   return (
     <form action={formAction} className="space-y-6">

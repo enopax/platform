@@ -93,6 +93,7 @@ export default async function CreateTeamPage({ params }: CreateTeamPageProps) {
             organisations={[organisation]}
             currentUserId={session.user.id}
             organisationId={organisationId}
+            orgName={orgName}
           />
         </Card>
       </div>
