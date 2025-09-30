@@ -4,8 +4,24 @@
 
 ### 1. Initial Setup
 
+**CentOS 9:**
 ```bash
-# Install Docker (Ubuntu/Debian)
+# Install Docker
+sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+sudo dnf install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker $USER
+newgrp docker
+
+# Verify installation
+docker --version
+docker compose version
+```
+
+**Ubuntu/Debian:**
+```bash
+# Install Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
@@ -98,11 +114,23 @@ docker logs storage-nextjs-app-1
 
 Open necessary ports:
 
+**CentOS 9 (firewalld):**
 ```bash
-# Ubuntu/Debian with ufw
+sudo firewall-cmd --permanent --add-port=3000/tcp  # Next.js
+sudo firewall-cmd --permanent --add-port=80/tcp    # HTTP
+sudo firewall-cmd --permanent --add-port=443/tcp   # HTTPS
+sudo firewall-cmd --permanent --add-port=22/tcp    # SSH
+sudo firewall-cmd --reload
+
+# Check status
+sudo firewall-cmd --list-all
+```
+
+**Ubuntu/Debian (ufw):**
+```bash
 sudo ufw allow 3000/tcp  # Next.js
-sudo ufw allow 80/tcp    # HTTP (if using nginx)
-sudo ufw allow 443/tcp   # HTTPS (if using nginx)
+sudo ufw allow 80/tcp    # HTTP
+sudo ufw allow 443/tcp   # HTTPS
 sudo ufw allow 22/tcp    # SSH
 sudo ufw enable
 
@@ -114,12 +142,23 @@ sudo ufw status
 
 ### Using Let's Encrypt
 
+**CentOS 9:**
+```bash
+# Install certbot
+sudo dnf install certbot -y
+
+# Obtain certificate
+sudo certbot certonly --standalone -d your-domain.com
+```
+
+**Ubuntu/Debian:**
 ```bash
 # Install certbot
 sudo apt-get install certbot
 
 # Obtain certificate
 sudo certbot certonly --standalone -d your-domain.com
+```
 
 # Certificates will be in:
 # /etc/letsencrypt/live/your-domain.com/fullchain.pem

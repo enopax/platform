@@ -44,7 +44,8 @@ fi
 if grep -q "generate-with-openssl-rand-base64-32" .env.production; then
     echo -e "${YELLOW}⚠️  Generating AUTH_SECRET...${NC}"
     NEW_SECRET=$(openssl rand -base64 32)
-    sed -i.bak "s/generate-with-openssl-rand-base64-32/${NEW_SECRET}/" .env.production
+    # Use | as delimiter to avoid conflicts with / in base64 strings
+    sed -i.bak "s|generate-with-openssl-rand-base64-32|${NEW_SECRET}|" .env.production
     echo -e "${GREEN}✓ AUTH_SECRET generated${NC}"
 fi
 
