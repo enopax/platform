@@ -40,12 +40,19 @@ if [ ! -f ".env.production" ]; then
     read -p "Press Enter after editing .env.production to continue..."
 fi
 
-# Generate AUTH_SECRET if not set
-if grep -q "generate-with-openssl-rand-base64-32" .env.production; then
+# Generate AUTH_SECRET if not set or if placeholder exists
+if ! grep -q "^AUTH_SECRET=" .env.production || grep -q "generate-with-openssl-rand-base64-32" .env.production; then
     echo -e "${YELLOW}⚠️  Generating AUTH_SECRET...${NC}"
     NEW_SECRET=$(openssl rand -base64 32)
-    # Use | as delimiter to avoid conflicts with / in base64 strings
-    sed -i.bak "s|generate-with-openssl-rand-base64-32|${NEW_SECRET}|" .env.production
+
+    if grep -q "^AUTH_SECRET=" .env.production; then
+        # Replace existing AUTH_SECRET line
+        sed -i.bak "s|^AUTH_SECRET=.*|AUTH_SECRET=\"${NEW_SECRET}\"|" .env.production
+    else
+        # Add AUTH_SECRET if not present
+        echo "AUTH_SECRET=\"${NEW_SECRET}\"" >> .env.production
+    fi
+
     echo -e "${GREEN}✓ AUTH_SECRET generated${NC}"
 fi
 
@@ -63,6 +70,17 @@ echo ""
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     echo "Deployment cancelled."
     exit 0
+fi
+
+# Export environment variables from .env.production for docker-compose
+echo ""
+echo "📦 Loading environment variables..."
+if [ -f .env.production ]; then
+    export $(grep -v '^#' .env.production | xargs)
+    echo -e "${GREEN}✓ Environment variables loaded${NC}"
+else
+    echo -e "${RED}❌ .env.production not found!${NC}"
+    exit 1
 fi
 
 echo ""
