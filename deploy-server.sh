@@ -100,8 +100,18 @@ echo "🚀 Starting services..."
 docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml up -d
 
 echo ""
-echo "⏳ Waiting for services to be healthy..."
+echo "⏳ Waiting for database to be ready..."
 sleep 10
+
+# Run database migrations
+echo "🔄 Running database migrations..."
+DATABASE_URL=$(grep DATABASE_URL .env.production | cut -d '=' -f2- | tr -d '"')
+export DATABASE_URL
+npx prisma migrate deploy
+
+if [ $? -ne 0 ]; then
+    echo -e "${YELLOW}⚠️  Migrations failed or not needed${NC}"
+fi
 
 # Check service status
 echo ""
