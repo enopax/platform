@@ -7,20 +7,10 @@ services:
       dockerfile: Dockerfile.prod
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://yannik:yannik123@postgres:5432/pinning?schema=public
-      - AUTH_SECRET=${AUTH_SECRET}
-      - AUTH_URL=${AUTH_URL:-http://localhost:3000}
-      - AUTH_TRUST_HOST=true
-      - NEXT_PUBLIC_META_DESC=${NEXT_PUBLIC_META_DESC:-IPFS Storage Platform}
-      - NEXT_PUBLIC_DISCORD_URL=${NEXT_PUBLIC_DISCORD_URL:-}
-      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
-      - EMAIL_SERVER=${EMAIL_SERVER:-}
-      - EMAIL_FROM=${EMAIL_FROM:-}
     env_file:
       - .env.production
+    environment:
+      - NODE_ENV=production
     depends_on:
       postgres:
         condition: service_healthy
