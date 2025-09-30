@@ -14,6 +14,9 @@ import {
 } from '@remixicon/react';
 import Link from 'next/link';
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+
 interface OpenAPISpec {
   openapi: string;
   info: {
