@@ -86,9 +86,14 @@ cd ~
 # Clone repository via SSH
 git clone git@github.com:addiinnocent/IIIII.git storage-app
 
-# Navigate to application directory
+# Navigate to application directory (ALL deployment files are here)
 cd storage-app/next-app
+
+# IMPORTANT: Switch to the correct branch
+git checkout deploy/demo-v2
 ```
+
+**⚠️ IMPORTANT:** All docker-compose files, deployment scripts, and configuration are in the `next-app` folder. There is no parent-level docker setup.
 
 ---
 
@@ -163,11 +168,31 @@ sudo firewall-cmd --list-all
 
 ---
 
-## Step 7: Initial Deployment
+## Step 7: Clean Up Old Containers (if needed)
+
+If you had a previous deployment, clean up old containers first:
 
 ```bash
 # Make sure you're in the next-app directory
 cd ~/storage-app/next-app
+
+# Run cleanup script
+./cleanup-old-containers.sh
+```
+
+This removes old nginx, grafana, prometheus, and swagger containers from previous setups.
+
+---
+
+## Step 8: Initial Deployment
+
+```bash
+# Make sure you're in the next-app directory (ALL deployment files are here)
+cd ~/storage-app/next-app
+
+# Verify you're on the correct branch
+git branch --show-current
+# Should show: deploy/demo-v2
 
 # Build and start production stack
 docker compose -f docker-compose.prod.yml up -d --build
@@ -190,7 +215,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 ---
 
-## Step 8: Verify Deployment
+## Step 9: Verify Deployment
 
 ```bash
 # Check running containers
@@ -216,7 +241,7 @@ curl http://localhost:3000/api/auth/session
 
 ---
 
-## Step 9: Access Your Application
+## Step 10: Access Your Application
 
 **From your local computer:**
 
@@ -234,7 +259,7 @@ curl http://localhost:3000/api/auth/session
 
 ---
 
-## Step 10: Set Up Deploy Script for Future Updates
+## Step 11: Set Up Deploy Script for Future Updates
 
 ```bash
 # Make deploy script executable
@@ -312,6 +337,51 @@ docker compose -f docker-compose.prod.yml exec -T postgres psql -U your_producti
 ---
 
 ## Troubleshooting
+
+### Wrong containers starting (nginx, grafana, etc.)
+
+If you see containers like `nginx`, `grafana`, `prometheus`, or `swagger-ui` starting, you're either:
+
+**Issue 1: Wrong branch**
+```bash
+# Check current branch
+git branch --show-current
+
+# Switch to correct branch
+git checkout deploy/demo-v2
+
+# Verify you're in next-app folder
+pwd
+# Should show: .../storage-app/next-app
+```
+
+**Issue 2: Old containers from previous setup**
+```bash
+# Remove all old containers
+docker ps -a --format "{{.Names}}" | grep -E "nginx|grafana|prometheus|swagger" | xargs docker rm -f
+
+# Remove old images
+docker images | grep -E "nginx|grafana|prometheus|swagger" | awk '{print $3}' | xargs docker rmi -f
+
+# Start fresh
+docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+**Issue 3: Parent directory has old docker files**
+```bash
+# Make sure you're in next-app folder
+cd ~/storage-app/next-app
+
+# Verify no docker-compose files in parent
+ls ../docker-compose*.yml
+# Should show: No such file or directory
+
+# If files exist in parent, you're on wrong branch
+cd ~/storage-app
+git checkout deploy/demo-v2
+cd next-app
+```
 
 ### Docker permission denied
 ```bash

@@ -32,14 +32,23 @@ docker compose version
 ### 2. Clone Repository
 
 ```bash
-# Clone from GitHub
+# Clone from GitHub (SSH - recommended)
 git clone git@github.com:addiinnocent/IIIII.git storage-app
-cd storage-app/next-app
 
 # Or via HTTPS
 git clone https://github.com/addiinnocent/IIIII.git storage-app
+
+# Navigate to application directory
 cd storage-app/next-app
+
+# IMPORTANT: Switch to deployment branch
+git checkout deploy/demo-v2
 ```
+
+**⚠️ IMPORTANT:**
+- All deployment files are in the `next-app` folder
+- No parent-level docker setup exists
+- Always work from `storage-app/next-app` directory
 
 ### 3. Configure Environment
 
