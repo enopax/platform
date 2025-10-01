@@ -14,3 +14,4 @@ migration-*.sql
 Dockerfile
 .dockerignore
 .default.env*
+.last_deploy_hash

@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  output: 'standalone',
   outputFileTracingRoot: path.join(__dirname),
 };
 

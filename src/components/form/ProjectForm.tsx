@@ -132,9 +132,9 @@ export default function ProjectForm({
         <input type="hidden" name="projectId" value={project.id} />
       )}
 
-      {/* Hidden field for user ID when updating */}
-      {project && currentUserId && (
-        <input type="hidden" name="userId" value={currentUserId} />
+      {/* Hidden field for user ID */}
+      {currentUserId && (
+        <input type="hidden" name="currentUserId" value={currentUserId} />
       )}
       
 

@@ -13,7 +13,12 @@
     "test:validation": "jest --config jest.config.unified.js --selectProjects validation",
     "test:actions": "jest --config jest.config.unified.js --selectProjects actions",
     "test:services": "jest --config jest.config.unified.js --selectProjects services",
-    "test:components": "jest --config jest.config.unified.js --selectProjects components"
+    "test:components": "jest --config jest.config.unified.js --selectProjects components",
+    "docker:dev": "docker compose up -d",
+    "docker:dev:stop": "docker compose down",
+    "docker:prod": "docker compose -f docker-compose.prod.yml up -d --build",
+    "docker:prod:stop": "docker compose -f docker-compose.prod.yml down",
+    "docker:logs": "docker compose logs -f"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
