@@ -1,9 +1,8 @@
-# Storage Platform Web Application
+# Infrastructure Deployment Platform
 
-**Next.js 15 + TypeScript Web Application for Team-Based File Management**
+**Next.js 15 + TypeScript Web Application**
 
-A modern, production-ready web application providing team management, project organisation, and comprehensive file handling with role-based permissions and real-time monitoring.
-
+A modern web application for deploying and managing infrastructure services with a single click. Deploy IPFS storage clusters, databases, and other services through an intuitive web interface.
 ---
 
 ## 🚀 Quick Start
