@@ -14,28 +14,46 @@ A modern, production-ready web application providing team management, project or
 # Install dependencies
 npm install
 
-# Start Docker infrastructure (Postgres, Grafana, Prometheus)
+# Start PostgreSQL database
 npm run docker:dev
 
 # Start Next.js development server (runs standalone)
 npm run dev
 
-# Stop infrastructure when done
+# Stop database when done
 npm run docker:dev:stop
 ```
 
-### Production Mode
+### Production Mode (Local Testing)
 
 ```bash
-# Build and start full stack (includes containerised Next.js)
+# Build and start production stack (PostgreSQL + Next.js)
 npm run docker:prod
+
+# Rebuild Next.js only (for updates)
+npm run docker:prod:rebuild
+
+# View logs
+npm run docker:prod:logs
 
 # Stop production stack
 npm run docker:prod:stop
-
-# View logs
-npm run docker:logs
 ```
+
+### Production Deployment (Server)
+
+**One-command deployment:**
+```bash
+./deploy.sh
+```
+
+This script automatically:
+- Pulls latest code from git
+- Rebuilds Next.js container
+- Synchronises database schema
+- Restarts services
+
+See [SERVER-SETUP.md](./SERVER-SETUP.md) for complete server deployment guide.
 
 ### Testing Commands
 

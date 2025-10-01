@@ -1,12 +1,17 @@
 #!/bin/sh
 set -e
 
-echo "🔄 Running database migrations..."
+echo "🔄 Synchronising database schema..."
 
-# Run migrations
-npx prisma migrate deploy
+# Push schema to database (no migration files needed)
+npx prisma db push --accept-data-loss --skip-generate
 
-echo "✅ Migrations complete"
+if [ $? -eq 0 ]; then
+  echo "✅ Database schema synchronised successfully"
+else
+  echo "❌ Failed to synchronise database schema"
+  exit 1
+fi
 
 # Start the application
 echo "🚀 Starting Next.js application..."

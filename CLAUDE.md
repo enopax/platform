@@ -33,14 +33,26 @@ npm run docker:dev:stop
 
 ### Production Environment
 ```bash
-# Build and start full stack (includes containerised Next.js)
+# Build and start production stack (PostgreSQL + Next.js)
 npm run docker:prod
+
+# Rebuild Next.js only (for updates)
+npm run docker:prod:rebuild
+
+# View application logs
+npm run docker:prod:logs
 
 # Stop production stack
 npm run docker:prod:stop
+```
 
-# View logs
-npm run docker:logs
+### Git-Pull Deployment (Production Server)
+```bash
+# Deploy updates with single command
+./deploy.sh
+
+# Manual deployment
+git pull && npm run docker:prod:rebuild
 ```
 
 ### Next.js Development
@@ -65,13 +77,19 @@ npm test            # Run all tests
 - Hot reloading enabled for fast development
 
 **Production**:
-- Docker runs: PostgreSQL, Grafana, Prometheus, Next.js (production build), Nginx
-- Full stack containerised with automatic restarts
-- Nginx reverse proxy for production traffic
+- Docker runs: PostgreSQL + Next.js (containerised production build)
+- Automatic database schema synchronisation via Prisma
+- Git-pull deployment workflow with `./deploy.sh`
+- No migration files - schema defined in `prisma/schema.prisma`
 
 **Key Services**:
 - PostgreSQL (port 5432) - Application database
 - Next.js App (port 3000) - Web interface
+
+**Database Management**:
+- Uses `prisma db push` for schema synchronisation (not migrations)
+- Schema changes deploy automatically on container restart
+- Perfect for rapid development and small teams
 
 > 📖 **For detailed architecture information, see [ARCHITECTURE.md](./ARCHITECTURE.md)**
 

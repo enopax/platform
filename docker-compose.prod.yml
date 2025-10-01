@@ -1,20 +1,16 @@
 services:
-  # ========================================
-  # DATABASE
-  # ========================================
-
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_USER: yannik
-      POSTGRES_PASSWORD: yannik123
-      POSTGRES_DB: pinning
+      POSTGRES_USER: ${POSTGRES_USER:-yannik}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-yannik123}
+      POSTGRES_DB: ${POSTGRES_DB:-pinning}
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U yannik -d pinning"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-yannik} -d ${POSTGRES_DB:-pinning}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,30 +18,16 @@ services:
     networks:
       - app-network
 
-  # ========================================
-  # NEXT.JS APPLICATION (Production Build)
-  # ========================================
-
   nextjs-app:
     build:
       context: .
       dockerfile: Dockerfile.prod
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://yannik:yannik123@postgres:5432/pinning?schema=public
-      - AUTH_SECRET=${AUTH_SECRET}
-      - AUTH_URL=${AUTH_URL:-http://localhost:3000}
-      - AUTH_TRUST_HOST=true
-      - NEXT_PUBLIC_META_DESC=${NEXT_PUBLIC_META_DESC:-Storage Platform}
-      - NEXT_PUBLIC_DISCORD_URL=${NEXT_PUBLIC_DISCORD_URL:-}
-      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
-      - EMAIL_SERVER=${EMAIL_SERVER:-}
-      - EMAIL_FROM=${EMAIL_FROM:-}
     env_file:
       - .env.production
+    environment:
+      - NODE_ENV=production
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,57 +41,8 @@ services:
     networks:
       - app-network
 
-  # ========================================
-  # MONITORING STACK
-  # ========================================
-
-  prometheus:
-    image: prom/prometheus:latest
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    restart: unless-stopped
-    networks:
-      - app-network
-
-  grafana:
-    image: grafana/grafana:latest
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    ports:
-      - "3001:3000"
-    depends_on:
-      - prometheus
-    volumes:
-      - grafana-data:/var/lib/grafana
-    restart: unless-stopped
-    networks:
-      - app-network
-
-  # ========================================
-  # NGINX REVERSE PROXY
-  # ========================================
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - nextjs-app
-      - postgres
-    restart: unless-stopped
-    networks:
-      - app-network
-
 volumes:
   postgres-data:
-  grafana-data:
 
 networks:
   app-network:

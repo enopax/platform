@@ -1,8 +1,21 @@
-# Server Setup Quick Reference
+# Production Server Setup Guide
 
-## On Your Server
+**Quick Start Guide for deploying to a production server using git-pull workflow**
 
-### 1. Initial Setup
+---
+
+## Prerequisites
+
+- Linux server (Ubuntu/Debian recommended)
+- Root or sudo access
+- Git installed
+- Docker and Docker Compose
+
+---
+
+## Initial Server Setup
+
+### 1. Install Docker
 
 ```bash
 # Install Docker (Ubuntu/Debian)
@@ -20,94 +33,106 @@ docker compose version
 
 ```bash
 # Clone from GitHub
-git clone git@github.com:addiinnocent/IIIII.git ipfs-storage
-cd ipfs-storage
+git clone git@github.com:addiinnocent/IIIII.git storage-app
+cd storage-app/next-app
 
-# Switch to deployment branch
-git checkout deploy/demo-v1
+# Or via HTTPS
+git clone https://github.com/addiinnocent/IIIII.git storage-app
+cd storage-app/next-app
 ```
 
 ### 3. Configure Environment
 
 ```bash
-# Navigate to next-app
-cd next-app
-
-# Create production environment file
+# Create production environment file from template
 cp .env.production.example .env.production
 
-# Generate AUTH_SECRET
-echo "AUTH_SECRET=\"$(openssl rand -base64 32)\"" >> .env.production
-
-# Edit other values
+# Edit configuration
 nano .env.production
 ```
 
 **Required Configuration:**
-- `DATABASE_URL`: PostgreSQL connection string
-- `AUTH_SECRET`: Generated authentication secret (already done above)
-- `AUTH_URL`: Your domain or `http://your-server-ip:3000`
 
-### 4. Update Database Credentials
-
-Edit `docker-compose.web.yml` to change default PostgreSQL password:
-
-```yaml
-postgres:
-  environment:
-    POSTGRES_USER: your_production_user
-    POSTGRES_PASSWORD: your_strong_password_here
-    POSTGRES_DB: pinning
+1. **Database Credentials** (Change these!)
+```bash
+POSTGRES_USER=your_production_user
+POSTGRES_PASSWORD=your_strong_password_here
+POSTGRES_DB=pinning
+DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public"
 ```
 
-Update `.env.production` to match:
+2. **Authentication Secret**
 ```bash
-DATABASE_URL="postgresql://your_production_user:your_strong_password_here@postgres:5432/pinning?schema=public"
+# Generate with:
+openssl rand -base64 32
+
+# Then add to .env.production:
+AUTH_SECRET="your_generated_secret_here"
 ```
 
-### 5. Deploy Using Script
-
+3. **Application URL**
 ```bash
-# From project root
-cd ..
-./deploy-server.sh
+# Your domain or server IP
+AUTH_URL="https://your-domain.com"
+# Or for testing:
+AUTH_URL="http://your-server-ip:3000"
 ```
 
-**Or manually:**
+### 4. Initial Deployment
 
 ```bash
-# Build and start
-docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml up -d
+# Build and start services
+docker compose -f docker-compose.prod.yml up -d --build
 
 # View logs
-docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml logs -f nextjs-app
-
-# Check status
-docker ps
+docker compose -f docker-compose.prod.yml logs -f
 ```
 
-### 6. Verify Deployment
+### 5. Verify Deployment
 
 ```bash
-# Check if services are running
-docker ps
+# Check service status
+docker compose -f docker-compose.prod.yml ps
 
 # Test the application
 curl http://localhost:3000/api/auth/session
 
-# View logs
-docker logs storage-nextjs-app-1
+# Should return: {"user":null}
 ```
+
+---
+
+## Git-Pull Deployment Workflow
+
+Once initial setup is complete, deploy updates with a single command:
+
+```bash
+./deploy.sh
+```
+
+This script will:
+1. Pull latest changes from git
+2. Rebuild Next.js container
+3. Synchronise database schema automatically (via Prisma)
+4. Restart services
+5. Show deployment status
+
+**Manual deployment:**
+```bash
+# Pull latest code
+git pull
+
+# Rebuild and restart
+docker compose -f docker-compose.prod.yml up -d --build nextjs-app
+```
+
+---
 
 ## Firewall Configuration
 
-Open necessary ports:
-
 ```bash
 # Ubuntu/Debian with ufw
-sudo ufw allow 3000/tcp  # Next.js
-sudo ufw allow 80/tcp    # HTTP (if using nginx)
-sudo ufw allow 443/tcp   # HTTPS (if using nginx)
+sudo ufw allow 3000/tcp  # Next.js application
 sudo ufw allow 22/tcp    # SSH
 sudo ufw enable
 
@@ -115,106 +140,76 @@ sudo ufw enable
 sudo ufw status
 ```
 
-## SSL/TLS Setup (Optional)
+**For production with domain:**
+- Use reverse proxy (nginx/caddy) on host
+- Expose ports 80/443 instead of 3000
+- Configure SSL certificates
 
-### Using Let's Encrypt
-
-```bash
-# Install certbot
-sudo apt-get install certbot
-
-# Obtain certificate
-sudo certbot certonly --standalone -d your-domain.com
-
-# Certificates will be in:
-# /etc/letsencrypt/live/your-domain.com/fullchain.pem
-# /etc/letsencrypt/live/your-domain.com/privkey.pem
-
-# Copy to project
-sudo cp /etc/letsencrypt/live/your-domain.com/fullchain.pem ./nginx/ssl/
-sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem ./nginx/ssl/
-
-# Update nginx configuration
-nano nginx/nginx.prod.conf
-
-# Restart nginx
-docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml restart nginx
-```
+---
 
 ## Common Operations
 
 ### View Logs
 
 ```bash
-# Application logs
-docker logs -f storage-nextjs-app-1
+# Application logs (follow)
+docker compose -f docker-compose.prod.yml logs -f nextjs-app
 
 # Database logs
-docker logs -f storage-postgres-1
+docker compose -f docker-compose.prod.yml logs -f postgres
 
 # All services
-docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml logs -f
+docker compose -f docker-compose.prod.yml logs -f
 ```
 
 ### Restart Services
 
 ```bash
-# Restart Next.js app
-docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml restart nextjs-app
+# Restart Next.js app only
+docker compose -f docker-compose.prod.yml restart nextjs-app
 
 # Restart all services
-docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml restart
-```
-
-### Update Application
-
-```bash
-# Pull latest changes
-git pull origin deploy/demo-v1
-
-# Rebuild and restart
-docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml up -d --build nextjs-app
+docker compose -f docker-compose.prod.yml restart
 ```
 
 ### Database Backup
 
 ```bash
 # Create backup
-docker exec storage-postgres-1 pg_dump -U your_user pinning > backup-$(date +%Y%m%d-%H%M%S).sql
+docker compose -f docker-compose.prod.yml exec postgres pg_dump -U your_user pinning > backup-$(date +%Y%m%d-%H%M%S).sql
 
 # Restore backup
-docker exec -i storage-postgres-1 psql -U your_user pinning < backup-20250930-120000.sql
+docker compose -f docker-compose.prod.yml exec -T postgres psql -U your_user pinning < backup-20250930-120000.sql
 ```
 
 ### Stop Services
 
 ```bash
 # Stop all services
-docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml down
+docker compose -f docker-compose.prod.yml down
 
-# Stop and remove volumes (WARNING: deletes data!)
-docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml down -v
+# Stop and remove volumes (⚠️ WARNING: deletes all data!)
+docker compose -f docker-compose.prod.yml down -v
 ```
 
-## Monitoring
+---
 
-### Check Container Health
+## Database Schema Management
 
-```bash
-docker ps  # Look for (healthy) status
-```
+This setup uses **Prisma db push** for automatic schema synchronisation:
 
-### Resource Usage
+- **No migration files** to manage
+- Schema defined in `prisma/schema.prisma`
+- Database syncs automatically on deployment
+- Perfect for small teams and rapid development
 
-```bash
-docker stats
-```
+**How it works:**
+1. Update `prisma/schema.prisma` in your code
+2. Commit and push changes
+3. Run `./deploy.sh` on server
+4. Schema updates automatically during container startup
 
-### Grafana Dashboards
-
-1. Access: `http://your-server-ip:3001`
-2. Login: `admin` / `admin` (change immediately!)
-3. Add Prometheus data source: `http://prometheus:9090`
+---
 
 ## Troubleshooting
 
@@ -222,26 +217,36 @@ docker stats
 
 ```bash
 # Check logs
-docker logs storage-nextjs-app-1
+docker compose -f docker-compose.prod.yml logs nextjs-app
 
-# Check if database is ready
-docker logs storage-postgres-1
+# Check database
+docker compose -f docker-compose.prod.yml logs postgres
 
 # Restart services
-docker-compose -f docker-compose.web.yml -f docker-compose.web.prod.yml restart
+docker compose -f docker-compose.prod.yml restart
 ```
 
 ### Database Connection Failed
 
 ```bash
 # Verify PostgreSQL is running
-docker ps | grep postgres
+docker compose -f docker-compose.prod.yml ps
 
 # Test database connection
-docker exec storage-postgres-1 psql -U your_user -d pinning -c "SELECT 1;"
+docker compose -f docker-compose.prod.yml exec postgres psql -U your_user -d pinning -c "SELECT 1;"
 
-# Check DATABASE_URL in .env.production
-cat next-app/.env.production | grep DATABASE_URL
+# Check credentials in .env.production
+grep DATABASE_URL .env.production
+```
+
+### Schema Sync Failed
+
+```bash
+# Check Prisma logs in container startup
+docker compose -f docker-compose.prod.yml logs nextjs-app | grep -i prisma
+
+# Manually push schema
+docker compose -f docker-compose.prod.yml exec nextjs-app npx prisma db push --accept-data-loss
 ```
 
 ### Port Already in Use
@@ -253,44 +258,47 @@ sudo lsof -i :3000
 # Kill the process
 sudo kill -9 <PID>
 
-# Or change port in docker-compose.web.prod.yml
+# Or change port in docker-compose.prod.yml
 # ports:
-#   - "3001:3000"  # Maps host port 3001 to container port 3000
+#   - "3001:3000"  # Maps host 3001 to container 3000
 ```
+
+---
 
 ## Security Checklist
 
 - [ ] Changed default PostgreSQL password
 - [ ] Generated strong AUTH_SECRET
-- [ ] Updated Grafana admin password
 - [ ] Configured firewall (ufw)
-- [ ] Set up SSL/TLS certificates
-- [ ] Disabled test API keys
-- [ ] Regular backups configured
+- [ ] Set up SSL/TLS with reverse proxy
+- [ ] Disabled test API keys in .env.production
+- [ ] Regular database backups configured
 - [ ] Keep Docker images updated
+- [ ] Review .env.production permissions (chmod 600)
+
+---
 
 ## Quick Commands Reference
 
 ```bash
-# Status
-docker ps
+# Deploy updates
+./deploy.sh
 
-# Logs (follow)
-docker logs -f storage-nextjs-app-1
+# Service status
+docker compose -f docker-compose.prod.yml ps
+
+# Follow logs
+docker compose -f docker-compose.prod.yml logs -f nextjs-app
 
 # Shell access
-docker exec -it storage-nextjs-app-1 sh
+docker compose -f docker-compose.prod.yml exec nextjs-app sh
 
 # Database shell
-docker exec -it storage-postgres-1 psql -U your_user pinning
+docker compose -f docker-compose.prod.yml exec postgres psql -U your_user pinning
 
 # Resource usage
 docker stats
 
-# Clean up
+# Clean up unused images
 docker system prune -a
 ```
-
----
-
-For detailed information, see [DEPLOYMENT.md](./DEPLOYMENT.md)
