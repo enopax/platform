@@ -1,30 +1,40 @@
-# IPFS Storage Web Application
+# Storage Platform Web Application
 
-**Next.js 15 + TypeScript Web Interface for IPFS Distributed Storage Cluster**
+**Next.js 15 + TypeScript Web Application for Team-Based File Management**
 
-A modern, production-ready web application providing a user-friendly interface for managing files in an IPFS storage cluster with comprehensive testing and unified API architecture.
+A modern, production-ready web application providing team management, project organisation, and comprehensive file handling with role-based permissions and real-time monitoring.
 
 ---
 
 ## 🚀 Quick Start
 
-### Development Commands
+### Development Mode
 
 ```bash
 # Install dependencies
 npm install
 
-# Start development server
+# Start Docker infrastructure (Postgres, Grafana, Prometheus)
+npm run docker:dev
+
+# Start Next.js development server (runs standalone)
 npm run dev
 
-# Build for production
-npm run build
+# Stop infrastructure when done
+npm run docker:dev:stop
+```
 
-# Start production server
-npm start
+### Production Mode
 
-# Run linting
-npm run lint
+```bash
+# Build and start full stack (includes containerised Next.js)
+npm run docker:prod
+
+# Stop production stack
+npm run docker:prod:stop
+
+# View logs
+npm run docker:logs
 ```
 
 ### Testing Commands
@@ -53,6 +63,18 @@ npm run test:components   # React component tests
 ### System Type
 Next.js 15 web application with Server Actions, unified API architecture, and comprehensive testing strategy.
 
+### Infrastructure Setup
+
+**Development**:
+- Docker runs: PostgreSQL, Grafana, Prometheus
+- Next.js runs standalone: `npm run dev` (port 3000)
+- Hot reloading enabled for fast development
+
+**Production**:
+- Docker runs: PostgreSQL, Grafana, Prometheus, Next.js (production build), Nginx
+- Full stack containerised with automatic restarts
+- Nginx reverse proxy for production traffic
+
 ### Key Technologies
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
@@ -60,6 +82,7 @@ Next.js 15 web application with Server Actions, unified API architecture, and co
 - **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: NextAuth.js v5
 - **Testing**: Jest with multi-environment configuration
+- **Monitoring**: Grafana + Prometheus
 - **Validation**: Zod schemas for type-safe data validation
 
 ### Core Architecture Principles
@@ -155,8 +178,8 @@ tests/
 - **Shared Services**: Both use identical business logic for consistency
 
 ### File Management
-- Upload files to IPFS cluster with automatic replication
-- Real-time file sync and status monitoring
+- Upload and manage files with metadata
+- Real-time file status monitoring
 - Advanced search and filtering capabilities
 - Team-based file organisation
 
@@ -225,13 +248,6 @@ All endpoints require authentication and follow role-based permission controls.
 
 ## 🔗 Integration
 
-### IPFS Cluster Integration
-This web application connects to the IPFS storage cluster (see parent directory for cluster architecture):
-
-- **Cluster API**: Port 9094 for pinning operations
-- **Storage Nodes**: Distributed across multiple IPFS nodes
-- **Replication**: Automatic content replication and consensus
-
 ### Database Schema
 - **PostgreSQL**: Primary database with Prisma ORM
 - **File Metadata**: Hash, size, ownership, and team associations
@@ -241,50 +257,45 @@ This web application connects to the IPFS storage cluster (see parent directory 
 
 ## 📊 Monitoring & Observability
 
+### Available Services
+- **Grafana**: http://localhost:3001 (admin/admin)
+- **Prometheus**: http://localhost:9090
+- **PostgreSQL**: localhost:5432
+
 ### Available Metrics
 - File upload/download statistics
 - Storage quota usage and limits
 - User activity and engagement metrics
-- IPFS cluster health and performance
-
-### Integration Points
-- Prometheus metrics collection
-- Grafana dashboards (parent cluster setup)
-- Real-time sync status monitoring
+- System health and performance
 
 ---
 
 ## 🚀 Production Deployment
 
-### Build Process
-```bash
-# Build the application
-npm run build
-
-# Start production server
-npm start
-```
-
 ### Environment Variables
-Required environment variables (see `.default.env`):
+Required environment variables (see `.env.production.example`):
 - Database connection strings
-- NextAuth.js configuration
-- IPFS cluster endpoints
+- NextAuth.js configuration (AUTH_SECRET, AUTH_URL)
 - External service credentials
+- Email server configuration
 
 ### Docker Support
-Dockerfile included for containerised deployment as part of the larger IPFS storage infrastructure.
+Production-ready Docker setup with:
+- Multi-stage build for optimised image size
+- Health checks for all services
+- Automatic database migrations
+- Nginx reverse proxy with SSL support
 
 ---
 
 ## 🤝 Development Workflow
 
 ### Getting Started
-1. Ensure IPFS storage cluster is running (see parent directory)
-2. Set up PostgreSQL database and run Prisma migrations
-3. Configure environment variables
-4. Install dependencies: `npm install`
-5. Start development server: `npm run dev`
+1. Set up environment variables (copy from `.default.env`)
+2. Start Docker infrastructure: `npm run docker:dev`
+3. Run database migrations: `npx prisma migrate dev`
+4. Start development server: `npm run dev`
+5. Access application: http://localhost:3000
 
 ### Testing Workflow
 1. **Development**: Use specific test commands for faster feedback
@@ -299,4 +310,14 @@ Dockerfile included for containerised deployment as part of the larger IPFS stor
 
 ---
 
-*This web application is part of the larger IPFS distributed storage system. For complete system architecture and setup instructions, see the parent directory documentation.*
+## 📚 Documentation
+
+- **CLAUDE.md** - AI assistant guidance and quick reference
+- **ARCHITECTURE.md** - Detailed technical architecture
+- **COMPONENTS.md** - Component structure and organisation
+- **SPECS.md** - Comprehensive application specifications
+- **JEST-TESTS.md** - Testing documentation and strategies
+
+---
+
+*Modern storage platform with team collaboration, role-based permissions, and comprehensive monitoring.*

@@ -4,24 +4,8 @@
 
 ### 1. Initial Setup
 
-**CentOS 9:**
 ```bash
-# Install Docker
-sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-sudo dnf install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
-sudo systemctl start docker
-sudo systemctl enable docker
-sudo usermod -aG docker $USER
-newgrp docker
-
-# Verify installation
-docker --version
-docker compose version
-```
-
-**Ubuntu/Debian:**
-```bash
-# Install Docker
+# Install Docker (Ubuntu/Debian)
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
@@ -36,8 +20,8 @@ docker compose version
 
 ```bash
 # Clone from GitHub
-git clone git@github.com:addiinnocent/IIIII.git
-cd IIIII
+git clone git@github.com:addiinnocent/IIIII.git ipfs-storage
+cd ipfs-storage
 
 # Switch to deployment branch
 git checkout deploy/demo-v1
@@ -46,6 +30,9 @@ git checkout deploy/demo-v1
 ### 3. Configure Environment
 
 ```bash
+# Navigate to next-app
+cd next-app
+
 # Create production environment file
 cp .env.production.example .env.production
 
@@ -81,6 +68,8 @@ DATABASE_URL="postgresql://your_production_user:your_strong_password_here@postgr
 ### 5. Deploy Using Script
 
 ```bash
+# From project root
+cd ..
 ./deploy-server.sh
 ```
 
@@ -114,23 +103,11 @@ docker logs storage-nextjs-app-1
 
 Open necessary ports:
 
-**CentOS 9 (firewalld):**
 ```bash
-sudo firewall-cmd --permanent --add-port=3000/tcp  # Next.js
-sudo firewall-cmd --permanent --add-port=80/tcp    # HTTP
-sudo firewall-cmd --permanent --add-port=443/tcp   # HTTPS
-sudo firewall-cmd --permanent --add-port=22/tcp    # SSH
-sudo firewall-cmd --reload
-
-# Check status
-sudo firewall-cmd --list-all
-```
-
-**Ubuntu/Debian (ufw):**
-```bash
+# Ubuntu/Debian with ufw
 sudo ufw allow 3000/tcp  # Next.js
-sudo ufw allow 80/tcp    # HTTP
-sudo ufw allow 443/tcp   # HTTPS
+sudo ufw allow 80/tcp    # HTTP (if using nginx)
+sudo ufw allow 443/tcp   # HTTPS (if using nginx)
 sudo ufw allow 22/tcp    # SSH
 sudo ufw enable
 
@@ -142,23 +119,12 @@ sudo ufw status
 
 ### Using Let's Encrypt
 
-**CentOS 9:**
-```bash
-# Install certbot
-sudo dnf install certbot -y
-
-# Obtain certificate
-sudo certbot certonly --standalone -d your-domain.com
-```
-
-**Ubuntu/Debian:**
 ```bash
 # Install certbot
 sudo apt-get install certbot
 
 # Obtain certificate
 sudo certbot certonly --standalone -d your-domain.com
-```
 
 # Certificates will be in:
 # /etc/letsencrypt/live/your-domain.com/fullchain.pem

@@ -38,14 +38,18 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Copy Prisma files and generated client
+# Copy Prisma schema and generated client
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+# Copy entire prisma CLI package to avoid reinstallation
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
-# Copy package.json and node_modules binaries
+# Copy package.json
 COPY --from=builder /app/package.json ./package.json
+
+# Copy all binaries from node_modules/.bin
 COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
 
 # Copy entrypoint script
