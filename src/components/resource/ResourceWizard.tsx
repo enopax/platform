@@ -9,92 +9,15 @@ import { Badge } from '@/components/common/Badge';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { Callout } from '@/components/common/Callout';
 import { createResource, type CreateResourceState } from '@/actions/resource';
+import { RESOURCE_TEMPLATES, type ResourceTemplate } from '@/lib/resource-templates';
 import {
   RiArrowLeftLine,
   RiArrowRightLine,
-  RiDatabase2Line,
-  RiServerLine,
-  RiCloudLine,
-  RiCodeLine,
   RiCheckLine,
   RiStarFill,
   RiInformationLine,
   RiErrorWarningLine
 } from '@remixicon/react';
-
-interface ResourceTemplate {
-  id: string;
-  name: string;
-  description: string;
-  type: 'STORAGE' | 'COMPUTE' | 'DATABASE' | 'API';
-  icon: any;
-  iconColor: string;
-  popular: boolean;
-  config: {
-    storageSize?: number;
-    recommended?: boolean;
-    features: string[];
-  };
-  pricing: {
-    estimate: string;
-    period: string;
-  };
-}
-
-const RESOURCE_TEMPLATES: ResourceTemplate[] = [
-  {
-    id: 'small-storage',
-    name: 'Small Project Storage',
-    description: 'Perfect for small projects, documentation, and lightweight assets',
-    type: 'STORAGE',
-    icon: RiDatabase2Line,
-    iconColor: 'text-blue-500',
-    popular: true,
-    config: {
-      storageSize: 5,
-      recommended: true,
-      features: ['5GB IPFS Storage', 'Basic file sharing', 'Version history']
-    },
-    pricing: {
-      estimate: 'Free',
-      period: 'month'
-    }
-  },
-  {
-    id: 'medium-storage',
-    name: 'Standard Project Storage',
-    description: 'Great for medium-sized projects with multimedia content',
-    type: 'STORAGE',
-    icon: RiDatabase2Line,
-    iconColor: 'text-blue-500',
-    popular: false,
-    config: {
-      storageSize: 25,
-      features: ['25GB IPFS Storage', 'Advanced sharing', 'CDN acceleration', 'Analytics']
-    },
-    pricing: {
-      estimate: '$5',
-      period: 'month'
-    }
-  },
-  {
-    id: 'large-storage',
-    name: 'Enterprise Storage',
-    description: 'Scalable storage for large applications and datasets',
-    type: 'STORAGE',
-    icon: RiDatabase2Line,
-    iconColor: 'text-blue-500',
-    popular: false,
-    config: {
-      storageSize: 100,
-      features: ['100GB IPFS Storage', 'Priority support', 'Custom endpoints', 'SLA guarantee']
-    },
-    pricing: {
-      estimate: '$15',
-      period: 'month'
-    }
-  }
-];
 
 interface ResourceWizardProps {
   projectId?: string;
@@ -184,9 +107,10 @@ export default function ResourceWizard({
       <input type="hidden" name="name" value={customConfig.name} />
       <input type="hidden" name="description" value={customConfig.description} />
       <input type="hidden" name="type" value={selectedTemplate?.type || ''} />
-      <input type="hidden" name="status" value="ACTIVE" />
+      <input type="hidden" name="status" value="PROVISIONING" />
       <input type="hidden" name="ownerId" value={currentUserId} />
       <input type="hidden" name="teamId" value={customConfig.teamId} />
+      <input type="hidden" name="templateId" value={selectedTemplate?.id || ''} />
       {selectedTemplate && (
         <input
           type="hidden"

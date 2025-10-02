@@ -6,6 +6,7 @@ import { Badge } from '@/components/common/Badge';
 import Breadcrumbs, { ProjectBreadcrumbs } from '@/components/common/Breadcrumbs';
 import Table from '@/components/GenericTable';
 import ResourcesHealthDashboard from '@/components/dashboard/ResourcesHealthDashboard';
+import ProjectResources from '@/components/project/ProjectResources';
 import { columns as resourceColumns } from '@/components/table/Resource';
 import {
   RiArrowLeftLine,
@@ -94,34 +95,35 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
         },
       },
     }),
-    // Get resources for this project
-    prisma.resource.findMany({
+    // Get resource allocations for this project
+    prisma.projectResource.findMany({
       where: {
-        allocatedProjects: {
-          some: {
-            projectId
-          }
-        },
-        isActive: true,
+        projectId
       },
       include: {
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            firstname: true,
-            lastname: true,
-            email: true,
-          }
-        },
-        organisation: {
-          select: {
-            id: true,
-            name: true
+        resource: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                name: true,
+                firstname: true,
+                lastname: true,
+                email: true,
+              }
+            },
+            organisation: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
           }
         }
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: {
+        allocatedAt: 'desc'
+      }
     }),
     // Get resource metrics
     getProjectResourceMetrics(projectId)
@@ -131,8 +133,9 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
     notFound();
   }
 
-  // Enhance resources with metrics
-  const resourcesWithMetrics = projectResources.map(resource => {
+  // Enhance resources with metrics for health dashboard
+  const resourcesWithMetrics = projectResources.map(allocation => {
+    const resource = allocation.resource;
     if (resource.type === 'STORAGE') {
       const storageResource = resourceMetrics.storageResources.find(sr => sr.id === resource.id);
       if (storageResource) {
@@ -170,6 +173,21 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
   if (!membership) {
     notFound();
   }
+
+  // Check if user can manage resources (owner or manager)
+  const orgMembership = isAdmin ? { role: 'OWNER' as const } : await prisma.organisationMember.findUnique({
+    where: {
+      userId_organisationId: {
+        userId: session.user.id,
+        organisationId: projectRaw!.organisationId
+      }
+    },
+    select: {
+      role: true
+    }
+  });
+
+  const canManage = isAdmin || orgMembership?.role === 'OWNER' || orgMembership?.role === 'MANAGER';
 
   // Convert Decimal to string for client components
   const project = {
@@ -359,180 +377,251 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
       {/* Main Content */}
       <div className="space-y-6">
         {/* Resources Section */}
-        {resourcesWithMetrics.length > 0 ? (
-          <Card>
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Resources
-                  </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Monitor and manage project resources
-                  </p>
-                </div>
+        <Card>
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Resources
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Allocated resources for this project
+                </p>
               </div>
+              {canManage && (
+                <Link href={`/main/organisations/${orgName}/resources/new?project=${project.id}`}>
+                  <Button size="sm">
+                    <RiAddLine className="mr-2 h-4 w-4" />
+                    Allocate Resource
+                  </Button>
+                </Link>
+              )}
             </div>
-            <div className="p-6">
-              <ResourcesHealthDashboard resources={healthDashboardResources} />
-            </div>
-          </Card>
-        ) : (
-          <Card className="p-12">
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
-                <RiServerLine className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No resources yet
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
-                Get started by adding your first resource. Resources provide storage, compute power, and other infrastructure for your project.
-              </p>
-              <Link href={`/main/organisations/${orgName}/resources/new?project=${project.id}`}>
-                <Button>
-                  <RiAddLine className="mr-2 h-4 w-4" />
-                  Add First Resource
-                </Button>
-              </Link>
-            </div>
-          </Card>
-        )}
+          </div>
+          <div className="p-6">
+            <ProjectResources
+              resources={projectResources}
+              projectId={project.id}
+              orgName={orgName}
+              canManage={canManage}
+            />
+          </div>
+        </Card>
 
         {/* Teams Section */}
-        {project.assignedTeams.length > 0 ? (
-          <Card>
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Teams
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Teams working on this project
-              </p>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {project.assignedTeams.map(({ team }) => (
-                  <Card key={team.id} className="p-5 hover:shadow-md transition-shadow">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                        <RiTeamLine className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                          {team.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          Led by {team.owner.name}
-                        </p>
-                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-600 dark:text-gray-300">
-                          <span>{team._count.members} members</span>
-                          <span>•</span>
-                          <span>{team._count.assignedProjects} projects</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+        <Card>
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Teams ({project.assignedTeams.length})
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Teams working on this project
+                </p>
               </div>
-            </div>
-          </Card>
-        ) : (
-          <Card className="p-8">
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full mb-3">
-                <RiTeamLine className="w-6 h-6 text-gray-400" />
-              </div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-                No teams assigned
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Assign a team to this project in settings
-              </p>
               <Link href={`/main/organisations/${orgName}/projects/${project.id}/settings`}>
                 <Button variant="outline" size="sm">
-                  Go to Settings
+                  <RiSettings3Line className="mr-2 h-4 w-4" />
+                  Manage Teams
                 </Button>
               </Link>
             </div>
-          </Card>
-        )}
+          </div>
+          <div className="p-6">
+            {project.assignedTeams.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {project.assignedTeams.map(({ team }) => (
+                  <Link
+                    key={team.id}
+                    href={`/main/organisations/${orgName}/teams/${team.id}`}
+                  >
+                    <Card className="p-5 hover:shadow-md transition-all hover:border-brand-300 dark:hover:border-brand-700">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg shrink-0">
+                          <RiTeamLine className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-900 dark:text-white truncate mb-1">
+                            {team.name}
+                          </h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                            Led by {team.owner.name || team.owner.email}
+                          </p>
+
+                          {/* Team Members Avatars */}
+                          <div className="flex items-center gap-3">
+                            <div className="flex -space-x-2">
+                              {team.members.slice(0, 5).map((member, idx) => (
+                                <div
+                                  key={member.user.id}
+                                  className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-xs font-medium border-2 border-white dark:border-gray-800"
+                                  title={member.user.name || member.user.email}
+                                >
+                                  {(member.user.name || member.user.email).charAt(0).toUpperCase()}
+                                </div>
+                              ))}
+                              {team._count.members > 5 && (
+                                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium border-2 border-white dark:border-gray-800 text-gray-600 dark:text-gray-400">
+                                  +{team._count.members - 5}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              {team._count.members} {team._count.members === 1 ? 'member' : 'members'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
+                  <RiTeamLine className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  No teams assigned
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                  Assign teams to collaborate on this project
+                </p>
+                <Link href={`/main/organisations/${orgName}/projects/${project.id}/settings`}>
+                  <Button>
+                    <RiAddLine className="mr-2 h-4 w-4" />
+                    Assign Teams
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </Card>
 
         {/* Project Details */}
         <Card>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Project Details
+              Project Information
             </h2>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Timeline */}
               <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Timeline</h3>
                 {project.startDate && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Start Date</label>
-                    <p className="text-gray-900 dark:text-white mt-1">
-                      {new Date(project.startDate).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </p>
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg mt-0.5">
+                      <RiCalendarLine className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Start Date</label>
+                      <p className="text-sm text-gray-900 dark:text-white mt-0.5">
+                        {new Date(project.startDate).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {project.endDate && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Target End Date</label>
-                    <p className="text-gray-900 dark:text-white mt-1">
-                      {new Date(project.endDate).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </p>
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg mt-0.5">
+                      <RiCalendarLine className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Target End</label>
+                      <p className="text-sm text-gray-900 dark:text-white mt-0.5">
+                        {new Date(project.endDate).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                {project.budget && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Budget</label>
-                    <p className="text-gray-900 dark:text-white mt-1">
-                      {project.budget} {project.currency}
-                    </p>
-                  </div>
+                {!project.startDate && !project.endDate && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No timeline set</p>
                 )}
               </div>
 
-              {/* Right Column */}
+              {/* Budget & Links */}
               <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Budget & Links</h3>
+                {project.budget && (
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg mt-0.5">
+                      <RiDatabase2Line className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Budget</label>
+                      <p className="text-sm text-gray-900 dark:text-white mt-0.5 font-semibold">
+                        {project.budget} {project.currency}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {project.repositoryUrl && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Repository</label>
-                    <a
-                      href={project.repositoryUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-brand-600 dark:text-brand-400 hover:underline mt-1 block"
-                    >
-                      {project.repositoryUrl}
-                    </a>
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mt-0.5">
+                      <RiDatabase2Line className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Repository</label>
+                      <a
+                        href={project.repositoryUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-brand-600 dark:text-brand-400 hover:underline mt-0.5 block truncate"
+                      >
+                        {project.repositoryUrl}
+                      </a>
+                    </div>
                   </div>
                 )}
 
+                {!project.budget && !project.repositoryUrl && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No budget or links set</p>
+                )}
+              </div>
+
+              {/* Documentation */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Documentation</h3>
                 {project.documentationUrl && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Documentation</label>
-                    <a
-                      href={project.documentationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-brand-600 dark:text-brand-400 hover:underline mt-1 block"
-                    >
-                      {project.documentationUrl}
-                    </a>
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg mt-0.5">
+                      <RiDatabase2Line className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Docs URL</label>
+                      <a
+                        href={project.documentationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-brand-600 dark:text-brand-400 hover:underline mt-0.5 block truncate"
+                      >
+                        {project.documentationUrl}
+                      </a>
+                    </div>
                   </div>
                 )}
 
-                <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Organisation</label>
-                  <p className="text-gray-900 dark:text-white mt-1">
-                    {project.organisation.name}
-                  </p>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg mt-0.5">
+                    <RiDatabase2Line className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Organisation</label>
+                    <p className="text-sm text-gray-900 dark:text-white mt-0.5">
+                      {project.organisation.name}
+                    </p>
+                  </div>
                 </div>
+
+                {!project.documentationUrl && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No documentation links</p>
+                )}
               </div>
             </div>
           </div>

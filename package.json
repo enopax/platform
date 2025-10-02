@@ -18,6 +18,8 @@
     "docker:dev:stop": "docker compose down",
     "docker:prod": "docker compose -f docker-compose.prod.yml up -d --build",
     "docker:prod:stop": "docker compose -f docker-compose.prod.yml down",
+    "docker:prod:rebuild": "docker compose -f docker-compose.prod.yml up -d --build --no-cache nextjs-app",
+    "docker:prod:logs": "docker compose -f docker-compose.prod.yml logs -f nextjs-app",
     "docker:logs": "docker compose logs -f"
   },
   "dependencies": {

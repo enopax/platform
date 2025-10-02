@@ -105,11 +105,25 @@ export default async function OrganisationOverviewPage({ params }: OrganisationO
         orderBy: { updatedAt: 'desc' },
         take: 6
       },
+      resources: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          status: true,
+        },
+        where: {
+          isActive: true
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 6
+      },
       _count: {
         select: {
           members: true,
           projects: true,
           teams: true,
+          resources: true
         }
       }
     }
@@ -338,7 +352,7 @@ export default async function OrganisationOverviewPage({ params }: OrganisationO
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Resources
+              Resources ({organisationFull._count.resources})
             </h2>
             <Link
               href={`/main/organisations/${orgName}/resources`}
@@ -348,13 +362,40 @@ export default async function OrganisationOverviewPage({ params }: OrganisationO
             </Link>
           </div>
 
-          <Card className="p-8 text-center">
-            <RiServerLine className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 mb-4">Organisation resources coming soon</p>
-            <p className="text-sm text-gray-400 dark:text-gray-500">
-              File storage, compute resources, and shared assets will be available here.
-            </p>
-          </Card>
+          {organisationFull.resources.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {organisationFull.resources.map((resource) => (
+                <Link key={resource.id} href={`/main/organisations/${orgName}/resources/${resource.id}`}>
+                  <Card className="p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-medium text-gray-900 dark:text-white">
+                        {resource.name}
+                      </h3>
+                      <Badge variant={resource.status === 'ACTIVE' ? 'success' : 'outline'} className="text-xs">
+                        {resource.status}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {resource.type}
+                    </p>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <Card className="p-8 text-center">
+              <RiServerLine className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 mb-4">No resources yet</p>
+              {canManage && (
+                <Link href={`/main/organisations/${orgName}/resources/new`}>
+                  <Button>
+                    <RiAddLine className="mr-2 h-4 w-4" />
+                    Create First Resource
+                  </Button>
+                </Link>
+              )}
+            </Card>
+          )}
         </div>
       </Container>
     </main>

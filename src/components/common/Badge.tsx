@@ -28,6 +28,10 @@ const badgeVariants = tv({
         "bg-yellow-50 text-yellow-900 ring-yellow-600/30",
         "dark:bg-yellow-400/10 dark:text-yellow-500 dark:ring-yellow-400/20",
       ],
+      outline: [
+        "bg-transparent text-gray-600 ring-gray-300",
+        "dark:text-gray-400 dark:ring-gray-600",
+      ],
     },
   },
   defaultVariants: {

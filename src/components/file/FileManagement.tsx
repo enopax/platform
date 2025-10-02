@@ -55,7 +55,8 @@ export default function FileManagement({
   };
 
   const getDownloadUrl = (hash: string, filename: string) => {
-    return `http://localhost:8080/ipfs/${hash}?filename=${encodeURIComponent(filename)}`;
+    const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8080';
+    return `${serverUrl}/ipfs/${hash}?filename=${encodeURIComponent(filename)}`;
   };
 
   const formatFileSize = (bytes: number): string => {
