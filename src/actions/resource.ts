@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { deployResource } from '@/lib/deployment-service';
 
 export interface CreateResourceState {
   success?: boolean;
@@ -52,6 +53,7 @@ export async function createResource(
     const ownerId = formData.get('ownerId') as string;
     const teamId = formData.get('teamId') as string;
     const isPublic = formData.get('isPublic') === 'on';
+    const templateId = formData.get('templateId') as string;
 
     // Basic validation
     if (!name || name.trim().length < 2) {
@@ -185,19 +187,27 @@ export async function createResource(
     // Get organisation ID from the team
     const organisationId = team.organisationId;
 
-    // Create the resource
+    // Create the resource with PROVISIONING status if template is provided
+    const initialStatus = templateId ? 'PROVISIONING' : (status || 'ACTIVE');
+
     const resource = await prisma.resource.create({
       data: {
         name: name.trim(),
         description: description?.trim() || null,
         type: type as any,
-        status: (status || 'ACTIVE') as any,
+        status: initialStatus as any,
         endpoint: endpoint?.trim() || null,
         quotaLimit,
         ownerId,
         organisationId,
         isPublic,
         tags,
+        configuration: templateId ? {
+          templateId,
+          deploymentStage: 'init',
+          deploymentProgress: 0,
+          deploymentMessage: 'Preparing deployment...'
+        } : null,
       },
     });
 
@@ -215,6 +225,17 @@ export async function createResource(
       } catch (linkError) {
         console.error('Failed to link resource to project:', linkError);
         // Still consider it a success since the resource was created
+      }
+    }
+
+    // Trigger deployment if template is provided
+    if (templateId) {
+      try {
+        await deployResource(resource.id, templateId);
+        console.log(`🚀 Started deployment for resource ${resource.id} using template ${templateId}`);
+      } catch (deployError) {
+        console.error('Failed to start deployment:', deployError);
+        // Resource is still created, deployment will be marked as failed
       }
     }
 
@@ -383,53 +404,177 @@ export async function deleteResource(resourceId: string) {
   }
 }
 
-// Search function for resources
-export async function findResources(query: string, userId: string) {
+// Allocate resource to project
+export async function allocateResourceToProject(
+  resourceId: string,
+  projectId: string,
+  allocatedBy: string,
+  quotaLimit?: bigint
+) {
   try {
+    // Check if resource exists
+    const resource = await prisma.resource.findUnique({
+      where: { id: resourceId, isActive: true },
+      include: { organisation: true }
+    });
+
+    if (!resource) {
+      return { error: 'Resource not found' };
+    }
+
+    // Check if project exists and belongs to same organisation
+    const project = await prisma.project.findUnique({
+      where: { id: projectId, isActive: true }
+    });
+
+    if (!project) {
+      return { error: 'Project not found' };
+    }
+
+    if (project.organisationId !== resource.organisationId) {
+      return { error: 'Resource and project must belong to the same organisation' };
+    }
+
+    // Check if allocation already exists
+    const existingAllocation = await prisma.projectResource.findUnique({
+      where: {
+        projectId_resourceId: {
+          projectId,
+          resourceId
+        }
+      }
+    });
+
+    if (existingAllocation) {
+      return { error: 'Resource is already allocated to this project' };
+    }
+
+    // Create allocation
+    await prisma.projectResource.create({
+      data: {
+        projectId,
+        resourceId,
+        allocatedBy,
+        quotaLimit
+      }
+    });
+
+    revalidatePath(`/main/organisations/${resource.organisation.name}/resources/${resourceId}`);
+    revalidatePath(`/main/organisations/${resource.organisation.name}/projects/${projectId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to allocate resource to project:', error);
+    return { error: 'Failed to allocate resource. Please try again.' };
+  }
+}
+
+// Remove resource allocation from project
+export async function removeResourceFromProject(
+  resourceId: string,
+  projectId: string
+) {
+  try {
+    const allocation = await prisma.projectResource.findUnique({
+      where: {
+        projectId_resourceId: {
+          projectId,
+          resourceId
+        }
+      },
+      include: {
+        resource: {
+          include: { organisation: true }
+        }
+      }
+    });
+
+    if (!allocation) {
+      return { error: 'Allocation not found' };
+    }
+
+    await prisma.projectResource.delete({
+      where: {
+        projectId_resourceId: {
+          projectId,
+          resourceId
+        }
+      }
+    });
+
+    revalidatePath(`/main/organisations/${allocation.resource.organisation.name}/resources/${resourceId}`);
+    revalidatePath(`/main/organisations/${allocation.resource.organisation.name}/projects/${projectId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to remove resource allocation:', error);
+    return { error: 'Failed to remove allocation. Please try again.' };
+  }
+}
+
+// Update resource allocation quota
+export async function updateResourceAllocationQuota(
+  resourceId: string,
+  projectId: string,
+  quotaLimit: bigint | null
+) {
+  try {
+    const allocation = await prisma.projectResource.findUnique({
+      where: {
+        projectId_resourceId: {
+          projectId,
+          resourceId
+        }
+      },
+      include: {
+        resource: {
+          include: { organisation: true }
+        }
+      }
+    });
+
+    if (!allocation) {
+      return { error: 'Allocation not found' };
+    }
+
+    await prisma.projectResource.update({
+      where: {
+        projectId_resourceId: {
+          projectId,
+          resourceId
+        }
+      },
+      data: {
+        quotaLimit
+      }
+    });
+
+    revalidatePath(`/main/organisations/${allocation.resource.organisation.name}/resources/${resourceId}`);
+    revalidatePath(`/main/organisations/${allocation.resource.organisation.name}/projects/${projectId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to update allocation quota:', error);
+    return { error: 'Failed to update quota. Please try again.' };
+  }
+}
+
+// Get available resources for a project
+export async function getAvailableResourcesForProject(organisationId: string, projectId: string) {
+  try {
+    // Get resources that are:
+    // 1. In the same organisation
+    // 2. Not already allocated to this project
+    // 3. Active
     const resources = await prisma.resource.findMany({
       where: {
-        AND: [
-          {
-            OR: [
-              {
-                name: {
-                  contains: query,
-                  mode: 'insensitive',
-                },
-              },
-              {
-                description: {
-                  contains: query,
-                  mode: 'insensitive',
-                },
-              },
-            ],
-          },
-          {
-            OR: [
-              // Resources owned by the user
-              { ownerId: userId },
-              // Resources managed by teams the user is a member of (through projects)
-              {
-                project: {
-                  team: {
-                    OR: [
-                      {
-                        members: {
-                          some: { userId }
-                        }
-                      },
-                      { ownerId: userId }
-                    ]
-                  }
-                }
-              },
-              // Public resources
-              { isPublic: true }
-            ]
-          },
-          { isActive: true }
-        ]
+        organisationId,
+        isActive: true,
+        allocatedProjects: {
+          none: {
+            projectId
+          }
+        }
       },
       select: {
         id: true,
@@ -437,27 +582,55 @@ export async function findResources(query: string, userId: string) {
         description: true,
         type: true,
         status: true,
-        owner: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-        project: {
-          select: {
-            name: true,
-            team: {
-              select: {
-                name: true,
-              },
+        endpoint: true,
+        quotaLimit: true,
+        currentUsage: true
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+
+    return resources;
+  } catch (error) {
+    console.error('Failed to fetch available resources:', error);
+    return [];
+  }
+}
+
+// Search function for resources
+export async function findResources(query: string, organisationId: string) {
+  try {
+    const resources = await prisma.resource.findMany({
+      where: {
+        organisationId,
+        isActive: true,
+        OR: [
+          {
+            name: {
+              contains: query,
+              mode: 'insensitive',
             },
           },
-        },
-        createdAt: true,
+          {
+            description: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+        ],
       },
-      orderBy: [
-        { name: 'asc' },
-      ],
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        type: true,
+        status: true,
+        endpoint: true
+      },
+      orderBy: {
+        name: 'asc'
+      },
       take: 10,
     });
 

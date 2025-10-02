@@ -406,9 +406,20 @@ export async function createProject(
       });
     }
 
+    // Get organisation name for revalidation
+    const org = await prisma.organisation.findUnique({
+      where: { id: organisationId },
+      select: { name: true }
+    });
+
     revalidatePath('/admin/project');
     revalidatePath('/main');
     revalidatePath('/main/projects');
+    if (org) {
+      revalidatePath(`/main/organisations/${org.name}`);
+      revalidatePath(`/main/organisations/${org.name}/projects`);
+      revalidatePath(`/main/organisations/${org.name}/projects/new`);
+    }
 
     return { success: true };
   } catch (error) {

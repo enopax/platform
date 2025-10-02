@@ -86,6 +86,7 @@ enum ResourceType {
 }
 
 enum ResourceStatus {
+  PROVISIONING
   ACTIVE
   INACTIVE
   MAINTENANCE

@@ -233,8 +233,9 @@ export class UserFilesService {
         success: true,
       });
 
-      // Return IPFS gateway URL (using first available node)
-      return `http://localhost:8080/ipfs/${userFile.ipfsHash}?filename=${encodeURIComponent(userFile.fileName)}`;
+      // Return server URL
+      const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8080';
+      return `${serverUrl}/ipfs/${userFile.ipfsHash}?filename=${encodeURIComponent(userFile.fileName)}`;
       
     } catch (error) {
       console.error('Failed to get download URL:', error);

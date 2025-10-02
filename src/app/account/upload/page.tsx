@@ -136,8 +136,8 @@ export default function Page() {
                   <div><strong>Size:</strong> {(result.size / 1024 / 1024).toFixed(2)} MB</div>
                 </div>
                 <div className="mt-2">
-                  <a 
-                    href={`http://localhost:8080/ipfs/${result.hash}`}
+                  <a
+                    href={`${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8080'}/ipfs/${result.hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 dark:text-blue-400 underline hover:no-underline"

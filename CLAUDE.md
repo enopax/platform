@@ -284,6 +284,255 @@ None / List migration steps if any
 
 ---
 
+## 🚀 Resource Deployment System
+
+### Overview
+
+The application supports **one-click resource deployment** for provisioning infrastructure (IPFS clusters, PostgreSQL databases) with a single button click.
+
+### Current Implementation: Mock Deployment
+
+**Status**: ✅ Implemented
+**Purpose**: UI/UX validation and demonstration
+
+**How it works:**
+1. User selects template (e.g., "IPFS Cluster (3 Nodes)")
+2. Resource created with `status = PROVISIONING`
+3. Background deployment service simulates provisioning (2-6 seconds)
+4. Progress updates stored in database (6 stages: 0% → 100%)
+5. Mock endpoint and credentials generated
+6. Resource status changes to `ACTIVE`
+
+### Resource Template System
+
+**Location**: `/src/lib/resource-templates.ts`
+
+**Available Templates:**
+- `ipfs-cluster-small` - 3-node IPFS cluster with automatic replication
+- `postgres-small` - 2 vCPUs, 4GB RAM, 10GB storage, daily backups
+- `postgres-medium` - 4 vCPUs, 16GB RAM, 50GB storage, read replica
+- `small-storage`, `medium-storage`, `large-storage` - Single IPFS nodes (5GB/25GB/100GB)
+
+**Adding New Templates:**
+
+```typescript
+import { RESOURCE_TEMPLATES } from '@/lib/resource-templates';
+
+RESOURCE_TEMPLATES.push({
+  id: 'redis-small',
+  name: 'Redis Cache (Small)',
+  description: 'In-memory cache for fast data access',
+  type: 'DATABASE',
+  icon: RiDatabaseLine,
+  iconColor: 'text-red-500',
+  popular: false,
+  config: {
+    features: ['2GB RAM', 'Persistence enabled', 'SSL/TLS']
+  },
+  pricing: {
+    estimate: '$5',
+    period: 'month'
+  },
+  deployment: {
+    mockEndpoint: 'redis://redis-{id}.local:6379',
+    mockCredentials: {
+      host: 'redis-{id}.local',
+      port: '6379',
+      password: 'mock-password-{id}'
+    },
+    provisioningTime: 3000,
+    configuration: {
+      maxMemory: '2gb',
+      persistence: true
+    }
+  }
+});
+```
+
+### Deployment Service
+
+**Location**: `/src/lib/deployment-service.ts`
+
+**Key Functions:**
+
+```typescript
+// Deploy a resource using a template
+deployResource(resourceId: string, templateId: string): Promise<DeploymentResult>
+
+// Get current deployment status
+getDeploymentStatus(resourceId: string): Promise<DeploymentProgress | null>
+
+// Simulate deployment with progress tracking
+simulateDeployment(resourceId: string, template: ResourceTemplate): Promise<DeploymentResult>
+```
+
+**Deployment Progress:**
+
+```typescript
+interface DeploymentProgress {
+  stage: 'init' | 'allocate' | 'configure' | 'provision' | 'verify' | 'complete';
+  progress: number;  // 0-100
+  message: string;   // User-facing status message
+}
+```
+
+### Resource Wizard Component
+
+**Location**: `/src/components/resource/ResourceWizard.tsx`
+
+**Key Features:**
+- 3-step wizard (Template → Configure → Review)
+- Template selection with visual cards
+- Configuration form with dynamic fields
+- Real-time deployment progress
+- Automatic redirect on completion
+
+**Usage:**
+
+```tsx
+<ResourceWizard
+  projectId={project?.id}
+  projectName={project?.name}
+  currentUserId={session.user.id}
+  teams={userTeams}
+  onCancel={handleCancel}
+  onComplete={handleComplete}
+/>
+```
+
+### Deployment Status Component
+
+**Location**: `/src/components/resource/DeploymentStatus.tsx`
+
+**Features:**
+- Real-time progress polling (every 2 seconds)
+- Stage-based progress indicator
+- Endpoint and credentials display on completion
+- Error handling for failed deployments
+
+**Usage:**
+
+```tsx
+<DeploymentStatus
+  resourceId={resource.id}
+  status={resource.status}
+  configuration={resource.configuration}
+  endpoint={resource.endpoint}
+  credentials={resource.credentials}
+  onDeploymentComplete={() => router.refresh()}
+/>
+```
+
+### API Endpoints
+
+**Deployment Status Polling:**
+```
+GET /api/resources/[resourceId]/deployment-status
+
+Returns:
+{
+  id: string;
+  name: string;
+  status: 'PROVISIONING' | 'ACTIVE' | 'INACTIVE';
+  endpoint: string | null;
+  credentials: object | null;
+  configuration: {
+    deploymentStage: string;
+    deploymentProgress: number;
+    deploymentMessage: string;
+  }
+}
+```
+
+### Database Schema
+
+**Resource Status Enum:**
+```prisma
+enum ResourceStatus {
+  PROVISIONING  // Currently being deployed
+  ACTIVE        // Running and operational
+  INACTIVE      // Stopped or failed
+  MAINTENANCE   // Under maintenance
+  DELETED       // Soft deleted
+}
+```
+
+**Resource Fields for Deployment:**
+```prisma
+model Resource {
+  status         ResourceStatus @default(ACTIVE)
+  endpoint       String?        // Generated endpoint URL
+  credentials    Json?          // Encrypted credentials
+  configuration  Json?          // Deployment metadata
+  // configuration structure:
+  // {
+  //   templateId: string;
+  //   deploymentStage: string;
+  //   deploymentProgress: number;
+  //   deploymentMessage: string;
+  //   deployedAt: string;
+  //   ...template-specific config
+  // }
+}
+```
+
+### Migration to Real Deployment
+
+**Phase 1: Docker Deployment (Next Step)**
+
+Replace mock provider with Docker provider:
+
+```typescript
+// src/lib/deployment/docker-provider.ts
+import Docker from 'dockerode';
+
+class DockerDeploymentProvider implements DeploymentProvider {
+  async deploy(resourceId: string, template: ResourceTemplate) {
+    const docker = new Docker();
+
+    // Generate Docker Compose config
+    const config = generateDockerConfig(resourceId, template);
+
+    // Deploy container
+    await docker.createService(config);
+
+    // Return real endpoint
+    return {
+      endpoint: `http://your-server:${allocatedPort}`,
+      credentials: generateRealCredentials()
+    };
+  }
+}
+```
+
+**Phase 2: Multi-Server Deployment**
+
+Deploy across server fleet using Kubernetes or Docker Swarm.
+
+**Phase 3: Cloud Provider Integration**
+
+Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
+
+### Important Notes
+
+- **Mock endpoints** use `.local` domain to clearly indicate they're not real
+- **Credentials** are stored in `credentials` JSONB field (will be encrypted in production)
+- **Progress tracking** happens in background, non-blocking
+- **Frontend polling** automatically stops when deployment completes
+- **Template IDs** must be unique across all templates
+- **Deployment time** in templates controls simulation duration (mock only)
+
+### Testing Deployment Flow
+
+1. Navigate to `/main/organisations/[orgName]/resources/new`
+2. Select "IPFS Cluster (3 Nodes)" template
+3. Configure resource name and team
+4. Click "Create Resource"
+5. Watch real-time deployment progress
+6. See mock endpoint and credentials on completion
+
+---
+
 *This file serves as a quick reference. For detailed information, consult the respective documentation files.*
 
 > 📋 **For comprehensive web application specifications, see [SPECS.md](./next-app/SPECS.md)**
