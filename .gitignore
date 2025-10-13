@@ -11,6 +11,7 @@ tsconfig.tsbuildinfo
 .env.local
 cluster_backup_*.json
 migration-*.sql
+prisma/migrations/
 Dockerfile
 .dockerignore
 .default.env*
