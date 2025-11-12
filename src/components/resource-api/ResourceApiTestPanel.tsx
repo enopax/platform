@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/common/Button';
-import { TextInput } from '@/components/common/TextInput';
+import { Input } from '@/components/common/Input';
 import {
   RiCheckLine,
   RiCloseLine,
@@ -220,20 +220,20 @@ export default function ResourceApiTestPanel({
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Provider
           </label>
-          <TextInput
+          <Input
             value={provider}
             onChange={(e) => setProvider(e.target.value)}
             placeholder="example"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Resource Name
           </label>
-          <TextInput
+          <Input
             value={resourceName}
             onChange={(e) => setResourceName(e.target.value)}
             placeholder="test-resource"
@@ -243,13 +243,13 @@ export default function ResourceApiTestPanel({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Project
           </label>
           <select
             value={selectedProject}
             onChange={(e) => setSelectedProject(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-neutral-950 text-gray-900 dark:text-white"
           >
             {projects.map((project) => (
               <option key={project.id} value={project.name}>
@@ -259,10 +259,10 @@ export default function ResourceApiTestPanel({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Resource ID (for status/delete)
           </label>
-          <TextInput
+          <Input
             value={resourceId}
             onChange={(e) => setResourceId(e.target.value)}
             placeholder="Enter resource ID"
