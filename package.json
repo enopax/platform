@@ -1,8 +1,9 @@
 {
-  "name": "fivelines",
-  "version": "0.3.6",
+  "name": "enopax-platform",
+  "version": "0.3.8",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate && prisma db push",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

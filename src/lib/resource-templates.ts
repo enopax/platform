@@ -334,3 +334,16 @@ export function generateDeploymentConfig(template: ResourceTemplate, resourceId:
 
   return replaceIds(config);
 }
+
+export const TEMPLATE_PROVIDER_MAP: Record<string, string> = {
+  'ipfs-cluster-small': 'example',
+  'postgres-small': 'example',
+  'postgres-medium': 'example',
+  'small-storage': 'example',
+  'medium-storage': 'example',
+  'large-storage': 'example',
+};
+
+export function getProviderForTemplate(templateId: string): string {
+  return TEMPLATE_PROVIDER_MAP[templateId] || 'example';
+}
