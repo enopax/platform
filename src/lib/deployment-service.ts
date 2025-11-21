@@ -4,8 +4,14 @@ import {
   generateMockEndpoint,
   generateMockCredentials,
   generateDeploymentConfig,
+  getProviderForTemplate,
   type ResourceTemplate
 } from '@/lib/resource-templates';
+import {
+  provisionResource,
+  getResourceStatus,
+  type ProvisionRequest
+} from '@/lib/resource-api-client';
 
 export interface DeploymentProgress {
   stage: string;
@@ -119,7 +125,14 @@ export async function deployResource(
   }
 
   const resource = await prisma.resource.findUnique({
-    where: { id: resourceId }
+    where: { id: resourceId },
+    include: {
+      owner: true,
+      organisation: true,
+      allocatedProjects: {
+        include: { project: true }
+      }
+    }
   });
 
   if (!resource) {
@@ -137,18 +150,94 @@ export async function deployResource(
         templateId,
         deploymentStage: 'init',
         deploymentProgress: 0,
-        deploymentMessage: 'Starting deployment...'
+        deploymentMessage: 'Contacting Resource API...'
       }
     }
   });
 
   setImmediate(async () => {
-    await simulateDeployment(resourceId, template);
+    await provisionResourceViaApi(resourceId, templateId, template, resource);
   });
 
   return {
     success: true
   };
+}
+
+async function provisionResourceViaApi(
+  resourceId: string,
+  templateId: string,
+  template: ResourceTemplate,
+  resource: any
+): Promise<void> {
+  try {
+    const provider = getProviderForTemplate(templateId);
+
+    await prisma.resource.update({
+      where: { id: resourceId },
+      data: {
+        configuration: {
+          templateId,
+          deploymentStage: 'provision',
+          deploymentProgress: 50,
+          deploymentMessage: 'Provisioning resource via API...'
+        }
+      }
+    });
+
+    const projectName = resource.allocatedProjects?.[0]?.project?.name || 'Default Project';
+
+    const provisionRequest: ProvisionRequest = {
+      name: resource.name,
+      organisationName: resource.organisation.name,
+      projectName: projectName,
+      userId: resource.owner.id,
+      sshKeys: [],
+    };
+
+    const result = await provisionResource(provider, provisionRequest);
+
+    if (!result.success) {
+      throw new Error(result.error || 'Provisioning failed');
+    }
+
+    await prisma.resource.update({
+      where: { id: resourceId },
+      data: {
+        status: 'ACTIVE',
+        endpoint: result.access,
+        credentials: {
+          resourceApiId: result.id,
+          resourceApiStatus: result.status,
+        },
+        configuration: {
+          templateId,
+          resourceApiId: result.id,
+          provider,
+          deploymentStage: 'complete',
+          deploymentProgress: 100,
+          deploymentMessage: 'Deployment complete!',
+          deployedAt: new Date().toISOString()
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Resource API provisioning failed:', error);
+
+    await prisma.resource.update({
+      where: { id: resourceId },
+      data: {
+        status: 'INACTIVE',
+        configuration: {
+          templateId,
+          deploymentStage: 'failed',
+          deploymentProgress: 0,
+          deploymentMessage: 'Provisioning failed',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
+      }
+    });
+  }
 }
 
 export async function getDeploymentStatus(resourceId: string): Promise<DeploymentProgress | null> {

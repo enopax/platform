@@ -6,6 +6,7 @@ import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import Link from 'next/link';
+import ResourceApiTestPanel from '@/components/resource-api/ResourceApiTestPanel';
 import {
   RiArrowRightLine,
   RiHomeLine,
@@ -115,6 +116,21 @@ export default async function ResourceDetailPage({ params }: ResourceDetailPageP
   });
 
   if (!resource) notFound();
+
+  // Fetch organisation projects for API testing
+  const organisationProjects = await prisma.project.findMany({
+    where: {
+      organisationId: organisation.id,
+      isActive: true
+    },
+    select: {
+      id: true,
+      name: true
+    },
+    orderBy: {
+      name: 'asc'
+    }
+  });
 
   const typeConfig = RESOURCE_TYPE_CONFIG[resource.type];
   const statusConfig = STATUS_CONFIG[resource.status];
@@ -314,6 +330,24 @@ export default async function ResourceDetailPage({ params }: ResourceDetailPageP
                 </div>
               )}
             </Card>
+
+            {/* Resource API Testing */}
+            {canManage && (
+              <Card className="p-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <RiCodeLine className="h-5 w-5" />
+                  Resource API Testing
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                  Test the Resource API endpoints for this organisation. Use these controls to provision, check status, list, and deprovision resources.
+                </p>
+                <ResourceApiTestPanel
+                  organisationName={organisation.name}
+                  projects={organisationProjects}
+                  userId={session.user.id}
+                />
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}
