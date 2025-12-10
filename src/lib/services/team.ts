@@ -543,6 +543,32 @@ export class TeamService {
       throw error;
     }
   }
+
+  async getAllTeams(): Promise<TeamInfo[]> {
+    try {
+      const teams = await prisma.team.findMany({
+        where: { isActive: true },
+        include: {
+          _count: {
+            select: {
+              members: true,
+              assignedProjects: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return teams.map(team => ({
+        ...team,
+        memberCount: team._count.members,
+        projectCount: team._count.assignedProjects,
+      }));
+    } catch (error) {
+      console.error('Failed to get all teams:', error);
+      throw error;
+    }
+  }
 }
 
 export const teamService = new TeamService();
