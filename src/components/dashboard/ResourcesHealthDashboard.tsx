@@ -131,7 +131,7 @@ export default function ResourcesHealthDashboard({ resources }: ResourcesHealthD
             )}
 
             <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-              <span>
+              <span suppressHydrationWarning>
                 Last check: {resource.lastChecked.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
               </span>
               {resource.responseTime && (

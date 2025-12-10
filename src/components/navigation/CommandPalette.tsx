@@ -38,10 +38,10 @@ export default function CommandPalette() {
     {
       id: 'dashboard',
       title: 'Dashboard',
-      subtitle: 'Go to main dashboard',
+      subtitle: 'Go to organisations',
       icon: RiProjectorLine,
       action: () => {
-        router.push('/main');
+        router.push('/orga/organisations');
         close();
       },
       category: 'navigation'

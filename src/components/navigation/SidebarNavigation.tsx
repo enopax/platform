@@ -15,7 +15,8 @@ import {
   RiAddLine,
   RiArrowUpSLine,
   RiExternalLinkLine,
-  RiUserLine
+  RiUserLine,
+  RiShieldLine
 } from '@remixicon/react';
 import { Button } from '@/components/common/Button';
 import { User } from '@prisma/client';
@@ -57,28 +58,28 @@ export default function SidebarNavigation({
 
   // Get organisation name from pathname
   const getOrganisationName = () => {
-    // Check if we're on an organisation tree page (/main/organisations/[orgName]/...)
+    // Check if we're on an organisation tree page (/orga/[name]/...)
     const pathSegments = pathname.split('/');
-    if (pathSegments[1] === 'main' && pathSegments[2] === 'organisations' && pathSegments[3]) {
-      return pathSegments[3];
+    if (pathSegments[1] === 'orga' && pathSegments[2]) {
+      return pathSegments[2];
     }
 
     return null;
   };
 
   const organisationName = getOrganisationName();
-  const organisationId = organisationName; // Keep for backward compatibility in checks
 
   // Find current organisation and its projects from server-provided data
   const organisation = organisationName
     ? initialOrganisations.find(org => org.name === organisationName) || null
     : null;
 
+  const organisationId = organisation?.id; // Get the actual ID from the organisation object
   const projects = organisation?.projects || [];
 
   const isActivePath = (href: string) => {
-    if (href === '/main') {
-      return pathname === '/main' && organisationId;
+    if (href === '') {
+      return pathname === '' && organisationId;
     }
     return pathname.startsWith(href);
   };
@@ -91,17 +92,29 @@ export default function SidebarNavigation({
         <div className="relative">
           <button
             onClick={() => setShowOrgDropdown(!showOrgDropdown)}
-            className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+            className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
+              organisation
+                ? 'border-brand-500 dark:border-brand-400 bg-brand-50 dark:bg-brand-900/20'
+                : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+            }`}
           >
             <div className="flex items-center min-w-0 flex-1">
-              <RiBuildingLine className="mr-3 h-5 w-5 text-brand-600 dark:text-brand-400 flex-shrink-0" />
+              <RiBuildingLine className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                organisation
+                  ? 'text-brand-600 dark:text-brand-400'
+                  : 'text-gray-400 dark:text-gray-600'
+              }`} />
               <div className="min-w-0 flex-1 text-left">
                 {organisation ? (
                   <>
-                    <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <div className={`text-sm font-semibold truncate ${
+                      organisation
+                        ? 'text-brand-900 dark:text-brand-100'
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
                       {organisation.name}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-xs text-brand-700 dark:text-brand-300">
                       Current organisation
                     </div>
                   </>
@@ -124,38 +137,53 @@ export default function SidebarNavigation({
             <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
               {initialOrganisations.length > 0 ? (
                 <>
-                  {initialOrganisations.map((org) => (
-                    <Link
-                      key={org.id}
-                      href={`/main/organisations/${org.name}`}
-                      onClick={() => setShowOrgDropdown(false)}
-                      className={`
-                        block p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors
-                        ${org.id === organisationId ? 'bg-brand-50 dark:bg-brand-900/20' : ''}
-                      `}
-                    >
-                      <div className="flex items-center">
-                        <RiBuildingLine className="mr-3 h-4 w-4 text-brand-600 dark:text-brand-400 flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <div className={`text-sm font-medium truncate ${
-                            org.id === organisationId
-                              ? 'text-brand-900 dark:text-brand-100'
-                              : 'text-gray-900 dark:text-white'
-                          }`}>
-                            {org.name}
+                  {initialOrganisations.map((org) => {
+                    const isSelected = org.id === organisationId;
+                    return (
+                      <Link
+                        key={org.id}
+                        href={`/orga/${org.name}`}
+                        onClick={() => setShowOrgDropdown(false)}
+                        className={`
+                          block p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-l-4
+                          ${isSelected
+                            ? 'bg-brand-50 dark:bg-brand-900/20 border-brand-500 dark:border-brand-400'
+                            : 'border-transparent'
+                          }
+                        `}
+                      >
+                        <div className="flex items-center">
+                          <RiBuildingLine className={`mr-3 h-4 w-4 flex-shrink-0 ${
+                            isSelected
+                              ? 'text-brand-600 dark:text-brand-400'
+                              : 'text-gray-400 dark:text-gray-600'
+                          }`} />
+                          <div className="min-w-0 flex-1">
+                            <div className={`text-sm font-medium truncate ${
+                              isSelected
+                                ? 'text-brand-900 dark:text-brand-100'
+                                : 'text-gray-900 dark:text-white'
+                            }`}>
+                              {org.name}
+                            </div>
+                            {org._count && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {org._count.projects} projects • {org._count.teams} teams
+                              </div>
+                            )}
                           </div>
-                          {org._count && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {org._count.projects} projects • {org._count.teams} teams
+                          {isSelected && (
+                            <div className="ml-2 flex-shrink-0">
+                              <div className="h-2 w-2 rounded-full bg-brand-500" />
                             </div>
                           )}
                         </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                   <div className="border-t border-gray-200 dark:border-gray-700 p-2">
                     <Link
-                      href="/main/organisations"
+                      href="/orga/organisations"
                       onClick={() => setShowOrgDropdown(false)}
                       className="flex items-center p-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded transition-colors"
                     >
@@ -168,7 +196,7 @@ export default function SidebarNavigation({
                 <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
                   No organisations found
                   <Link
-                    href="/main/organisations/new"
+                    href="/orga/new"
                     onClick={() => setShowOrgDropdown(false)}
                     className="block mt-2 text-brand-600 dark:text-brand-400 hover:underline"
                   >
@@ -181,7 +209,7 @@ export default function SidebarNavigation({
         </div>
       </div>
 
-      {!organisationId && (
+      {!organisation && (
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center">
             <RiBuildingLine className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -196,8 +224,8 @@ export default function SidebarNavigation({
       )}
 
           {/* Organisation Navigation */}
-          {organisationId && (
-            <div className="border-t border-gray-200 dark:border-gray-700 px-3 py-4">
+          {organisation && (
+            <div className="border-t border-gray-200 dark:border-gray-700 px-3 py-4 flex-1 flex flex-col">
               <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
                 Organisation
               </h4>
@@ -205,33 +233,27 @@ export default function SidebarNavigation({
                 {[
                   {
                     name: 'Projects',
-                    icon: RiTeamLine,
-                    href: `/main/organisations/${organisationName}/projects`,
-                    active: pathname.startsWith(`/main/organisations/${organisationName}/projects`)
-                  },
-                  {
-                    name: 'Teams',
-                    icon: RiTeamLine,
-                    href: `/main/organisations/${organisationName}/teams`,
-                    active: pathname.startsWith(`/main/organisations/${organisationName}/teams`)
-                  },
-                  {
-                    name: 'Resources',
-                    icon: RiServerLine,
-                    href: `/main/organisations/${organisationName}/resources`,
-                    active: pathname.startsWith(`/main/organisations/${organisationName}/resources`)
+                    icon: RiProjectorLine,
+                    href: `/orga/${organisationName}/projects`,
+                    active: pathname === `/orga/${organisationName}` || pathname.startsWith(`/orga/${organisationName}/projects`) || pathname.match(new RegExp(`^/orga/${organisationName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/[^/]+/?$`))
                   },
                   {
                     name: 'Members',
                     icon: RiUserLine,
-                    href: `/main/organisations/${organisationName}/members`,
-                    active: pathname.startsWith(`/main/organisations/${organisationName}/members`)
+                    href: `/orga/${organisationName}/members`,
+                    active: pathname.startsWith(`/orga/${organisationName}/members`)
+                  },
+                  {
+                    name: 'Roles',
+                    icon: RiShieldLine,
+                    href: `/orga/${organisationName}/roles`,
+                    active: pathname.startsWith(`/orga/${organisationName}/roles`)
                   },
                   {
                     name: 'Settings',
                     icon: RiSettings3Line,
-                    href: `/main/organisations/${organisationName}/settings`,
-                    active: pathname.startsWith(`/main/organisations/${organisationName}/settings`)
+                    href: `/orga/${organisationName}/settings`,
+                    active: pathname.startsWith(`/orga/${organisationName}/settings`)
                   },
                 ].map((item) => (
                   <Link
@@ -260,8 +282,6 @@ export default function SidebarNavigation({
               </div>
             </div>
           )}
-        </>
-      )}
 
       {/* User section */}
       <div className="border-t p-4 flex-shrink-0">

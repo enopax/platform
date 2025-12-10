@@ -198,10 +198,10 @@ const columns: ColumnDef<ResourceWithDetails>[] = [
 
       const orgId = row.original.organisationId;
       const resourceViewUrl = orgId
-        ? `/main/organisations/${organisation.name}`
+        ? `/orga/${organisation.name}`
         : `/main/resources/${row.original.id}`;
       const resourceEditUrl = orgId
-        ? `/main/organisations/${organisation.name}/edit`
+        ? `/orga/${organisation.name}/edit`
         : `/main/resources/${row.original.id}/edit`;
 
       return (

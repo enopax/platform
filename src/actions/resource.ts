@@ -17,7 +17,7 @@ export interface CreateResourceState {
     projectId?: string;
     tags?: string;
     ownerId?: string;
-    teamId?: string;
+    organisationName?: string;
   };
 }
 
@@ -51,7 +51,7 @@ export async function createResource(
     const projectId = formData.get('projectId') as string;
     const tagsStr = formData.get('tags') as string;
     const ownerId = formData.get('ownerId') as string;
-    const teamId = formData.get('teamId') as string;
+    const organisationName = formData.get('organisationName') as string;
     const isPublic = formData.get('isPublic') === 'on';
     const templateId = formData.get('templateId') as string;
 
@@ -77,10 +77,10 @@ export async function createResource(
       };
     }
 
-    if (!teamId) {
+    if (!organisationName) {
       return {
-        error: 'Team is required',
-        fieldErrors: { teamId: 'Team is required' }
+        error: 'Organisation is required',
+        fieldErrors: { organisationName: 'Organisation is required' }
       };
     }
 
@@ -96,31 +96,30 @@ export async function createResource(
       };
     }
 
-    // Validate team exists and user has access
-    const team = await prisma.team.findUnique({
-      where: { id: teamId },
-      include: {
-        members: {
-          select: { userId: true }
-        }
-      }
+    // Validate organisation exists
+    const organisation = await prisma.organisation.findUnique({
+      where: { name: organisationName }
     });
 
-    if (!team) {
+    if (!organisation) {
       return {
-        error: 'Selected team does not exist',
-        fieldErrors: { teamId: 'Selected team does not exist' }
+        error: 'Selected organisation does not exist',
+        fieldErrors: { organisationName: 'Selected organisation does not exist' }
       };
     }
 
-    // Check if user is team owner or member
-    const isTeamOwner = team.ownerId === ownerId;
-    const isTeamMember = team.members.some(member => member.userId === ownerId);
+    // Check if user is part of the organisation
+    const userOrgMembership = await prisma.organisationMember.findFirst({
+      where: {
+        userId: ownerId,
+        organisationId: organisation.id
+      }
+    });
 
-    if (!isTeamOwner && !isTeamMember) {
+    if (!userOrgMembership) {
       return {
-        error: 'You do not have access to this team',
-        fieldErrors: { teamId: 'You do not have access to this team' }
+        error: 'You do not have access to this organisation',
+        fieldErrors: { organisationName: 'You do not have access to this organisation' }
       };
     }
 
@@ -184,8 +183,8 @@ export async function createResource(
       };
     }
 
-    // Get organisation ID from the team
-    const organisationId = team.organisationId;
+    // Use organisation ID from the validated organisation
+    const organisationId = organisation.id;
 
     // Create the resource with PROVISIONING status if template is provided
     const initialStatus = templateId ? 'PROVISIONING' : (status || 'ACTIVE');
@@ -241,7 +240,7 @@ export async function createResource(
 
     revalidatePath('/main/resources');
     if (projectId) {
-      revalidatePath(`/main/organisations/${organisationId}/projects/${projectId.trim()}`);
+      revalidatePath(`/orga/${organisationId}/projects/${projectId.trim()}`);
       console.log(`🔄 Revalidated project path for org ${organisationId}, project ${projectId.trim()}`);
     }
 
@@ -459,8 +458,8 @@ export async function allocateResourceToProject(
       }
     });
 
-    revalidatePath(`/main/organisations/${resource.organisation.name}/resources/${resourceId}`);
-    revalidatePath(`/main/organisations/${resource.organisation.name}/projects/${projectId}`);
+    revalidatePath(`/orga/${resource.organisation.name}/resources/${resourceId}`);
+    revalidatePath(`/orga/${resource.organisation.name}/projects/${projectId}`);
 
     return { success: true };
   } catch (error) {
@@ -502,8 +501,8 @@ export async function removeResourceFromProject(
       }
     });
 
-    revalidatePath(`/main/organisations/${allocation.resource.organisation.name}/resources/${resourceId}`);
-    revalidatePath(`/main/organisations/${allocation.resource.organisation.name}/projects/${projectId}`);
+    revalidatePath(`/orga/${allocation.resource.organisation.name}/resources/${resourceId}`);
+    revalidatePath(`/orga/${allocation.resource.organisation.name}/projects/${projectId}`);
 
     return { success: true };
   } catch (error) {
@@ -549,8 +548,8 @@ export async function updateResourceAllocationQuota(
       }
     });
 
-    revalidatePath(`/main/organisations/${allocation.resource.organisation.name}/resources/${resourceId}`);
-    revalidatePath(`/main/organisations/${allocation.resource.organisation.name}/projects/${projectId}`);
+    revalidatePath(`/orga/${allocation.resource.organisation.name}/resources/${resourceId}`);
+    revalidatePath(`/orga/${allocation.resource.organisation.name}/projects/${projectId}`);
 
     return { success: true };
   } catch (error) {

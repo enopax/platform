@@ -45,7 +45,7 @@ export default function OrganisationSelector() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             You need to be part of an organisation to access the main dashboard.
           </p>
-          <Link href="/main/organisations/new">
+          <Link href="/orga/new">
             <Button size="sm">
               <RiAddLine className="mr-2 h-4 w-4" />
               Create Organisation
@@ -86,7 +86,7 @@ export default function OrganisationSelector() {
           </Select>
         </div>
 
-        <Link href="/main/organisations/new">
+        <Link href="/orga/new">
           <Button variant="outline" size="sm">
             <RiAddLine className="h-4 w-4" />
           </Button>

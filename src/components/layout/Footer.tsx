@@ -15,7 +15,7 @@ export default function Footer() {
           <div className="mb-16 pt-16 grid grid-cols-2 gap-12 md:grid-cols-4 lg:grid-cols-6 lg:gap-8">
             <div className="col-span-full lg:col-span-2">
               <p className="mb-6 italic sm:pr-8">
-                "Decentralized storage for the distributed web"
+                "Infrastructure for europe and the world"
               </p>
 
               <div className="flex gap-4">
@@ -132,7 +132,7 @@ export default function Footer() {
           </div>
 
           <div className="py-8 text-center text-sm text-gray-400">
-            © {new Date().getFullYear()} IPFS Storage • Powered by the InterPlanetary File System
+            © {new Date().getFullYear()} Enopax
           </div>
         
       </div>

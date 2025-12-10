@@ -274,12 +274,12 @@ export default function EnhancedProjectGrid({ projects, selectedTeamName }: Enha
 
                     {/* Action buttons */}
                     <div className="flex gap-2">
-                      <Link href={`/main/organisations/${organisation.name}`} className="flex-1">
+                      <Link href={`/orga/${organisation.name}`} className="flex-1">
                         <Button variant="outline" size="sm" className="text-xs px-3 py-1 w-full">
                           View Details
                         </Button>
                       </Link>
-                      <Link href={`/main/organisations/${organisation.name}/add-resource`}>
+                      <Link href={`/orga/${organisation.name}/add-resource`}>
                         <Button size="sm" className="text-xs px-3 py-1">
                           <RiAddLine className="mr-1 h-3 w-3" />
                           Add Resource
@@ -319,12 +319,12 @@ export default function EnhancedProjectGrid({ projects, selectedTeamName }: Enha
 
                   {/* Actions */}
                   <div className="flex gap-2 flex-shrink-0">
-                    <Link href={`/main/organisations/${organisation.name}`}>
+                    <Link href={`/orga/${organisation.name}`}>
                       <Button variant="outline" size="sm" className="text-xs px-3 py-1">
                         View
                       </Button>
                     </Link>
-                    <Link href={`/main/organisations/${organisation.name}/add-resource`}>
+                    <Link href={`/orga/${organisation.name}/add-resource`}>
                       <Button size="sm" className="text-xs px-3 py-1">
                         <RiAddLine className="h-3 w-3" />
                       </Button>

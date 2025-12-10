@@ -6,7 +6,6 @@ import "./globals.css";
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { AnalyticsProvider } from './AnalyticsContext';
 
 import UserBar from '@/components/layout/UserBar';
 import Footer from '@/components/layout/Footer';
@@ -18,7 +17,7 @@ const geist = Geist({
 
 
 export const metadata: Metadata = {
-  title: 'IPFS Storage',
+  title: 'Enopax File System',
   description: process.env.NEXT_PUBLIC_META_DESC,
   openGraph: {
     images: [process.env.NEXT_PUBLIC_OG_IMAGE || ''],
@@ -34,16 +33,14 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <AnalyticsProvider>
-        <body className={`${geist.className} antialiased bg-gray-50 dark:bg-gray-950`}>
-          <div className="text-neutral-800 dark:text-neutral-200">
-            <UserBar user={session?.user} />
-            {children}
-            <Footer />
-            <CommandPaletteProvider />
-          </div>
-        </body>
-      </AnalyticsProvider>
+      <body className={`${geist.className} antialiased bg-gray-50 dark:bg-gray-950`}>
+        <div className="text-neutral-800 dark:text-neutral-200">
+          <UserBar user={session?.user} />
+          {children}
+          <Footer />
+          <CommandPaletteProvider />
+        </div>
+      </body>
     </html>
   );
 }

@@ -43,7 +43,7 @@ export default function EditOrganisationForm({ organisation, userId, isAdmin }: 
   // Redirect to organisations page on success
   useEffect(() => {
     if (state?.success) {
-      router.push('/main/organisations');
+      router.push('/orga');
     }
   }, [state?.success, router]);
 
@@ -250,7 +250,7 @@ export default function EditOrganisationForm({ organisation, userId, isAdmin }: 
             >
               Update Organisation
             </Button>
-            <Link href="/main/organisations">
+            <Link href="/orga">
               <Button variant="ghost" className="px-6">
                 Cancel
               </Button>

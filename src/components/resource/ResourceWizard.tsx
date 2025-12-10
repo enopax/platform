@@ -91,9 +91,9 @@ export default function ResourceWizard({
 
       setTimeout(() => {
         if (projectId && orgName) {
-          router.push(`/main/organisations/${orgName}/projects/${projectId}`);
+          router.push(`/orga/${orgName}/${projectId}`);
         } else if (orgName) {
-          router.push(`/main/organisations/${orgName}/resources`);
+          router.push(`/orga/${orgName}/projects`);
         } else {
           router.push('/main/resources');
         }

@@ -85,7 +85,7 @@ export async function createJoinRequest(
           }
         });
 
-        revalidatePath('/main/organisations');
+        revalidatePath('/orga');
         return { success: true };
       } else if (existingRequest.status === 'APPROVED') {
         // If user had approved request but left, allow them to create new request
@@ -104,7 +104,7 @@ export async function createJoinRequest(
       }
     });
 
-    revalidatePath('/main/organisations');
+    revalidatePath('/orga');
     return { success: true };
   } catch (error) {
     console.error('Failed to create join request:', error);
@@ -185,8 +185,8 @@ export async function respondToJoinRequest(
       );
     }
 
-    revalidatePath('/main/organisations');
-    revalidatePath(`/main/organisations/${joinRequest.organisationId}`);
+    revalidatePath('/orga');
+    revalidatePath(`/orga/${joinRequest.organisationId}`);
     
     return { success: true };
   } catch (error) {
@@ -228,7 +228,7 @@ export async function cancelJoinRequest(
       where: { id: joinRequest.id }
     });
 
-    revalidatePath('/main/organisations');
+    revalidatePath('/orga');
     return { success: true };
   } catch (error) {
     console.error('Failed to cancel join request:', error);
@@ -402,7 +402,7 @@ export async function leaveOrganisation(organisationId: string) {
       }
     });
 
-    revalidatePath('/main/organisations');
+    revalidatePath('/orga');
     return { success: true };
   } catch (error) {
     console.error('Failed to leave organisation:', error);
@@ -543,9 +543,9 @@ export async function kickMember(
       }
     });
 
-    revalidatePath('/main/organisations');
-    revalidatePath(`/main/organisations/${organisationId}`);
-    revalidatePath(`/main/organisations/${organisationId}/members`);
+    revalidatePath('/orga');
+    revalidatePath(`/orga/${organisationId}`);
+    revalidatePath(`/orga/${organisationId}/members`);
     
     return { success: true };
   } catch (error) {

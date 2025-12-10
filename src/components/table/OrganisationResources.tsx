@@ -85,7 +85,7 @@ export default function OrganisationResources({ resources, orgName, canManage }:
           Create your first resource to get started.
         </p>
         {canManage && (
-          <Link href={`/main/organisations/${orgName}/resources/new`}>
+          <Link href={`/orga/${orgName}/resources/new`}>
             <Button>Create Resource</Button>
           </Link>
         )}
@@ -115,7 +115,7 @@ export default function OrganisationResources({ resources, orgName, canManage }:
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
                     <Link
-                      href={`/main/organisations/${orgName}/resources/${resource.id}`}
+                      href={`/orga/${orgName}/resources/${resource.id}`}
                       className="text-lg font-semibold text-gray-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 transition-colours"
                     >
                       {resource.name}
@@ -204,7 +204,7 @@ export default function OrganisationResources({ resources, orgName, canManage }:
               {/* Actions */}
               {canManage && (
                 <div className="flex items-center gap-2 ml-4">
-                  <Link href={`/main/organisations/${orgName}/resources/${resource.id}`}>
+                  <Link href={`/orga/${orgName}/resources/${resource.id}`}>
                     <Button variant="outline" size="sm">
                       <RiEyeLine className="h-4 w-4" />
                     </Button>

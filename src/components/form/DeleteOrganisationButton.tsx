@@ -23,7 +23,7 @@ export default function DeleteOrganisationButton({
   className = ''
 }: DeleteOrganisationButtonProps) {
   const { isLoading, error, executeAction } = useConfirmAction({
-    redirectTo: '/main/organisations',
+    redirectTo: '/orga',
     refreshOnSuccess: true,
   });
 
