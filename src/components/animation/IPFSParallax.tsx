@@ -8,7 +8,7 @@ import {
   useTransform,
 } from "motion/react"
 import { useRef } from "react"
-import { RiDatabase2Line, RiNodeTree, RiGlobalLine, RiShieldCheckLine, RiSpeedUpLine } from "@remixicon/react"
+import { RiDatabase2Line, RiNodeTree, RiGlobalLine, RiShieldCheckLine, RiSpeedUpLine, RiTeamLine, RiDashboardLine } from "@remixicon/react"
 
 function useParallax(value: MotionValue<number>, distance: number) {
   return useTransform(value, [0, 1], [-distance, distance])
@@ -70,36 +70,42 @@ export default function IPFSParallax() {
     restDelta: 0.001,
   })
 
-  const ipfsFeatures = [
+  const resourceFeatures = [
     {
-      icon: RiDatabase2Line,
-      title: "Immutable Storage",
-      description: "Content-addressed storage ensures your files never change unexpectedly and remain permanently accessible.",
-      stats: ["Content hashing", "Version control", "Data integrity"]
+      icon: RiGlobalLine,
+      title: "Multi-Provider Support",
+      description: "Seamlessly deploy resources across multiple infrastructure providers from a single unified platform.",
+      stats: ["Multiple providers", "Unified interface", "Flexible switching"]
+    },
+    {
+      icon: RiSpeedUpLine,
+      title: "One-Click Deployment",
+      description: "Deploy infrastructure resources instantly with pre-configured templates and automated provisioning.",
+      stats: ["Instant provisioning", "Template library", "Auto-configuration"]
+    },
+    {
+      icon: RiTeamLine,
+      title: "Organisation Management",
+      description: "Manage teams and control access with role-based permissions at the organisation level.",
+      stats: ["Team collaboration", "Role-based access", "Permission control"]
+    },
+    {
+      icon: RiDashboardLine,
+      title: "Real-time Monitoring",
+      description: "Track deployment progress and resource status with live updates and comprehensive dashboards.",
+      stats: ["Live progress", "Status tracking", "Performance metrics"]
     },
     {
       icon: RiNodeTree,
-      title: "Distributed Network",
-      description: "Your content is replicated across multiple nodes worldwide, eliminating single points of failure.",
-      stats: ["47+ active nodes", "Global replication", "Auto-failover"]
-    },
-    {
-      icon: RiGlobalLine,
-      title: "Edge Optimization",
-      description: "Smart caching and edge distribution ensure lightning-fast access from anywhere in the world.",
-      stats: ["CDN integration", "Smart routing", "99.9% uptime"]
+      title: "Scalable Infrastructure",
+      description: "Effortlessly grow your resources on demand with automatic scaling and flexible capacity management.",
+      stats: ["Auto-scaling", "On-demand growth", "Capacity planning"]
     },
     {
       icon: RiShieldCheckLine,
       title: "Enterprise Security",
-      description: "Military-grade encryption and access controls keep your data secure and compliant.",
-      stats: ["AES-256 encryption", "Access controls", "Audit logs"]
-    },
-    {
-      icon: RiSpeedUpLine,
-      title: "Lightning Fast",
-      description: "Optimized protocols and intelligent caching deliver sub-second response times globally.",
-      stats: ["<100ms latency", "Bandwidth optimization", "Intelligent prefetch"]
+      description: "Protect your resources with enterprise-grade security, access controls, and compliance standards.",
+      stats: ["Encryption", "Access controls", "Audit logs"]
     }
   ]
   
@@ -111,7 +117,7 @@ export default function IPFSParallax() {
       />
       
       <div className="overflow-y-auto snap-y snap-mandatory">
-        {ipfsFeatures.map((feature, index) => (
+        {resourceFeatures.map((feature, index) => (
           <IPFSFeature key={index} feature={feature} index={index} />
         ))}
       </div>
