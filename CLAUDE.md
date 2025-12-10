@@ -5,15 +5,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 ---
 
-## 📚 Documentation Structure
+## 📚 Documentation Index
 
-This project follows a structured documentation approach:
+This file serves as the quick reference guide for AI assistants. For comprehensive documentation, see the files in `/docs/`:
 
-- **CLAUDE.md** (this file) - AI assistant guidance and quick reference
-- **SPECS.md** - Comprehensive web application technical specifications
-- **ARCHITECTURE.md** - Detailed technical architecture and system design
-- **COMPONENTS.md** - Component folder structure and organisation guide
-- **LATEST.md** - Where we have stopped before the session was ended (limit reached). Check at every new session and update occasionally!
+| Document | Purpose |
+|----------|---------|
+| **CLAUDE.md** (this file) | Quick reference for AI assistants and development commands |
+| **[SPECS.md](./docs/SPECS.md)** | Comprehensive web application technical specifications |
+| **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** | Detailed technical architecture and system design |
+| **[COMPONENTS.md](./docs/COMPONENTS.md)** | Component folder structure and organisation guide |
+| **[DESIGN.md](./docs/DESIGN.md)** | Design system, UX guidelines, and component patterns |
+| **[BEST-PRACTICES.md](./docs/BEST-PRACTICES.md)** | Development best practices and coding standards |
+| **[JEST-TESTS.md](./docs/JEST-TESTS.md)** | Testing strategies and Jest configuration |
+| **[BUSINESS-STRATEGY.md](./docs/BUSINESS-STRATEGY.md)** | Business context and strategic decisions |
 
 ---
 
@@ -44,15 +49,6 @@ npm run docker:prod:logs
 
 # Stop production stack
 npm run docker:prod:stop
-```
-
-### Git-Pull Deployment (Production Server)
-```bash
-# Deploy updates with single command
-./deploy.sh
-
-# Manual deployment
-git pull && npm run docker:prod:rebuild
 ```
 
 ### Next.js Development
@@ -91,7 +87,7 @@ npm test            # Run all tests
 - Schema changes deploy automatically on container restart
 - Perfect for rapid development and small teams
 
-> 📖 **For detailed architecture information, see [ARCHITECTURE.md](./ARCHITECTURE.md)**
+> 📖 **For detailed architecture information, see [ARCHITECTURE.md](./docs/ARCHITECTURE.md)**
 
 ---
 
@@ -101,7 +97,7 @@ npm test            # Run all tests
 - **UI Framework**: Radix UI + Tailwind CSS
 - **Components**: Tremor components available in `/components/common/` folder
 - **Icons**: Remix Icons (`@remixicon/react`)
-- **Organisation**: See [COMPONENTS.md](./next-app/COMPONENTS.md) for detailed folder structure
+- **Organisation**: See [COMPONENTS.md](./docs/COMPONENTS.md) for detailed folder structure
 
 ### Code Patterns
 - **Forms**: Action selection based on entity presence (not explicit mode props)
@@ -114,101 +110,7 @@ npm test            # Run all tests
 - **Auth**: NextAuth.js with Prisma adapter
 - **Queries**: Limit results, select only needed fields
 
-> 🎯 **For comprehensive UX guidelines, see [UX.md](./UX.md)**
-
----
-
-## 🔄 GitHub Pull Request Workflow
-
-### Trigger Command: `pr`
-
-When you type `pr`, Claude will execute this standardised pull request workflow:
-
-1. **Pre-flight Checks**
-   - Check git status and current branch
-   - Ensure all changes are committed
-   - Verify tests pass with `cd next-app && npm run lint`
-
-2. **Branch Management**
-   - **DEFAULT**: Create a new branch for each distinct feature/fix unless explicitly continuing existing work
-   - Evaluate if current changes fit existing branch scope (see criteria below)
-   - **Prefer fresh branches** to keep PRs focused and avoid mixing unrelated changes
-   - Branch naming: `feature/description` or `fix/issue-description`
-   - Push current branch to remote with upstream tracking
-
-3. **Branch Creation Decision**
-   - If creating new branch: `git checkout -b feature/new-branch-name` from main
-   - If continuing existing: ensure changes align with branch purpose
-   - **Bias towards new branches** for cleaner, focused PRs
-
-4. **Pull Request Creation**
-   - Generate concise PR title based on commits
-   - Create compressed PR body including:
-     - **Summary**: 3-5 bullet points of key changes
-     - **Technical**: Architecture/implementation highlights
-     - **Testing**: Essential test coverage only
-     - **Breaking**: Changes requiring migration (if any)
-
-5. **PR Standards**
-   - Link to relevant issues (if any)
-   - Add appropriate labels
-   - Request reviews from relevant team members
-   - Include screenshots for UI changes
-
-### Compressed Pull Request Template
-```markdown
-## Summary
-- 3-5 bullet points of core changes
-- Focus on user-facing improvements
-- Highlight technical architecture updates
-
-## Technical
-- Key implementation details only
-- New dependencies/migrations
-- Performance/security improvements
-
-## Testing
-- [ ] Core functionality verified
-- [ ] Build/lint success
-- [ ] Breaking change testing (if applicable)
-
-## Breaking Changes
-None / List migration steps if any
-
-## Screenshots
-(UI changes only)
-```
-
-### Branch Evaluation Criteria
-
-**IMPORTANT**: Default to creating new branches. Only continue on existing branch when explicitly justified.
-
-**Create New Branch (DEFAULT BEHAVIOUR):**
-- Starting any new feature, bug fix, or improvement
-- Changes implement a different feature/fix than current branch purpose
-- Current branch has existing commits unrelated to new work
-- Changes address a different user story or technical requirement
-- Any doubt about whether changes belong together
-- Current branch is already in PR state or ready for review
-- Want to keep work separated for easier code review
-
-**Continue on Current Branch (ONLY IF):**
-- Changes are direct iterations/improvements on current branch's feature
-- Fixing bugs introduced in current branch's commits
-- Adding missing pieces to incomplete feature in progress
-- All changes serve the exact same user story/technical goal
-- Current branch has no existing commits (just switched from main)
-
-### PR Best Practices
-- **Fresh Branches**: Create new branches for each distinct piece of work
-- **Single Purpose**: Each PR should address one specific feature, fix, or improvement
-- **Concise Descriptions**: Focus on essential changes, avoid verbose explanations
-- **Highlight Impact**: Emphasise user-facing improvements and technical benefits
-- **Compress Technical Details**: Include only implementation highlights
-- **Essential Testing**: Cover core functionality, not exhaustive test lists
-- **Breaking Changes**: Clearly state "None" or provide migration steps
-- **Branch Naming**: `feature/description` or `fix/issue-description`
-- **PR Size**: Keep focused and reasonably sized
+> 🎯 **For comprehensive UX guidelines, see [DESIGN.md](./docs/DESIGN.md)**
 
 ---
 
@@ -444,84 +346,6 @@ Returns:
 }
 ```
 
-### Database Schema
-
-**Resource Status Enum:**
-```prisma
-enum ResourceStatus {
-  PROVISIONING  // Currently being deployed
-  ACTIVE        // Running and operational
-  INACTIVE      // Stopped or failed
-  MAINTENANCE   // Under maintenance
-  DELETED       // Soft deleted
-}
-```
-
-**Resource Fields for Deployment:**
-```prisma
-model Resource {
-  status         ResourceStatus @default(ACTIVE)
-  endpoint       String?        // Generated endpoint URL
-  credentials    Json?          // Encrypted credentials
-  configuration  Json?          // Deployment metadata
-  // configuration structure:
-  // {
-  //   templateId: string;
-  //   deploymentStage: string;
-  //   deploymentProgress: number;
-  //   deploymentMessage: string;
-  //   deployedAt: string;
-  //   ...template-specific config
-  // }
-}
-```
-
-### Migration to Real Deployment
-
-**Phase 1: Docker Deployment (Next Step)**
-
-Replace mock provider with Docker provider:
-
-```typescript
-// src/lib/deployment/docker-provider.ts
-import Docker from 'dockerode';
-
-class DockerDeploymentProvider implements DeploymentProvider {
-  async deploy(resourceId: string, template: ResourceTemplate) {
-    const docker = new Docker();
-
-    // Generate Docker Compose config
-    const config = generateDockerConfig(resourceId, template);
-
-    // Deploy container
-    await docker.createService(config);
-
-    // Return real endpoint
-    return {
-      endpoint: `http://your-server:${allocatedPort}`,
-      credentials: generateRealCredentials()
-    };
-  }
-}
-```
-
-**Phase 2: Multi-Server Deployment**
-
-Deploy across server fleet using Kubernetes or Docker Swarm.
-
-**Phase 3: Cloud Provider Integration**
-
-Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
-
-### Important Notes
-
-- **Mock endpoints** use `.local` domain to clearly indicate they're not real
-- **Credentials** are stored in `credentials` JSONB field (will be encrypted in production)
-- **Progress tracking** happens in background, non-blocking
-- **Frontend polling** automatically stops when deployment completes
-- **Template IDs** must be unique across all templates
-- **Deployment time** in templates controls simulation duration (mock only)
-
 ### Testing Deployment Flow
 
 1. Navigate to `/main/organisations/[orgName]/resources/new`
@@ -533,14 +357,27 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
 
 ---
 
-*This file serves as a quick reference. For detailed information, consult the respective documentation files.*
+## 📖 How to Use This Documentation
 
-> 📋 **For comprehensive web application specifications, see [SPECS.md](./next-app/SPECS.md)**
-> 🎯 **For development best practices and guidelines, see [BEST-PRACTICES.md](./next-app/BEST-PRACTICES.md)**
-- to memorize **ALWAYS** Stop the running processes after you have finished testing (npm run dev)
-- to memorize **ALWAYS** use british english spelling
-- to memorize **NEVER** put client components in /app, unless they are page.tsx files
-- ro memorize if you have problems with the database migration, drop it or migrate forcefully
-- to memorize **ALWAYS** use british english spelling
-- to memorize **NEVER** use dialog components unless it is to alert or to confirm
-- to memorize **IMPORTANT** Github repo is located in the next-app folder
+This file serves as the quick reference and starting point. For detailed information:
+
+1. **Architecture & Design**: See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) and [DESIGN.md](./docs/DESIGN.md)
+2. **Component Details**: See [COMPONENTS.md](./docs/COMPONENTS.md) and [BEST-PRACTICES.md](./docs/BEST-PRACTICES.md)
+3. **Specifications**: See [SPECS.md](./docs/SPECS.md) for comprehensive technical specifications
+4. **Testing**: See [JEST-TESTS.md](./docs/JEST-TESTS.md) for testing strategies and configuration
+5. **Business Context**: See [BUSINESS-STRATEGY.md](./docs/BUSINESS-STRATEGY.md)
+
+---
+
+## 🎓 Key Reminders
+
+- **ALWAYS** stop the running processes after you have finished testing (`npm run dev`)
+- **ALWAYS** use British English spelling throughout all code and documentation
+- **NEVER** put client components in `/app`, unless they are `page.tsx` files
+- **NEVER** use dialog components unless they are for alerts or confirmations
+- If you have problems with database migrations, drop it or migrate forcefully
+- **IMPORTANT**: The GitHub repository is located in the `next-app` folder
+
+---
+
+*Last updated: This documentation structure guides all development work in this repository.*
