@@ -209,6 +209,28 @@ export class UserService {
       return false;
     }
   }
+
+  async getAllUsers(): Promise<User[]> {
+    try {
+      return await prisma.user.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (error) {
+      console.error('Failed to get all users:', error);
+      throw error;
+    }
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    try {
+      await prisma.user.delete({
+        where: { id: userId },
+      });
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      throw error;
+    }
+  }
 }
 
 export const userService = new UserService();
