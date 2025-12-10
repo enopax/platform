@@ -260,8 +260,6 @@ export default function SidebarNavigation({
               </div>
             </div>
           )}
-        </>
-      )}
 
       {/* User section */}
       <div className="border-t p-4 flex-shrink-0">
