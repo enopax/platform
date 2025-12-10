@@ -85,17 +85,6 @@ export default function SidebarNavigation({
 
   return (
     <div className="w-64 min-h-screen border-r flex flex-col flex-shrink-0">
-      {/* Header */}
-      <div className="flex items-center h-16 px-6 flex-shrink-0">
-        <div className="flex items-center">
-          <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center mr-3">
-            <span className="text-sm font-bold text-white">IIIII</span>
-          </div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Main
-          </h1>
-        </div>
-      </div>
 
       {/* Organisation Selector */}
       <div className="px-3 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -192,7 +181,7 @@ export default function SidebarNavigation({
         </div>
       </div>
 
-      {!organisationId ? (
+      {!organisationId && (
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center">
             <RiBuildingLine className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -204,90 +193,7 @@ export default function SidebarNavigation({
             </p>
           </div>
         </div>
-      ) : (
-        <>
-          {/* Projects List */}
-          <div className="flex-1 px-3 py-4 overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                Projects
-              </h3>
-              <Link href={`/main/organisations/${organisationName}/projects/new`}>
-                <Button variant="ghost" size="sm" className="p-1">
-                  <RiAddLine className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-
-            {projects.length > 0 ? (
-              <div className="space-y-1">
-                {projects.map((project) => {
-                  // Determine if we're in organisation context based on current path
-                  const isInOrgContext = pathname.startsWith('/main/organisations/');
-
-                  // Use organisation-specific links when in organisation context, global links otherwise
-                  const projectPath = isInOrgContext
-                    ? `/main/organisations/${organisationName}/projects/${project.id}`
-                    : `/main/projects/${project.id}`;
-
-                  const globalProjectPath = `/main/projects/${project.id}`;
-                  const orgProjectPath = `/main/organisations/${organisationName}/projects/${project.id}`;
-                  const isActive = pathname.startsWith(orgProjectPath) || pathname.startsWith(globalProjectPath);
-
-                  return (
-                    <Link
-                      key={project.id}
-                      href={projectPath}
-                      className={`
-                        group flex items-center px-3 py-2 text-sm rounded-lg transition-all duration-150
-                        ${isActive
-                          ? 'bg-brand-50 text-brand-900 dark:bg-brand-900/20 dark:text-brand-100'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800/50 dark:hover:text-white'
-                        }
-                      `}
-                    >
-                      <RiProjectorLine
-                        className={`
-                          mr-3 h-4 w-4 flex-shrink-0
-                          ${isActive
-                            ? 'text-brand-600 dark:text-brand-400'
-                            : 'text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300'
-                          }
-                        `}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="truncate font-medium">{project.name}</div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge
-                            variant={project.status === 'ACTIVE' ? 'success' : 'warning'}
-                            className="text-xs"
-                          >
-                            {project.status}
-                          </Badge>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {project.progress}%
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <RiProjectorLine className="mx-auto h-8 w-8 text-gray-400 mb-3" />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                  No projects yet
-                </p>
-                <Link href={`/main/organisations/${organisationName}/projects/new`}>
-                  <Button size="sm">
-                    <RiAddLine className="mr-2 h-4 w-4" />
-                    Create Project
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
+      )}
 
           {/* Organisation Navigation */}
           {organisationId && (
@@ -297,6 +203,12 @@ export default function SidebarNavigation({
               </h4>
               <div className="space-y-1">
                 {[
+                  {
+                    name: 'Projects',
+                    icon: RiTeamLine,
+                    href: `/main/organisations/${organisationName}/projects`,
+                    active: pathname.startsWith(`/main/organisations/${organisationName}/projects`)
+                  },
                   {
                     name: 'Teams',
                     icon: RiTeamLine,

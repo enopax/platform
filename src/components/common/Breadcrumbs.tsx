@@ -25,16 +25,16 @@ export function ProjectBreadcrumbs({
 }) {
   return (
     <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-      <Link href="/main" className="hover:text-gray-900 dark:hover:text-gray-100 flex items-center">
+      <Link href="/orga/organisations" className="hover:text-gray-900 dark:hover:text-gray-100 flex items-center">
         <RiHomeLine className="h-4 w-4 mr-1" />
-        Main
+        Organisations
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href="/main/projects" className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href="/orga/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
         Projects
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/projects/${projectId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/orga/organisations`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {projectName}
       </Link>
       {currentPage && (
@@ -63,23 +63,19 @@ export function OrganisationProjectBreadcrumbs({
 }) {
   return (
     <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-      <Link href="/main" className="hover:text-gray-900 dark:hover:text-gray-100">
-        Main
-      </Link>
-      <RiArrowRightLine className="h-3 w-3" />
-      <Link href="/main/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href="/orga/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
         Organisations
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/orga/${organisationName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {organisationName}
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationName}/projects`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/orga/${organisationName}/projects`} className="hover:text-gray-900 dark:hover:text-gray-100">
         Projects
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationName}/projects/${projectId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/orga/${organisationName}/${projectName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {projectName}
       </Link>
       {currentPage && (
@@ -108,23 +104,19 @@ export function OrganisationTeamBreadcrumbs({
 }) {
   return (
     <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-      <Link href="/main" className="hover:text-gray-900 dark:hover:text-gray-100">
-        Main
-      </Link>
-      <RiArrowRightLine className="h-3 w-3" />
-      <Link href="/main/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href="/orga/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
         Organisations
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/orga/${organisationName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {organisationName}
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationName}/teams`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/orga/${organisationName}/teams`} className="hover:text-gray-900 dark:hover:text-gray-100">
         Teams
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationName}/teams/${teamId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/orga/${organisationName}/teams/${teamId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {teamName}
       </Link>
       {currentPage && (
@@ -153,23 +145,19 @@ export function OrganisationResourceBreadcrumbs({
 }) {
   return (
     <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-      <Link href="/main" className="hover:text-gray-900 dark:hover:text-gray-100">
-        Main
-      </Link>
-      <RiArrowRightLine className="h-3 w-3" />
-      <Link href="/main/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href="/orga/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
         Organisations
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/orga/${organisationName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {organisationName}
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationName}/resources`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/orga/${organisationName}/resources`} className="hover:text-gray-900 dark:hover:text-gray-100">
         Resources
       </Link>
       <RiArrowRightLine className="h-3 w-3" />
-      <Link href={`/main/organisations/${organisationName}/resources/${resourceId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href={`/orga/${organisationName}/resources/${resourceId}`} className="hover:text-gray-900 dark:hover:text-gray-100">
         {resourceName}
       </Link>
       {currentPage && (
@@ -190,9 +178,9 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
 
   return (
     <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-      <Link href="/main" className="hover:text-gray-900 dark:hover:text-gray-100 flex items-center">
+      <Link href="/orga/organisations" className="hover:text-gray-900 dark:hover:text-gray-100 flex items-center">
         <RiHomeLine className="h-4 w-4 mr-1" />
-        Main
+        Organisations
       </Link>
       {breadcrumbItems.map((item, index) => (
         <div key={index} className="flex items-center space-x-2">
@@ -248,4 +236,73 @@ function formatSegmentLabel(segment: string): string {
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+// Simplified breadcrumbs for organisation pages (no intermediate categories)
+export function SimpleOrganisationBreadcrumbs({
+  organisationName,
+}: {
+  organisationName: string;
+}) {
+  return (
+    <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+      <Link href="/orga/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
+        Organisations
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <span className="text-gray-900 dark:text-gray-100 font-medium">{organisationName}</span>
+    </nav>
+  );
+}
+
+// Simplified breadcrumbs for project pages (no intermediate categories)
+export function SimpleProjectBreadcrumbs({
+  organisationName,
+  projectName,
+}: {
+  organisationName: string;
+  projectName: string;
+}) {
+  return (
+    <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+      <Link href="/orga/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
+        Organisations
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href={`/orga/${organisationName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+        {organisationName}
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <span className="text-gray-900 dark:text-gray-100 font-medium">{projectName}</span>
+    </nav>
+  );
+}
+
+// Simplified breadcrumbs for resource pages (no intermediate categories)
+export function SimpleResourceBreadcrumbs({
+  organisationName,
+  projectName,
+  resourceName,
+}: {
+  organisationName: string;
+  projectName: string;
+  resourceName: string;
+}) {
+  return (
+    <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+      <Link href="/orga/organisations" className="hover:text-gray-900 dark:hover:text-gray-100">
+        Organisations
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href={`/orga/${organisationName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+        {organisationName}
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <Link href={`/orga/${organisationName}/${projectName}`} className="hover:text-gray-900 dark:hover:text-gray-100">
+        {projectName}
+      </Link>
+      <RiArrowRightLine className="h-3 w-3" />
+      <span className="text-gray-900 dark:text-gray-100 font-medium">{resourceName}</span>
+    </nav>
+  );
 }
