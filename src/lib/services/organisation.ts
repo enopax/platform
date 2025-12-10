@@ -362,6 +362,61 @@ export class OrganisationService {
       return [];
     }
   }
+
+  async getAllOrganisations(): Promise<OrganisationInfo[]> {
+    try {
+      const organisations = await prisma.organisation.findMany({
+        where: { isActive: true },
+        include: {
+          _count: {
+            select: {
+              members: true,
+              teams: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return organisations.map(org => ({
+        ...org,
+        memberCount: org._count.members,
+        teamCount: org._count.teams,
+      }));
+    } catch (error) {
+      console.error('Failed to get all organisations:', error);
+      throw error;
+    }
+  }
+
+  async findByOwner(ownerId: string): Promise<OrganisationInfo[]> {
+    try {
+      const organisations = await prisma.organisation.findMany({
+        where: {
+          ownerId,
+          isActive: true,
+        },
+        include: {
+          _count: {
+            select: {
+              members: true,
+              teams: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return organisations.map(org => ({
+        ...org,
+        memberCount: org._count.members,
+        teamCount: org._count.teams,
+      }));
+    } catch (error) {
+      console.error('Failed to find organisations by owner:', error);
+      throw error;
+    }
+  }
 }
 
 export const organisationService = new OrganisationService();

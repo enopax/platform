@@ -734,6 +734,70 @@ export class ProjectService {
       return [];
     }
   }
+
+  async getAllProjects(): Promise<ProjectInfo[]> {
+    try {
+      const projects = await prisma.project.findMany({
+        where: { isActive: true },
+        include: {
+          organisation: {
+            select: {
+              id: true,
+              name: true,
+            }
+          },
+          assignedTeams: {
+            include: {
+              team: {
+                select: {
+                  id: true,
+                  name: true,
+                  owner: {
+                    select: {
+                      id: true,
+                      name: true,
+                    }
+                  }
+                }
+              }
+            }
+          },
+          _count: {
+            select: {
+              files: true,
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return projects.map(project => ({
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        status: project.status,
+        priority: project.priority,
+        budget: project.budget ? Number(project.budget) : undefined,
+        currency: project.currency,
+        startDate: project.startDate,
+        endDate: project.endDate,
+        actualEndDate: project.actualEndDate,
+        progress: project.progress,
+        repositoryUrl: project.repositoryUrl,
+        documentationUrl: project.documentationUrl,
+        organisationId: project.organisationId,
+        isActive: project.isActive,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+        organisation: project.organisation,
+        assignedTeams: project.assignedTeams,
+        fileCount: project._count.files,
+      }));
+    } catch (error) {
+      console.error('Failed to get all projects:', error);
+      throw error;
+    }
+  }
 }
 
 export const projectService = new ProjectService();
