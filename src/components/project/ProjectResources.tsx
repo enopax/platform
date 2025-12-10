@@ -3,6 +3,7 @@
 import { Card } from '@/components/common/Card';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
+import Link from 'next/link';
 import { useState } from 'react';
 import {
   RiServerLine,
@@ -39,6 +40,7 @@ interface ProjectResourcesProps {
   resources: ProjectResource[];
   projectId: string;
   orgName: string;
+  projectName: string;
   canManage: boolean;
 }
 
@@ -68,7 +70,7 @@ function formatBytes(bytes: bigint | number): string {
   return `${parseFloat((num / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
-export default function ProjectResources({ resources, projectId, orgName, canManage }: ProjectResourcesProps) {
+export default function ProjectResources({ resources, projectId, orgName, projectName, canManage }: ProjectResourcesProps) {
   const router = useRouter();
   const [removing, setRemoving] = useState<string | null>(null);
 
@@ -130,10 +132,15 @@ export default function ProjectResources({ resources, projectId, orgName, canMan
           : 0;
 
         return (
-          <Card key={allocation.id} className="p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between">
-              {/* Resource Info */}
-              <div className="flex items-start gap-4 flex-1">
+          <Link
+            key={allocation.id}
+            href={`/orga/${orgName}/${projectName}/${resource.name}`}
+            className="block group"
+          >
+            <Card className="p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between">
+                {/* Resource Info */}
+                <div className="flex items-start gap-4 flex-1">
                 {/* Icon */}
                 <div className={`p-3 rounded-lg ${typeConfig.bgColor}`}>
                   <Icon className={`h-6 w-6 ${typeConfig.color}`} />
@@ -216,7 +223,7 @@ export default function ProjectResources({ resources, projectId, orgName, canMan
 
               {/* Actions */}
               {canManage && (
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2 ml-4" onClick={(e) => e.preventDefault()}>
                   <Button
                     variant="outline"
                     size="sm"
@@ -234,7 +241,8 @@ export default function ProjectResources({ resources, projectId, orgName, canMan
                 </div>
               )}
             </div>
-          </Card>
+            </Card>
+          </Link>
         );
       })}
     </div>
