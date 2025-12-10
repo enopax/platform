@@ -1,6 +1,6 @@
 Enopax Updates
 
-- [ ] Landing page - keep simple
+- [X] Landing page - keep simple
 - [X] ./docs folder for .md files
 - [X] Update CLAUDE.md, BEST-PRACTISES.md and DESIGN.md
 - [ ] Page Header without logo, page title instead and smaller
@@ -13,4 +13,3 @@ Enopax Updates
 In Organisation:
 
 - [ ] Sidebar as navigation navbar
-- [ ]
