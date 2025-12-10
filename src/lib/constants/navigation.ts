@@ -28,7 +28,7 @@ export const navigation = [
   },
   {
     name: 'Organisations',
-    href: '/main/organisations',
+    href: '/orga',
     icon: RiBuildingLine,
     description: 'Company and organisation management'
   },

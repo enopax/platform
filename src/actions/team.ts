@@ -185,8 +185,8 @@ export async function createTeam(
     });
 
     // Revalidate organisation-based paths
-    revalidatePath('/main/organisations');
-    revalidatePath('/main/organisations/[orgName]/teams', 'page');
+    revalidatePath('/orga');
+    revalidatePath('/orga/[orgName]/teams', 'page');
 
     return { success: true };
   } catch (error) {
@@ -210,9 +210,9 @@ export async function deleteTeam(
     await teamService.deleteTeam(teamId, session.user.id);
 
     // Revalidate organisation-based paths
-    revalidatePath('/main/organisations');
-    revalidatePath('/main/organisations/[orgName]/teams', 'page');
-    revalidatePath('/main/organisations/[orgName]/teams/[teamId]', 'page');
+    revalidatePath('/orga');
+    revalidatePath('/orga/[orgName]/teams', 'page');
+    revalidatePath('/orga/[orgName]/teams/[teamId]', 'page');
 
     return { success: true };
   } catch (error) {

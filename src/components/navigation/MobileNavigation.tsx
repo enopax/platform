@@ -56,8 +56,8 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
   // Get organisation name from pathname
   const getOrganisationName = () => {
     const pathSegments = pathname.split('/');
-    if (pathSegments[1] === 'main' && pathSegments[2] === 'organisations' && pathSegments[3]) {
-      return pathSegments[3];
+    if (pathSegments[1] === 'orga' && pathSegments[2]) {
+      return pathSegments[2];
     }
     return null;
   };
@@ -73,8 +73,8 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
   const projects = organisation?.projects || [];
 
   const isActivePath = (href: string) => {
-    if (href === '/main') {
-      return pathname === '/main' && organisationId;
+    if (href === '/orga') {
+      return pathname === '/orga' && organisationId;
     }
     return pathname.startsWith(href);
   };
@@ -173,7 +173,7 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
                       {initialOrganisations.map((org) => (
                         <Link
                           key={org.id}
-                          href={`/main/organisations/${org.name}`}
+                          href={`/orga/${org.name}`}
                           onClick={handleLinkClick}
                           className={`
                             block p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors
@@ -201,7 +201,7 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
                       ))}
                       <div className="border-t border-gray-200 dark:border-gray-700 p-2">
                         <Link
-                          href="/main/organisations"
+                          href="/orga/organisations"
                           onClick={handleLinkClick}
                           className="flex items-center p-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded transition-colors"
                         >
@@ -240,7 +240,7 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                     Projects
                   </h3>
-                  <Link href={`/main/organisations/${organisationName}/projects/new`} onClick={handleLinkClick}>
+                  <Link href={`/orga/${organisationName}/projects/new`} onClick={handleLinkClick}>
                     <Button variant="ghost" size="sm" className="p-1">
                       <RiAddLine className="h-4 w-4" />
                     </Button>
@@ -250,14 +250,8 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
                 {projects.length > 0 ? (
                   <div className="space-y-1">
                     {projects.map((project) => {
-                      const isInOrgContext = pathname.startsWith('/main/organisations/');
-                      const projectPath = isInOrgContext
-                        ? `/main/organisations/${organisationName}/projects/${project.id}`
-                        : `/main/projects/${project.id}`;
-
-                      const globalProjectPath = `/main/projects/${project.id}`;
-                      const orgProjectPath = `/main/organisations/${organisationName}/projects/${project.id}`;
-                      const isActive = pathname.startsWith(orgProjectPath) || pathname.startsWith(globalProjectPath);
+                      const projectPath = `/orga/${organisationName}/${project.id}`;
+                      const isActive = pathname.startsWith(projectPath);
 
                       return (
                         <Link
@@ -305,7 +299,7 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                       No projects yet
                     </p>
-                    <Link href={`/main/organisations/${organisationName}/projects/new`} onClick={handleLinkClick}>
+                    <Link href={`/orga/${organisationName}/projects/new`} onClick={handleLinkClick}>
                       <Button size="sm">
                         <RiAddLine className="mr-2 h-4 w-4" />
                         Create Project
@@ -326,26 +320,26 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
                       {
                         name: 'Teams',
                         icon: RiTeamLine,
-                        href: `/main/organisations/${organisationName}/teams`,
-                        active: pathname.startsWith(`/main/organisations/${organisationName}/teams`)
+                        href: `/orga/${organisationName}/teams`,
+                        active: pathname.startsWith(`/orga/${organisationName}/teams`)
                       },
                       {
                         name: 'Resources',
                         icon: RiServerLine,
-                        href: `/main/organisations/${organisationName}/resources`,
-                        active: pathname.startsWith(`/main/organisations/${organisationName}/resources`)
+                        href: `/orga/${organisationName}/resources`,
+                        active: pathname.startsWith(`/orga/${organisationName}/resources`)
                       },
                       {
                         name: 'Members',
                         icon: RiUserLine,
-                        href: `/main/organisations/${organisationName}/members`,
-                        active: pathname.startsWith(`/main/organisations/${organisationName}/members`)
+                        href: `/orga/${organisationName}/members`,
+                        active: pathname.startsWith(`/orga/${organisationName}/members`)
                       },
                       {
                         name: 'Settings',
                         icon: RiSettings3Line,
-                        href: `/main/organisations/${organisationName}/settings`,
-                        active: pathname.startsWith(`/main/organisations/${organisationName}/settings`)
+                        href: `/orga/${organisationName}/settings`,
+                        active: pathname.startsWith(`/orga/${organisationName}/settings`)
                       },
                     ].map((item) => (
                       <Link

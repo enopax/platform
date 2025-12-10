@@ -44,10 +44,10 @@ export default function DeleteTeamButton({
       } else {
         // Navigate to teams list or organisation page
         if (organisationName) {
-          router.push(`/main/organisations/${organisationName}`);
+          router.push(`/orga/${organisationName}`);
         } else if (organisationId) {
           // Fallback for backward compatibility
-          router.push(`/main/organisations/${organisationId}`);
+          router.push(`/orga/${organisationId}`);
         } else {
           router.push('/main/teams');
         }

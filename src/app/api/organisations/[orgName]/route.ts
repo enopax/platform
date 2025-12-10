@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { orgName: string } }
 ) {
   try {
     const session = await auth();
@@ -12,26 +12,16 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
     }
 
-    const organisationId = params.id;
+    const orgName = params.orgName;
 
-    // Check if user has access to this organisation
-    const isAdmin = session.user.role === 'ADMIN';
-    const membership = await prisma.organisationMember.findUnique({
-      where: {
-        userId_organisationId: {
-          userId: session.user.id,
-          organisationId: organisationId
-        }
-      }
-    });
-
-    if (!isAdmin && !membership) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    // Validate that orgName is provided
+    if (!orgName) {
+      return NextResponse.json({ error: 'Organisation name is required' }, { status: 400 });
     }
 
-    // Fetch organisation data
+    // Get organisation by name
     const organisation = await prisma.organisation.findUnique({
-      where: { id: organisationId },
+      where: { name: orgName },
       select: {
         id: true,
         name: true,
@@ -42,6 +32,21 @@ export async function GET(
 
     if (!organisation) {
       return NextResponse.json({ error: 'Organisation not found' }, { status: 404 });
+    }
+
+    // Check if user has access to this organisation
+    const isAdmin = session.user.role === 'ADMIN';
+    const membership = await prisma.organisationMember.findUnique({
+      where: {
+        userId_organisationId: {
+          userId: session.user.id,
+          organisationId: organisation.id
+        }
+      }
+    });
+
+    if (!isAdmin && !membership) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     return NextResponse.json(organisation);

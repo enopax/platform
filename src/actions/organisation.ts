@@ -109,8 +109,8 @@ export async function updateOrganisation(
 
     revalidatePath('/admin/organisation');
     revalidatePath(`/admin/organisation/${organisationId}`);
-    revalidatePath('/main/organisations');
-    revalidatePath(`/main/organisations/${organisationId}`);
+    revalidatePath('/orga');
+    revalidatePath(`/orga/${organisationId}`);
 
     return { success: true };
   } catch (error) {
@@ -232,8 +232,8 @@ export async function deleteOrganisation(
 
     console.log('Organisation deleted successfully, revalidating paths...');
     revalidatePath('/admin/organisations');
-    revalidatePath('/main/organisations');
-    revalidatePath(`/main/organisations/${organisationId}`);
+    revalidatePath('/orga');
+    revalidatePath(`/orga/${organisationId}`);
 
     console.log('Paths revalidated, returning success');
     return { success: true };

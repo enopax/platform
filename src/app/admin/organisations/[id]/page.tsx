@@ -16,6 +16,11 @@ interface EditOrganisationPageProps {
 export default async function EditOrganisationPage({ params }: EditOrganisationPageProps) {
   const { id } = await params;
 
+  // Validate that id is provided
+  if (!id) {
+    notFound();
+  }
+
   const [organisation, users] = await Promise.all([
     prisma.organisation.findUnique({
       where: { id },

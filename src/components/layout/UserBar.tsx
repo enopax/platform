@@ -10,13 +10,8 @@ export default function UserBar({
 }) {
   return (
     <header className="border-b">
-      <div className="p-4 text-sm w-full">
-        <div className="mx-auto max-w-6xl w-full relative flex items-center">
-          {/* Logo centered relative to page width */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 z-10">
-            <Logo />
-          </div>
-          
+      <div className="px-4 text-sm w-full">
+        <div className="mx-auto max-w-6xl w-full relative flex items-center">          
           {/* UserBarMenu positioned on the right */}
           <div className="ml-auto px-4">
             <UserBarMenu user={user} />

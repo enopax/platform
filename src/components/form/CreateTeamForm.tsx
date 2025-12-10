@@ -41,8 +41,8 @@ export default function CreateTeamForm({ organisations, currentUserId, organisat
     if (state.success) {
       setTimeout(() => {
         const redirectUrl = orgName
-          ? `/main/organisations/${orgName}/teams`
-          : '/main/organisations';
+          ? `/orga/${orgName}/teams`
+          : '/orga';
         router.push(redirectUrl);
       }, 1500);
     }

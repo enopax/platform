@@ -41,8 +41,8 @@ export default function UserBarMenu({
           <u>Account</u>
         </DropdownMenuLabel>
 
-        <DropdownMenuGroup> 
-            <Link href="/main">
+        <DropdownMenuGroup>
+            <Link href="/orga/organisations">
              <DropdownMenuItem>
                Dashboard
              </DropdownMenuItem>

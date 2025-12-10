@@ -124,7 +124,7 @@ const columns: ColumnDef<TeamWithDetails>[] = [
 
       const orgId = row.original.organisationId;
       const teamUrl = orgId
-        ? `/main/organisations/${organisation.name}`
+        ? `/orga/${organisation.name}`
         : `/main/teams/${row.original.id}`;
 
       return (

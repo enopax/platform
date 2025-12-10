@@ -8,16 +8,15 @@ import { Callout } from '@/components/common/Callout';
 import { Slider } from '@/components/common/Slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/Select';
 import { createResource, type CreateResourceState } from '@/actions/resource';
-import { RiDatabase2Line, RiCheckLine, RiErrorWarningLine, RiInformationLine, RiServerLine, RiCloudLine, RiCodeLine } from '@remixicon/react';
+import { RiDatabase2Line, RiCheckLine, RiErrorWarningLine, RiServerLine, RiCloudLine, RiCodeLine } from '@remixicon/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { type Team, type Organisation } from '@prisma/client';
 
 interface CreateResourceFormProps {
   currentUserId: string;
   projectId?: string;
   projectName?: string;
-  teams: (Team & { organisation?: Organisation | null })[];
+  organisationName: string;
 }
 
 // Storage size options in GB
@@ -71,13 +70,11 @@ const RESOURCE_TYPES = [
   },
 ];
 
-export default function CreateResourceForm({ currentUserId, projectId, projectName, teams }: CreateResourceFormProps) {
+export default function CreateResourceForm({ currentUserId, projectId, projectName, organisationName }: CreateResourceFormProps) {
   const router = useRouter();
-  const [selectedTeamId, setSelectedTeamId] = useState<string>(
-    Array.isArray(teams) ? (teams.find(team => team.isPersonal)?.id || teams[0]?.id || '') : ''
-  );
   const [resourceType, setResourceType] = useState<ResourceType>('STORAGE');
   const [storageSize, setStorageSize] = useState([1]); // Default to 5 GB (index 1)
+  const [resourceName, setResourceName] = useState<string>('');
   const [state, formAction, isPending] = useActionState<CreateResourceState, FormData>(
     createResource,
     {}
@@ -87,24 +84,20 @@ export default function CreateResourceForm({ currentUserId, projectId, projectNa
   useEffect(() => {
     if (state.success) {
       setTimeout(() => {
-        // Get organisation from the team's organisation
-        const selectedTeam = teams.find(t => t.id === selectedTeamId);
-        const orgName = selectedTeam?.organisation?.name;
-
-        if (projectId && orgName) {
-          // Redirect to project page if created from project context
-          router.push(`/main/organisations/${orgName}/projects/${projectId}`);
-        } else if (orgName) {
-          // Redirect to organisation resources if no project context
-          router.push(`/main/organisations/${orgName}/resources`);
+        if (projectId && projectName && resourceName) {
+          // Redirect to resource page if created from project context
+          router.push(`/orga/${organisationName}/${projectName}/${resourceName}`);
+        } else if (projectId && projectName) {
+          // Redirect to project page if no resource name
+          router.push(`/orga/${organisationName}/${projectName}`);
         } else {
-          // Fallback to general resources page
-          router.push('/main/resources');
+          // Redirect to organisation page if no project context
+          router.push(`/orga/${organisationName}`);
         }
         router.refresh();
       }, 1500);
     }
-  }, [state.success, router, projectId, selectedTeamId, teams]);
+  }, [state.success, router, projectId, projectName, resourceName, organisationName]);
 
   const selectedStorageOption = STORAGE_OPTIONS[storageSize[0]];
   const selectedResourceType = RESOURCE_TYPES.find(type => type.value === resourceType);
@@ -218,6 +211,7 @@ export default function CreateResourceForm({ currentUserId, projectId, projectNa
             hasError={!!state.fieldErrors?.name}
             className="mt-1"
             placeholder={`My ${selectedResourceType?.label || 'Resource'}`}
+            onChange={(e) => setResourceName(e.target.value)}
           />
           {state.fieldErrors?.name && (
             <p className="mt-1 text-sm text-red-600">{state.fieldErrors.name}</p>
@@ -245,33 +239,6 @@ export default function CreateResourceForm({ currentUserId, projectId, projectNa
           )}
         </div>
 
-        {/* Team Selection */}
-        <div>
-          <Label htmlFor="teamId">
-            Team *
-          </Label>
-          <Select value={selectedTeamId} onValueChange={setSelectedTeamId} name="teamId" required>
-            <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.teamId}>
-              <SelectValue placeholder="Select team" />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.isArray(teams) ? teams.map((team) => (
-                <SelectItem key={team.id} value={team.id}>
-                  {team.name} {team.isPersonal ? '(Personal)' : ''}
-                  {team.organisation && ` - ${team.organisation.name}`}
-                </SelectItem>
-              )) : (
-                <SelectItem value="" disabled>No teams available</SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-          {state.fieldErrors?.teamId && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.teamId}</p>
-          )}
-          <p className="text-xs text-gray-500 mt-1">
-            Resources belong to teams and can be accessed by team members
-          </p>
-        </div>
       </div>
 
       {/* Hidden fields */}
@@ -279,7 +246,7 @@ export default function CreateResourceForm({ currentUserId, projectId, projectNa
       <input type="hidden" name="type" value={resourceType} />
       <input type="hidden" name="status" value="ACTIVE" />
       {projectId && <input type="hidden" name="projectId" value={projectId} />}
-      <input type="hidden" name="teamId" value={selectedTeamId} />
+      <input type="hidden" name="organisationName" value={organisationName} />
       {resourceType === 'STORAGE' && (
         <input type="hidden" name="quotaLimit" value={selectedStorageOption.bytes.toString()} />
       )}
