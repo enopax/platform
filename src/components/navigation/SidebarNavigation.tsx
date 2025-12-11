@@ -183,12 +183,12 @@ export default function SidebarNavigation({
                   })}
                   <div className="border-t border-gray-200 dark:border-gray-700 p-2">
                     <Link
-                      href="/orga/organisations"
+                      href="/orga"
                       onClick={() => setShowOrgDropdown(false)}
                       className="flex items-center p-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded transition-colors"
                     >
                       <RiExternalLinkLine className="mr-2 h-4 w-4" />
-                      View all organisations
+                      My Organisations
                     </Link>
                   </div>
                 </>
