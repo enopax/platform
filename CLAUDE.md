@@ -107,8 +107,9 @@ npm run test:tinybase       # Run TinyBase-specific tests only
 
 **🔄 TinyBase Migration (In Progress)**:
 - **Status**: Migrating from PostgreSQL + Prisma to TinyBase with file-based storage
-- **Progress**: 7/51 tasks completed (14%) - Task Group A: 78% complete
-- **Current**: Quality checkpoint PASSED ✅ - Ready for Task Group B (Data Access Layer)
+- **Progress**: 9/54 tasks completed (17%) - Task Group A: 58%, Task Group B: 25%
+- **Current**: B2 (User Model) COMPLETE ✅ - Next: B3 (Organisation Model)
+- **Tests**: 194/229 passing (85%) - TinyBase unit tests: 58/59 (98%)
 - **See**: `/docs/TINYBASE_MIGRATION_PLAN.md` for detailed migration plan
 - **See**: `/docs/file-store/README.md` for file-store research and decision
 
@@ -558,28 +559,33 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
 
 ### Current Implementation Status
 
-**Migration Progress:** 8/51 tasks (16%)
+**Migration Progress:** 9/54 tasks (17%)
 
-**Task Group A: Foundation & Infrastructure (7/9 tasks - 78%)**
+**Task Group A: Foundation & Infrastructure (7/12 tasks - 58%)**
 - ✅ A1: TinyBase v7.1.0 installed
 - ✅ A2: Custom file persister implemented (`/src/lib/tinybase/persister.ts`)
 - ✅ A3: TinyBase database wrapper implemented (`/src/lib/tinybase/db.ts`)
 - ✅ A4: Persister unit tests created (9/10 passing - 90%)
 - ✅ A5: Delete test limitation documented
 - ✅ A6: Test NPM scripts added (test:unit, test:integration, test:api, test:tinybase)
-- 📋 A7: Code quality review and improvements (optional)
-- 📋 A8: Install missing dependencies and fix API tests (optional)
+- 📋 A7-A8: Code quality review and improvements (optional)
 - ✅ A9: Quality checkpoint PASSED - Ready for Task Group B
+- 📋 A10-A12: Quality improvements (optional - error handling, validation, constants)
 
-**Task Group B: Data Access Layer (1/8 tasks - 13%)**
+**Task Group B: Data Access Layer (2/8 tasks - 25%)**
 - ✅ B1: Base Model Class created (`/src/lib/dal/base.ts`)
   - Abstract CRUD operations for all models
   - Auto-generates IDs using nanoid
   - Auto-sets createdAt/updatedAt timestamps
   - Helper methods: count(), exists()
   - 25 comprehensive tests (100% passing)
-- ⏳ B2: Implement User Model (next task)
-- ⏳ B3: Implement Organisation Model
+- ✅ B2: User Model implemented (`/src/lib/dal/user.ts`) ⭐ NEW
+  - Full CRUD + custom queries
+  - Enums: UserRole, StorageTier
+  - Methods: findByEmail (index), findByRole, findByStorageTier, findVerified, findUnverified
+  - Singleton instance exported
+  - 29 comprehensive tests (100% passing)
+- ⏳ B3: Implement Organisation Model (next task)
 - ⏳ B4: Implement Team Model
 - ⏳ B5: Implement Project Model
 - ⏳ B6: Implement Resource Model
@@ -593,6 +599,8 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
 - `/src/lib/tinybase/__tests__/persister.test.ts` - Persister tests (9/10 passing)
 - `/src/lib/dal/base.ts` - Base Model Class for CRUD operations
 - `/src/lib/dal/__tests__/base.test.ts` - Base Model tests (25/25 passing)
+- `/src/lib/dal/user.ts` - User Model implementation ⭐ NEW
+- `/src/lib/dal/__tests__/user.test.ts` - User Model tests (29/29 passing) ⭐ NEW
 - `/docs/TINYBASE_MIGRATION_PLAN.md` - Complete migration plan
 - `/docs/MIGRATION_TEST_STRATEGY.md` - Test strategy
 - `/docs/file-store/` - Research and decision documentation

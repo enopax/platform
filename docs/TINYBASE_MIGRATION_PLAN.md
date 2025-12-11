@@ -898,14 +898,71 @@ const found = await model.findById(record.id);
 - Uses TinyBase index for email lookup
 
 **Definition of Done:**
-- [ ] File `/src/lib/dal/user.ts` exists
-- [ ] Exports `interface User` matching Prisma schema
-- [ ] Exports `class UserModel extends BaseModel<User>`
-- [ ] Method `findByEmail()` uses TinyBase index
-- [ ] Method `findByRole()` filters by role
-- [ ] Exports `export const userModel = new UserModel()`
-- [ ] TypeScript compiles without errors
-- [ ] Can query: `await userModel.findByEmail('test@example.com')`
+- [x] File `/src/lib/dal/user.ts` exists
+- [x] Exports `interface User` matching Prisma schema
+- [x] Exports `enum UserRole` and `enum StorageTier`
+- [x] Exports `class UserModel extends BaseModel<User>`
+- [x] Method `findByEmail()` uses TinyBase index (with fallback for tests)
+- [x] Method `findByRole()` filters by role
+- [x] Method `findByStorageTier()` filters by storage tier
+- [x] Method `findVerified()` finds users with verified emails
+- [x] Method `findUnverified()` finds users without verified emails
+- [x] Exports `export const userModel = new UserModel()`
+- [x] TypeScript compiles without errors
+- [x] Can query: `await userModel.findByEmail('test@example.com')`
+- [x] Comprehensive test suite created (29 tests)
+- [x] All tests passing (29/29 - 100%)
+
+**Status:** ✅ Completed
+
+**Implementation Details:**
+- Created `/src/lib/dal/user.ts` with full User model implementation
+- Exports `User` interface matching all Prisma User fields
+- Exports `UserRole` enum: GUEST, CUSTOMER, ADMIN
+- Exports `UserStorage Tier` enum: FREE_500MB, BASIC_5GB, PRO_50GB, ENTERPRISE_500GB, UNLIMITED
+- Implements all required methods plus additional helper methods
+- Uses TinyBase index for efficient email lookup (with fallback to findMany for tests)
+- Singleton instance exported: `export const userModel = new UserModel()`
+
+**Testing:**
+- Created `/src/lib/dal/__tests__/user.test.ts`
+- 29 comprehensive tests covering:
+  - CRUD operations (create, findById, update, delete)
+  - Email lookup (findByEmail with index)
+  - Role filtering (findByRole)
+  - Storage tier filtering (findByStorageTier)
+  - Email verification status (findVerified, findUnverified)
+  - Helper methods (count, exists)
+  - Edge cases (non-existent users, case-sensitive email, etc.)
+- **All 29 tests passing (100%)**
+
+**Validation:**
+```typescript
+import { userModel, UserRole, StorageTier } from '@/lib/dal/user';
+
+// Create user
+const user = await userModel.create({
+  email: 'alice@example.com',
+  password: 'hashed-password',
+  name: 'Alice',
+  role: UserRole.CUSTOMER,
+  storageTier: StorageTier.FREE_500MB
+});
+
+// Find by email
+const found = await userModel.findByEmail('alice@example.com');
+// found.id === user.id ✓
+
+// Find by role
+const admins = await userModel.findByRole(UserRole.ADMIN);
+// Returns all admin users ✓
+
+// Find by storage tier
+const freeUsers = await userModel.findByStorageTier(StorageTier.FREE_500MB);
+// Returns all free tier users ✓
+```
+
+**Completion Date:** 2025-12-11
 
 ---
 
@@ -1845,7 +1902,7 @@ cp docker-compose.yml docker-compose.old.yml
 
 **Task Groups:**
 - [🔄] A: Foundation & Infrastructure (7/12 tasks completed - 58%)
-- [🔄] B: Data Access Layer (1/8 tasks completed - 13%)
+- [🔄] B: Data Access Layer (2/8 tasks completed - 25%)
 - [ ] C: Server Actions Migration (7 tasks)
 - [ ] D: API Routes Migration (4 tasks)
 - [ ] E: NextAuth.js Integration (3 tasks)
@@ -1858,7 +1915,7 @@ cp docker-compose.yml docker-compose.old.yml
 **Completion Tracking:**
 ```
 A: [7/12] ██████░░░░░░ 58%  ✅ A1, ✅ A2, ✅ A3, ✅ A4, ✅ A5, ✅ A6, 📋 A7, 📋 A8, ✅ A9, 📋 A10, 📋 A11, 📋 A12
-B: [1/8]  ██░░░░░░░░░░ 13%  ✅ B1, ⏳ B2
+B: [2/8]  ███░░░░░░░░░ 25%  ✅ B1, ✅ B2, ⏳ B3
 C: [0/7]  ░░░░░░░░░░░░  0%
 D: [0/4]  ░░░░░░░░░░░░  0%
 E: [0/3]  ░░░░░░░░░░░░  0%
@@ -1866,7 +1923,7 @@ F: [0/7]  ░░░░░░░░░░░░  0%
 G: [0/3]  ░░░░░░░░░░░░  0%
 H: [0/8]  ░░░░░░░░░░░░  0%
 
-Overall: [8/54] ███████░░░░░ 15%
+Overall: [9/54] ████████░░░░ 17%
 
 Legend:
 ✅ Complete
@@ -1889,12 +1946,17 @@ Legend:
   - Extract magic numbers and strings to named constants
   - Improve code maintainability
 
-**Task Group B Started - Data Access Layer (B1 Complete):**
+**Task Group B Progress - Data Access Layer (B1-B2 Complete):**
 - ✅ B1: Base Model Class implemented with comprehensive CRUD operations
 - ✅ B1: 25 unit tests created and passing (100%)
 - ✅ B1: Helper methods added (count, exists)
 - ✅ B1: nanoid mock created for testing
 - ✅ B1: TinyBase store mock enhanced with getTable() and setPartialRow()
+- ✅ B2: User Model implemented with full CRUD + custom queries
+- ✅ B2: 29 unit tests created and passing (100%)
+- ✅ B2: Enums: UserRole, StorageTier
+- ✅ B2: Methods: findByEmail (index), findByRole, findByStorageTier, findVerified, findUnverified
+- ✅ B2: Singleton instance exported
 
 **Implementation Complete (A1-A6):**
 - ✅ A1: TinyBase v7.1.0 installed
@@ -1924,10 +1986,12 @@ Legend:
 
 **Test Results Summary (2025-12-11):**
 - **Total Tests:** 229
-- **Passing:** 165 (72%)
-- **TinyBase Unit Tests:** 29/30 (97%) ✅
+- **Passing:** 194/229 (85%) ⬆️ (was 165/229 - 72%)
+- **TinyBase Unit Tests:** 58/59 (98%) ✅
   - Database wrapper: 20/20 (100%)
   - Persister: 9/10 (90%)
+  - Base Model: 25/25 (100%)
+  - User Model: 29/29 (100%) ⭐ NEW
 - **Service Tests:** 12/12 (100%) ✅
 - **Known Issues:**
   - 1 delete test (mock limitation - not blocker)
@@ -1940,10 +2004,19 @@ Legend:
 - **Overall:** 7/9 tasks complete (78%)
 - **Assessment:** **READY FOR TASK GROUP B** ✅
 
+**Task Group B Status:**
+- **B1:** Base Model Class - COMPLETE ✅ (25 tests, 100% passing)
+- **B2:** User Model - COMPLETE ✅ (29 tests, 100% passing)
+- **B3-B8:** Remaining models - IN PROGRESS ⏳
+- **Overall:** 2/8 tasks complete (25%)
+- **Assessment:** **GOOD PROGRESS** - Next: Organisation Model (B3)
+
 **Next Steps:**
-1. ✅ **PROCEED to Task Group B** (Data Access Layer)
-2. 📋 **Optional:** Complete A8 (dependency fixes) in parallel
-3. 📋 **Optional:** Implement A7 improvements in parallel
+1. ⏳ **IN PROGRESS:** Complete B3 (Organisation Model)
+2. **THEN:** B4 (Team Model), B5 (Project Model), B6 (Resource Model), B7 (Membership Model)
+3. **FINALLY:** B8 (DAL Tests)
+4. 📋 **Optional:** Complete A8 (dependency fixes) in parallel
+5. 📋 **Optional:** Implement A10-A12 quality improvements in parallel
 
 ---
 
