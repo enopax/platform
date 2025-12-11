@@ -61,6 +61,20 @@ npm run dev         # Start development server
 npm run build       # Build for production
 npm run lint        # Run ESLint
 npm test            # Run all tests
+npm run test:watch  # Run tests in watch mode
+npm run test:coverage  # Run tests with coverage report
+```
+
+### Test Organisation (TinyBase Migration)
+```bash
+npm run test:unit           # Run unit tests only (TinyBase, utilities)
+npm run test:integration    # Run integration tests (database integration)
+npm run test:api            # Run API endpoint tests
+npm run test:validation     # Run validation layer tests
+npm run test:actions        # Run server action tests
+npm run test:services       # Run service layer tests
+npm run test:components     # Run React component tests
+npm run test:tinybase       # Run TinyBase-specific tests only
 ```
 
 ---
@@ -93,8 +107,8 @@ npm test            # Run all tests
 
 **🔄 TinyBase Migration (In Progress)**:
 - **Status**: Migrating from PostgreSQL + Prisma to TinyBase with file-based storage
-- **Progress**: 2/48 tasks completed (4%) - Foundation & Infrastructure: 25%
-- **Current**: Custom file persister implemented with atomic writes and JSONL indices
+- **Progress**: 6/54 tasks completed (11%) - Foundation & Infrastructure: 67%
+- **Current**: Test infrastructure enhanced with NPM scripts (Task A6 complete)
 - **See**: `/docs/TINYBASE_MIGRATION_PLAN.md` for detailed migration plan
 - **See**: `/docs/file-store/README.md` for file-store research and decision
 
@@ -544,16 +558,16 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
 
 ### Current Implementation Status
 
-**Migration Progress:** 5/54 tasks (9%)
+**Migration Progress:** 6/54 tasks (11%)
 
-**Task Group A: Foundation & Infrastructure (5/9 tasks - 56%)**
+**Task Group A: Foundation & Infrastructure (6/9 tasks - 67%)**
 - ✅ A1: TinyBase v7.1.0 installed
 - ✅ A2: Custom file persister implemented (`/src/lib/tinybase/persister.ts`)
 - ✅ A3: TinyBase database wrapper implemented (`/src/lib/tinybase/db.ts`)
 - ✅ A4: Persister unit tests created (9/10 passing - 90%)
 - ✅ A5: Delete test limitation documented
-- ⏳ A6: Add test NPM scripts (next task)
-- ⏳ A7: Code quality review and improvements
+- ✅ A6: Test NPM scripts added (test:unit, test:integration, test:api, test:tinybase)
+- ⏳ A7: Code quality review and improvements (next task)
 - ⏳ A8: Install missing dependencies and fix API tests
 - ⏳ A9: Final quality review checkpoint
 
