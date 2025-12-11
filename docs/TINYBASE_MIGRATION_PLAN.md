@@ -807,6 +807,118 @@ function validateConfig(config: FilePerRecordConfig) {
 
 ---
 
+#### A13: Fix Test Cleanup Issues (RECOMMENDED)
+
+**Objective:** Fix async timeout warnings and test cleanup issues in persister tests
+
+**Priority:** MEDIUM - Test quality improvement
+
+**Current Issues (Discovered 2025-12-11):**
+- Async timeout warnings: "Cannot log after tests are done"
+- Console warnings: "No storage config for collection: test"
+- Tests not properly cleaning up async operations
+
+**Root Cause:**
+- Persister auto-save timer continues running after test completion
+- Mock persister doesn't properly stop auto-save
+- Test directories/files not fully cleaned up
+
+**Tasks:**
+
+1. **Fix Persister Test Cleanup:**
+   ```typescript
+   // persister.test.ts
+   afterEach(async () => {
+     // Stop auto-save before cleanup
+     if (persister) {
+       await persister.stopAutoSave();
+     }
+     // Clean up test directory
+     if (existsSync(testDataPath)) {
+       await rm(testDataPath, { recursive: true, force: true });
+     }
+   });
+   ```
+
+2. **Add Cleanup to TinyBase Mock:**
+   ```typescript
+   // tests/__mocks__/tinybase-persisters.ts
+   export const mockPersister = {
+     stopAutoSave: jest.fn(async () => {
+       if (autoSaveTimeout) {
+         clearTimeout(autoSaveTimeout);
+         autoSaveTimeout = null;
+       }
+     }),
+     // ... other methods
+   };
+   ```
+
+3. **Add Collection Config Check:**
+   ```typescript
+   // persister.ts - saveFull()
+   const config = this.config.collections[collectionName];
+   if (!config) {
+     // Skip collections without config instead of warning
+     continue;
+   }
+   ```
+
+**Definition of Done:**
+- [ ] All async timeouts properly cleared
+- [ ] No "Cannot log after tests are done" warnings
+- [ ] No "No storage config" warnings
+- [ ] All test cleanup happens synchronously
+- [ ] Tests remain 98% passing (58/59)
+
+**Estimated Effort:** 1 hour
+
+**Status:** 📋 Pending (Recommended for test quality)
+
+**Completion Date:** Not started
+
+---
+
+#### A14: Add Missing Test Dependencies (QUICK FIX)
+
+**Objective:** Install missing dependencies to fix 4 failing tests
+
+**Priority:** LOW - Easy fixes for test completeness
+
+**Current Failures:**
+- 1 component test: Missing `@testing-library/dom`
+- 3 API tests: Missing `zod`
+
+**Tasks:**
+
+```bash
+# Install missing dependencies
+npm install zod
+npm install -D @testing-library/dom
+```
+
+**Expected Results:**
+- **Before:** 214/278 tests passing (77%)
+- **After:** ~218/278 tests passing (78%)
+  - Component tests: All passing
+  - API tests: All passing
+  - Integration tests: Still 60 failing (expected until migration complete)
+
+**Definition of Done:**
+- [ ] `zod` in dependencies
+- [ ] `@testing-library/dom` in devDependencies
+- [ ] Component test passing
+- [ ] API tests passing (3 tests)
+- [ ] Test count: ~218/278 passing
+
+**Estimated Effort:** 5 minutes
+
+**Status:** 📋 Pending (Quick win)
+
+**Completion Date:** Not started
+
+---
+
 ### Task Group B: Data Access Layer
 
 ---
@@ -1901,7 +2013,7 @@ cp docker-compose.yml docker-compose.old.yml
 ## 📈 Progress Tracking
 
 **Task Groups:**
-- [🔄] A: Foundation & Infrastructure (7/12 tasks completed - 58%)
+- [🔄] A: Foundation & Infrastructure (7/14 tasks completed - 50%)
 - [🔄] B: Data Access Layer (2/8 tasks completed - 25%)
 - [ ] C: Server Actions Migration (7 tasks)
 - [ ] D: API Routes Migration (4 tasks)
@@ -1910,11 +2022,11 @@ cp docker-compose.yml docker-compose.old.yml
 - [ ] G: Data Migration (3 tasks)
 - [ ] H: Cleanup & Deployment (8 tasks)
 
-**Total Tasks:** 48 original + 6 quality tasks = 54 tasks
+**Total Tasks:** 48 original + 8 quality tasks = 56 tasks
 
 **Completion Tracking:**
 ```
-A: [7/12] ██████░░░░░░ 58%  ✅ A1, ✅ A2, ✅ A3, ✅ A4, ✅ A5, ✅ A6, 📋 A7, 📋 A8, ✅ A9, 📋 A10, 📋 A11, 📋 A12
+A: [7/14] ██████░░░░░░░░ 50%  ✅ A1, ✅ A2, ✅ A3, ✅ A4, ✅ A5, ✅ A6, 📋 A7, 📋 A8, ✅ A9, 📋 A10, 📋 A11, 📋 A12, 📋 A13, 📋 A14
 B: [2/8]  ███░░░░░░░░░ 25%  ✅ B1, ✅ B2, ⏳ B3
 C: [0/7]  ░░░░░░░░░░░░  0%
 D: [0/4]  ░░░░░░░░░░░░  0%
@@ -1923,7 +2035,7 @@ F: [0/7]  ░░░░░░░░░░░░  0%
 G: [0/3]  ░░░░░░░░░░░░  0%
 H: [0/8]  ░░░░░░░░░░░░  0%
 
-Overall: [9/54] ████████░░░░ 17%
+Overall: [9/56] ███████░░░░░ 16%
 
 Legend:
 ✅ Complete
@@ -1934,7 +2046,7 @@ Legend:
 
 **Recent Progress (2025-12-11):**
 
-**Quality Improvement Tasks Added (A10-A12):**
+**Quality Improvement Tasks Added (A10-A14):**
 - 📋 A10: Error Handling Improvements - HIGH PRIORITY (2-3 hours effort)
   - Add try/catch to all file I/O operations
   - Create logger utility for debugging
@@ -1945,6 +2057,14 @@ Legend:
 - 📋 A12: Constants Extraction - LOW PRIORITY (30 minutes effort)
   - Extract magic numbers and strings to named constants
   - Improve code maintainability
+- 📋 A13: Fix Test Cleanup Issues - MEDIUM PRIORITY (1 hour effort) ⭐ NEW
+  - Fix async timeout warnings in persister tests
+  - Stop auto-save properly in test cleanup
+  - Remove "No storage config" warnings
+- 📋 A14: Add Missing Test Dependencies - LOW PRIORITY (5 minutes effort) ⭐ NEW
+  - Install `zod` for API tests
+  - Install `@testing-library/dom` for component tests
+  - Quick win: +4 passing tests
 
 **Task Group B Progress - Data Access Layer (B1-B2 Complete):**
 - ✅ B1: Base Model Class implemented with comprehensive CRUD operations
@@ -1984,19 +2104,28 @@ Legend:
   - **Decision:** PROCEED to Task Group B
   - A7/A8 improvements are optional enhancements
 
-**Test Results Summary (2025-12-11):**
-- **Total Tests:** 229
-- **Passing:** 194/229 (85%) ⬆️ (was 165/229 - 72%)
-- **TinyBase Unit Tests:** 58/59 (98%) ✅
+**Test Results Summary (2025-12-11 - UPDATED AFTER FULL TEST RUN):**
+- **Total Tests:** 278 (increased from 229)
+- **Passing:** 214/278 (77%) ✅ IMPROVED from 165/229 (72%)
+- **Failing:** 64/278 (23%)
+
+**TinyBase Unit Tests:** 58/59 (98%) ✅ EXCELLENT
   - Database wrapper: 20/20 (100%)
-  - Persister: 9/10 (90%)
   - Base Model: 25/25 (100%)
-  - User Model: 29/29 (100%) ⭐ NEW
-- **Service Tests:** 12/12 (100%) ✅
-- **Known Issues:**
-  - 1 delete test (mock limitation - not blocker)
-  - 4 dependency tests (easy fix - npm install)
-  - 60 integration tests (expected - for post-migration)
+  - User Model: 29/29 (100%)
+  - Persister: 9/10 (90%) - 1 known mock limitation
+
+**Service Tests:** 12/12 (100%) ✅
+
+**Known Issues (Non-Blocking):**
+  - 1 TinyBase delete test (mock limitation - will fix with real TinyBase)
+  - 1 Component test (missing @testing-library/dom)
+  - 3 API tests (missing zod dependency)
+  - 60 integration tests (EXPECTED - for post-migration verification)
+
+**New Quality Issues Discovered:**
+  - ⚠️ Test cleanup warnings (async timeout warnings in persister tests)
+  - ⚠️ Console warnings about "No storage config for collection: test"
 
 **Task Group A Status:**
 - **Core Tasks (A1-A6):** 6/6 complete (100%) ✅
@@ -2015,8 +2144,9 @@ Legend:
 1. ⏳ **IN PROGRESS:** Complete B3 (Organisation Model)
 2. **THEN:** B4 (Team Model), B5 (Project Model), B6 (Resource Model), B7 (Membership Model)
 3. **FINALLY:** B8 (DAL Tests)
-4. 📋 **Optional:** Complete A8 (dependency fixes) in parallel
-5. 📋 **Optional:** Implement A10-A12 quality improvements in parallel
+4. 📋 **Quick Win:** A14 (Install missing dependencies - 5 min effort)
+5. 📋 **Optional:** A13 (Fix test cleanup issues - 1 hour effort)
+6. 📋 **Optional:** A10-A12 (Quality improvements - 3-6 hours effort)
 
 ---
 
