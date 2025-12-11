@@ -124,22 +124,39 @@ npm install tinybase
 - Batch saves every 2 seconds
 
 **Definition of Done:**
-- [ ] File `/src/lib/tinybase/persister.ts` exists
-- [ ] Exports `createFilePerRecordPersister()` function
-- [ ] Implements `getPersisted()` - loads from files
-- [ ] Implements `setPersisted()` - saves with atomic rename
-- [ ] Implements `updateIndices()` - maintains JSONL indices
-- [ ] Uses atomic write pattern: `writeFile(temp) → rename(temp, final)`
-- [ ] Supports per-collection config: `{indexed: string[], wal: boolean}`
-- [ ] TypeScript compiles without errors
+- [x] File `/src/lib/tinybase/persister.ts` exists
+- [x] Exports `createFilePerRecordPersister()` function
+- [x] Implements `getPersisted()` - loads from files
+- [x] Implements `setPersisted()` - saves with atomic rename
+- [x] Implements `updateIndices()` - maintains JSONL indices
+- [x] Uses atomic write pattern: `writeFile(temp) → rename(temp, final)`
+- [x] Supports per-collection config: `{indexed: string[], wal: boolean}`
+- [x] TypeScript compiles without errors
+
+**Status:** ✅ Completed
+
+**Implementation Details:**
+- Created `/src/lib/tinybase/persister.ts` with full implementation
+- Exports `createFilePerRecordPersister()` with comprehensive configuration
+- Exports `createEnopaxPersister()` helper with pre-configured collections
+- Implements incremental saves (only changed records)
+- Implements full saves (all records on first save)
+- Atomic writes using temp file + rename pattern
+- JSONL indices with atomic updates
+- Per-collection configuration: `{indexed: string[], wal?: boolean, path?: string}`
+- Comprehensive TypeScript types and JSDoc documentation
 
 **Validation:**
 ```typescript
 // Can create and use persister
-const persister = createFilePerRecordPersister(store, '/data', {
-  users: {indexed: ['email'], wal: true}
+const persister = createFilePerRecordPersister(store, {
+  dataPath: '/data',
+  collections: {
+    users: {indexed: ['email'], wal: true}
+  }
 });
-await persister.save();
+await persister.load();
+await persister.startAutoSave();
 // /data/users/<id>.json exists
 // /data/users/indices/email.jsonl exists
 ```
@@ -1209,7 +1226,7 @@ cp docker-compose.yml docker-compose.old.yml
 ## 📈 Progress Tracking
 
 **Task Groups:**
-- [ ] A: Foundation & Infrastructure (8 tasks)
+- [🔄] A: Foundation & Infrastructure (2/8 tasks completed - 25%)
 - [ ] B: Data Access Layer (8 tasks)
 - [ ] C: Server Actions Migration (7 tasks)
 - [ ] D: API Routes Migration (4 tasks)
@@ -1222,7 +1239,7 @@ cp docker-compose.yml docker-compose.old.yml
 
 **Completion Tracking:**
 ```
-A: [0/8]  ░░░░░░░░ 0%
+A: [2/8]  ██░░░░░░ 25%  ✅ A1 (Install TinyBase), ✅ A2 (Custom File Persister)
 B: [0/8]  ░░░░░░░░ 0%
 C: [0/7]  ░░░░░░░  0%
 D: [0/4]  ░░░░     0%
@@ -1231,7 +1248,7 @@ F: [0/7]  ░░░░░░░  0%
 G: [0/3]  ░░░      0%
 H: [0/8]  ░░░░░░░░ 0%
 
-Overall: [0/48] ░░░░░░░░░░ 0%
+Overall: [2/48] ██░░░░░░░░ 4%
 ```
 
 ---
