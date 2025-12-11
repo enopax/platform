@@ -1,5 +1,34 @@
 module.exports = {
   projects: [
+    // Unit tests (Node environment) - Tests in src/**/__tests__
+    {
+      displayName: 'unit',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+        '^tinybase$': '<rootDir>/tests/__mocks__/tinybase.ts',
+        '^tinybase/persisters$': '<rootDir>/tests/__mocks__/tinybase-persisters.ts',
+      },
+      testMatch: [
+        '<rootDir>/src/**/__tests__/**/*.test.ts',
+      ],
+    },
+
+    // Integration tests (Node environment) - Database integration tests
+    {
+      displayName: 'integration',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      setupFilesAfterEnv: ['<rootDir>/tests/integration/setup.ts'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+      },
+      testMatch: [
+        '<rootDir>/tests/integration/**/*.test.ts',
+      ],
+    },
+
     // Validation tests (Node environment)
     {
       displayName: 'validation',
