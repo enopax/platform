@@ -415,24 +415,41 @@ This file serves as the quick reference and starting point. For detailed informa
 
 ### Current Implementation Status
 
-**Migration Progress:** 6/54 tasks (11%)
+**Migration Progress:** 8/51 tasks (16%)
 
-**Task Group A: Foundation & Infrastructure (6/9 tasks - 67%)**
+**Task Group A: Foundation & Infrastructure (7/9 tasks - 78%)**
 - ✅ A1: TinyBase v7.1.0 installed
 - ✅ A2: Custom file persister implemented (`/src/lib/tinybase/persister.ts`)
 - ✅ A3: TinyBase database wrapper implemented (`/src/lib/tinybase/db.ts`)
 - ✅ A4: Persister unit tests created (9/10 passing - 90%)
 - ✅ A5: Delete test limitation documented
 - ✅ A6: Test NPM scripts added (test:unit, test:integration, test:api, test:tinybase)
-- ⏳ A7: Code quality review and improvements (next task)
-- ⏳ A8: Install missing dependencies and fix API tests
-- ⏳ A9: Final quality review checkpoint
+- 📋 A7: Code quality review and improvements (optional)
+- 📋 A8: Install missing dependencies and fix API tests (optional)
+- ✅ A9: Quality checkpoint PASSED - Ready for Task Group B
+
+**Task Group B: Data Access Layer (1/8 tasks - 13%)**
+- ✅ B1: Base Model Class created (`/src/lib/dal/base.ts`)
+  - Abstract CRUD operations for all models
+  - Auto-generates IDs using nanoid
+  - Auto-sets createdAt/updatedAt timestamps
+  - Helper methods: count(), exists()
+  - 25 comprehensive tests (100% passing)
+- ⏳ B2: Implement User Model (next task)
+- ⏳ B3: Implement Organisation Model
+- ⏳ B4: Implement Team Model
+- ⏳ B5: Implement Project Model
+- ⏳ B6: Implement Resource Model
+- ⏳ B7: Implement Membership Model
+- ⏳ B8: Create DAL Tests
 
 **Key Files:**
 - `/src/lib/tinybase/db.ts` - Database wrapper (singleton with relationships & indexes)
 - `/src/lib/tinybase/persister.ts` - Custom file persister with atomic writes
 - `/src/lib/tinybase/__tests__/db.test.ts` - Database wrapper tests (20/20 passing)
-- `/src/lib/tinybase/__tests__/persister.test.ts` - Persister tests (9/10 passing - 90%)
+- `/src/lib/tinybase/__tests__/persister.test.ts` - Persister tests (9/10 passing)
+- `/src/lib/dal/base.ts` - Base Model Class for CRUD operations
+- `/src/lib/dal/__tests__/base.test.ts` - Base Model tests (25/25 passing)
 - `/docs/TINYBASE_MIGRATION_PLAN.md` - Complete migration plan
 - `/docs/MIGRATION_TEST_STRATEGY.md` - Test strategy
 - `/docs/file-store/` - Research and decision documentation
@@ -467,7 +484,49 @@ const teamIds = db.relationships.getLocalRowIds('teamOrganisation', 'org1');
 // Indices in: /data/users/indices/email.jsonl
 ```
 
-**Direct Persister Usage (Advanced):**
+**Base Model Usage (Data Access Layer - Recommended for App Code):**
+```typescript
+import { BaseModel } from '@/lib/dal/base';
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+class UserModel extends BaseModel<User> {
+  protected tableName = 'users';
+
+  async findByEmail(email: string): Promise<User | null> {
+    const users = await this.findMany((u) => u.email === email);
+    return users[0] || null;
+  }
+}
+
+const userModel = new UserModel();
+
+// Create user (auto-generates ID and timestamps)
+const user = await userModel.create({
+  email: 'alice@example.com',
+  name: 'Alice'
+});
+
+// Find by ID
+const found = await userModel.findById(user.id);
+
+// Update user
+const updated = await userModel.update(user.id, { name: 'Alice Updated' });
+
+// Custom finder
+const byEmail = await userModel.findByEmail('alice@example.com');
+
+// Delete user
+await userModel.delete(user.id);
+```
+
+**Direct Persister Usage (Advanced - Low Level):**
 ```typescript
 import { createStore } from 'tinybase/store';
 import { createEnopaxPersister } from '@/lib/tinybase/persister';

@@ -7,6 +7,7 @@ module.exports = {
       testEnvironment: 'node',
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
+        '^nanoid$': '<rootDir>/tests/__mocks__/nanoid.ts',
         '^tinybase$': '<rootDir>/tests/__mocks__/tinybase.ts',
         '^tinybase/store$': '<rootDir>/tests/__mocks__/tinybase-store.ts',
         '^tinybase/indexes$': '<rootDir>/tests/__mocks__/tinybase-indexes.ts',
