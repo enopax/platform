@@ -91,6 +91,13 @@ npm test            # Run all tests
 - Schema changes deploy automatically on container restart
 - Perfect for rapid development and small teams
 
+**🔄 TinyBase Migration (In Progress)**:
+- **Status**: Migrating from PostgreSQL + Prisma to TinyBase with file-based storage
+- **Progress**: 2/48 tasks completed (4%) - Foundation & Infrastructure: 25%
+- **Current**: Custom file persister implemented with atomic writes and JSONL indices
+- **See**: `/docs/TINYBASE_MIGRATION_PLAN.md` for detailed migration plan
+- **See**: `/docs/file-store/README.md` for file-store research and decision
+
 > 📖 **For detailed architecture information, see [ARCHITECTURE.md](./ARCHITECTURE.md)**
 
 ---
@@ -533,14 +540,56 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
 
 ---
 
+## 🔄 TinyBase Migration
+
+### Current Implementation Status
+
+**Migration Progress:** 2/48 tasks (4%)
+
+**Task Group A: Foundation & Infrastructure (25%)**
+- ✅ A1: TinyBase v7.1.0 installed
+- ✅ A2: Custom file persister implemented (`/src/lib/tinybase/persister.ts`)
+- ⏳ A3: TinyBase database wrapper (next task)
+- ⏳ A4-A8: Tests and validation
+
+**Key Files:**
+- `/src/lib/tinybase/persister.ts` - Custom file persister with atomic writes
+- `/docs/TINYBASE_MIGRATION_PLAN.md` - Complete migration plan
+- `/docs/MIGRATION_TEST_STRATEGY.md` - Test strategy
+- `/docs/file-store/` - Research and decision documentation
+
+**Usage Example:**
+```typescript
+import { createStore } from 'tinybase';
+import { createEnopaxPersister } from '@/lib/tinybase/persister';
+
+const store = createStore();
+const persister = createEnopaxPersister(store, '/data');
+
+await persister.load();
+await persister.startAutoSave();
+
+// Use the store
+store.setRow('users', userId, {
+  email: 'alice@example.com',
+  name: 'Alice'
+});
+
+// Changes are automatically saved every 2s with atomic writes
+// Data stored in: /data/users/<userId>.json
+// Indices in: /data/users/indices/email.jsonl
+```
+
+---
+
 *This file serves as a quick reference. For detailed information, consult the respective documentation files.*
 
 > 📋 **For comprehensive web application specifications, see [SPECS.md](./next-app/SPECS.md)**
 > 🎯 **For development best practices and guidelines, see [BEST-PRACTICES.md](./next-app/BEST-PRACTICES.md)**
-- to memorize **ALWAYS** Stop the running processes after you have finished testing (npm run dev)
-- to memorize **ALWAYS** use british english spelling
-- to memorize **NEVER** put client components in /app, unless they are page.tsx files
-- ro memorize if you have problems with the database migration, drop it or migrate forcefully
-- to memorize **ALWAYS** use british english spelling
-- to memorize **NEVER** use dialog components unless it is to alert or to confirm
-- to memorize **IMPORTANT** Github repo is located in the next-app folder
+- to memorise **ALWAYS** Stop the running processes after you have finished testing (npm run dev)
+- to memorise **ALWAYS** use British English spelling
+- to memorise **NEVER** put client components in /app, unless they are page.tsx files
+- to memorise if you have problems with the database migration, drop it or migrate forcefully
+- to memorise **ALWAYS** use British English spelling
+- to memorise **NEVER** use dialogue components unless it is to alert or to confirm
+- to memorise **IMPORTANT** GitHub repo is located in the next-app folder
