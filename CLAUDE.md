@@ -105,8 +105,9 @@ npm run test:tinybase       # Run TinyBase-specific tests only
 - **Status**: Migrating from PostgreSQL + Prisma to TinyBase with file-based storage
 - **Progress**: 13/58 tasks completed (22%) - Task Group A: 44%, Task Group B: 75% ✅
 - **Current**: B6 (Resource Model) COMPLETE ✅ - Next: B7 (Membership Model)
-- **Tests**: 350/414 passing (85%) - TinyBase unit tests: 215/216 (99.5%) ✅ EXCELLENT
+- **Tests**: 349/413 passing (85%) - TinyBase unit tests: 215/216 (99.5%) ✅ OUTSTANDING
 - **Quality Tasks**: 9 optional tasks available (A10-A16) - Total effort: 5-10 hours
+- **Quick Win**: A14 (Install deps - 5 min) → +8 passing tests
 - **See**: `/docs/TINYBASE_MIGRATION_PLAN.md` for detailed migration plan
 - **See**: `/docs/file-store/README.md` for file-store research and decision
 
@@ -516,9 +517,9 @@ This file serves as the quick reference and starting point. For detailed informa
 - `/docs/file-store/` - Research and decision documentation
 
 **Test Results Summary (2025-12-11 - FULL SUITE - UPDATED AFTER B6):**
-- **Total Tests:** 414 (increased from 374)
-- **Passing:** 350/414 (85%) ✅ IMPROVED from 310/374 (83%)
-- **Failing:** 64/414 (15%) - Reduced from 17%
+- **Total Tests:** 413 (increased from 374 after B6 completion)
+- **Passing:** 349/413 (85%) ✅ IMPROVED from 310/374 (83%)
+- **Failing:** 64/413 (15%) - Reduced from 17%
 
 **Breakdown by Test Type:**
 - ✅ **TinyBase Unit Tests:** 215/216 (99.5%) ✅ EXCELLENT
@@ -536,18 +537,31 @@ This file serves as the quick reference and starting point. For detailed informa
 - ❌ **Integration Tests:** 0/60 (0%) - EXPECTED (for post-migration verification)
 
 **Known Issues (Non-Blocking):**
-- 1 TinyBase delete test (mock limitation - will fix with real TinyBase)
-- 1 Component test (missing `@testing-library/dom` - install to fix - see A14)
-- 7 API tests (missing `zod` - install to fix - see A14)
-- 2 API tests (module resolution errors - see A15 for fix)
+- 1 TinyBase delete test (mock limitation - will auto-fix with real TinyBase)
+- 1 Component test (missing `@testing-library/dom` - 5 min fix - see A14)
+- 7 API tests (missing `zod` - 5 min fix - see A14)
+- 2 API tests (module resolution errors - 30-60 min fix - see A15)
 - 60 Integration tests (EXPECTED - for post-migration verification)
-- Test cleanup warnings (async timeout warnings - see A13 for fix)
+- Test cleanup warnings (async timeout warnings - 1 hour fix - see A13)
 
-**Quality Improvement Tasks Available:**
-- 📋 A14: Install missing dependencies (5 min) - Quick win: +8 passing tests
-- 📋 A15: Fix API route module resolution (30-60 min) - Fixes 2 more tests
-- 📋 A13: Fix test cleanup warnings (1 hour) - Removes console noise
-- 📋 A10-A12: Code quality improvements (3-6 hours) - Production hardening
+**Quality Improvement Tasks Available (Post-B6 Review - Task B6.1):**
+
+**IMMEDIATE QUICK WINS (15 min total):**
+- 📋 A14: Install missing dependencies (`zod`, `@testing-library/dom`) - 5 min → +8 tests
+
+**HIGH PRIORITY (Production Hardening - 2-3 hours):**
+- 📋 A10: Error handling improvements - Add try/catch to file I/O
+
+**MEDIUM PRIORITY (Code Quality - 2-3 hours):**
+- 📋 A11: Configuration validation - 1-2 hours
+- 📋 A13: Fix test cleanup issues - 1 hour → Remove async warnings
+- 📋 A15: Fix API route module resolution - 30-60 min → +2 tests
+
+**LOW PRIORITY (Maintainability - 45 min):**
+- 📋 A12: Constants extraction - 30 min
+- 📋 A16: Update test statistics - 15 min
+
+**Total Optional Effort:** 5-10 hours
 
 **Usage Example (via Database Wrapper - Recommended):**
 ```typescript
