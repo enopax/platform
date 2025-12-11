@@ -560,7 +560,7 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
 
 ### Current Implementation Status
 
-**Migration Progress:** 11/58 tasks (19%) - Updated 2025-12-11
+**Migration Progress:** 12/58 tasks (21%) - Updated 2025-12-11
 
 **Task Group A: Foundation & Infrastructure (7/16 tasks - 44%)**
 - ✅ A1: TinyBase v7.1.0 installed
@@ -578,7 +578,7 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
 - 📋 A13: Fix test cleanup issues (optional - 1 hour)
 - 📋 A14: Add missing dependencies (optional - 5 min)
 
-**Task Group B: Data Access Layer (4/8 tasks - 50%)**
+**Task Group B: Data Access Layer (5/8 tasks - 63%) ✅ UPDATED**
 - ✅ B1: Base Model Class created (`/src/lib/dal/base.ts`)
   - Abstract CRUD operations for all models
   - Auto-generates IDs using nanoid
@@ -601,7 +601,7 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
   - Default values: country, subscription tier, limits
   - Singleton instance exported
   - 40 comprehensive tests (100% passing)
-- ✅ B4: Team Model implemented (`/src/lib/dal/team.ts`) ⭐ NEW
+- ✅ B4: Team Model implemented (`/src/lib/dal/team.ts`)
   - Full CRUD + custom queries
   - Enums: TeamType (ADMIN, DEV, GUEST, CUSTOM), TeamVisibility (PUBLIC, PRIVATE, INVITE_ONLY), TeamRole (MEMBER, LEAD, ADMIN)
   - Methods: findByOrganisation, findByNameInOrganisation, findByOwner, findByType, findByVisibility
@@ -611,8 +611,17 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
   - Default values: teamType, visibility, flags, tags
   - Singleton instance exported
   - 48 comprehensive tests (100% passing)
-- ⏳ B5: Implement Project Model (next task)
-- ⏳ B6: Implement Resource Model
+- ✅ B5: Project Model implemented (`/src/lib/dal/project.ts`) ⭐ NEW
+  - Full CRUD + custom queries
+  - Enums: ProjectStatus (PLANNING, ACTIVE, ON_HOLD, COMPLETED, CANCELLED), ProjectPriority (LOW, MEDIUM, HIGH, URGENT)
+  - Methods: findByOrganisation, findByNameInOrganisation, findByStatus, findByPriority, findByOrganisationAndStatus
+  - Special project methods: findActive, findInactive, findDevelopment, findProduction
+  - Relationship methods: getResourceIds, getTeamIds (placeholders)
+  - Helper: isNameAvailable for name uniqueness within organisation
+  - Default values: development, status, priority, currency, progress, isActive
+  - Singleton instance exported
+  - 33 comprehensive tests (100% passing)
+- ⏳ B6: Implement Resource Model (next task)
 - ⏳ B7: Implement Membership Model
 - ⏳ B8: Create DAL Tests
 
@@ -627,24 +636,27 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
 - `/src/lib/dal/__tests__/user.test.ts` - User Model tests (29/29 passing)
 - `/src/lib/dal/organisation.ts` - Organisation Model implementation
 - `/src/lib/dal/__tests__/organisation.test.ts` - Organisation Model tests (40/40 passing)
-- `/src/lib/dal/team.ts` - Team Model implementation ⭐ NEW
-- `/src/lib/dal/__tests__/team.test.ts` - Team Model tests (48/48 passing) ⭐ NEW
+- `/src/lib/dal/team.ts` - Team Model implementation
+- `/src/lib/dal/__tests__/team.test.ts` - Team Model tests (48/48 passing)
+- `/src/lib/dal/project.ts` - Project Model implementation ⭐ NEW
+- `/src/lib/dal/__tests__/project.test.ts` - Project Model tests (33/33 passing) ⭐ NEW
 - `/docs/TINYBASE_MIGRATION_PLAN.md` - Complete migration plan
 - `/docs/MIGRATION_TEST_STRATEGY.md` - Test strategy
 - `/docs/file-store/` - Research and decision documentation
 
-**Test Results Summary (2025-12-11 - FULL SUITE - UPDATED AFTER B4):**
-- **Total Tests:** 341 (increased from 307)
-- **Passing:** 277/341 (81%) ✅ IMPROVED from 243/307 (79%)
-- **Failing:** 64/341 (19%)
+**Test Results Summary (2025-12-11 - FULL SUITE - UPDATED AFTER B5):**
+- **Total Tests:** 374 (increased from 341)
+- **Passing:** 310/374 (83%) ✅ IMPROVED from 277/341 (81%)
+- **Failing:** 64/374 (17%)
 
 **Breakdown by Test Type:**
-- ✅ **TinyBase Unit Tests:** 142/143 (99%) ✅ EXCELLENT
+- ✅ **TinyBase Unit Tests:** 175/176 (99%) ✅ EXCELLENT
   - Database wrapper: 20/20 (100%)
   - Base Model: 25/25 (100%)
   - User Model: 29/29 (100%)
   - Organisation Model: 40/40 (100%)
-  - Team Model: 48/48 (100%) ⭐ NEW
+  - Team Model: 48/48 (100%)
+  - Project Model: 33/33 (100%) ⭐ NEW
   - Persister: 9/10 (90%) - 1 known mock limitation
 - ✅ **Service Tests:** 12/12 (100%)
 - ❌ **Component Tests:** 0/1 (0%) - Missing @testing-library/dom
