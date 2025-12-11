@@ -401,23 +401,51 @@ This file serves as the quick reference and starting point. For detailed informa
 
 ### Current Implementation Status
 
-**Migration Progress:** 2/48 tasks (4%)
+**Migration Progress:** 4/48 tasks (8%)
 
-**Task Group A: Foundation & Infrastructure (25%)**
+**Task Group A: Foundation & Infrastructure (50%)**
 - ✅ A1: TinyBase v7.1.0 installed
 - ✅ A2: Custom file persister implemented (`/src/lib/tinybase/persister.ts`)
-- ⏳ A3: TinyBase database wrapper (next task)
-- ⏳ A4-A8: Tests and validation
+- ✅ A3: TinyBase database wrapper implemented (`/src/lib/tinybase/db.ts`)
+- ✅ A4: Persister unit tests created (9/10 passing)
+- ⏳ A5-A8: Quality improvements and documentation (next tasks)
 
 **Key Files:**
+- `/src/lib/tinybase/db.ts` - Database wrapper (singleton with relationships & indexes)
 - `/src/lib/tinybase/persister.ts` - Custom file persister with atomic writes
+- `/src/lib/tinybase/__tests__/db.test.ts` - Database wrapper tests (20/20 passing)
+- `/src/lib/tinybase/__tests__/persister.test.ts` - Persister tests (9/10 passing)
 - `/docs/TINYBASE_MIGRATION_PLAN.md` - Complete migration plan
 - `/docs/MIGRATION_TEST_STRATEGY.md` - Test strategy
 - `/docs/file-store/` - Research and decision documentation
 
-**Usage Example:**
+**Usage Example (via Database Wrapper - Recommended):**
 ```typescript
-import { createStore } from 'tinybase';
+import { getDB } from '@/lib/tinybase/db';
+
+// Get singleton database instance
+const db = await getDB();
+
+// Use the store
+db.store.setRow('users', userId, {
+  email: 'alice@example.com',
+  name: 'Alice'
+});
+
+// Use indexes for lookups
+const userIds = db.indexes.getSliceRowIds('usersByEmail', 'alice@example.com');
+
+// Use relationships for navigation
+const teamIds = db.relationships.getLocalRowIds('teamOrganisation', 'org1');
+
+// Changes are automatically saved every 2s with atomic writes
+// Data stored in: /data/users/<userId>.json
+// Indices in: /data/users/indices/email.jsonl
+```
+
+**Direct Persister Usage (Advanced):**
+```typescript
+import { createStore } from 'tinybase/store';
 import { createEnopaxPersister } from '@/lib/tinybase/persister';
 
 const store = createStore();
@@ -426,16 +454,24 @@ const persister = createEnopaxPersister(store, '/data');
 await persister.load();
 await persister.startAutoSave();
 
-// Use the store
 store.setRow('users', userId, {
   email: 'alice@example.com',
   name: 'Alice'
 });
-
-// Changes are automatically saved every 2s with atomic writes
-// Data stored in: /data/users/<userId>.json
-// Indices in: /data/users/indices/email.jsonl
 ```
+
+**Database Wrapper Features:**
+- ✅ Singleton pattern (single instance across app)
+- ✅ Pre-configured relationships (foreign keys)
+- ✅ Pre-configured indexes (lookup fields)
+- ✅ Auto-persister with file-per-record storage
+- ✅ Auto-initialization on first access
+
+**Key Files:**
+- `/src/lib/tinybase/db.ts` - Database wrapper (singleton)
+- `/src/lib/tinybase/persister.ts` - Custom file persister
+- `/src/lib/tinybase/__tests__/db.test.ts` - Database wrapper tests (20/20 passing)
+- `/src/lib/tinybase/__tests__/persister.test.ts` - Persister tests (9/10 passing)
 
 ---
 

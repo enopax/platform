@@ -25,7 +25,9 @@
  */
 
 import { createCustomPersister } from 'tinybase/persisters';
-import type { Store, MergeableStore, Persister } from 'tinybase';
+import type { Store } from 'tinybase/store';
+import type { MergeableStore } from 'tinybase/mergeable-store';
+import type { Persister } from 'tinybase/persisters';
 import { readFile, writeFile, rename, readdir, mkdir, unlink, stat } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
