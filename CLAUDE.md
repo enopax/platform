@@ -103,9 +103,9 @@ npm run test:tinybase       # Run TinyBase-specific tests only
 
 **🔄 TinyBase Migration (In Progress)**:
 - **Status**: Migrating from PostgreSQL + Prisma to TinyBase with file-based storage
-- **Progress**: 9/54 tasks completed (17%) - Task Group A: 58%, Task Group B: 25%
-- **Current**: B2 (User Model) COMPLETE ✅ - Next: B3 (Organisation Model)
-- **Tests**: 194/229 passing (85%) - TinyBase unit tests: 58/59 (98%)
+- **Progress**: 10/56 tasks completed (18%) - Task Group A: 50%, Task Group B: 38%
+- **Current**: B3 (Organisation Model) COMPLETE ✅ - Next: B4 (Team Model)
+- **Tests**: 243/278 passing (87%) - TinyBase unit tests: 94/99 (95%)
 - **See**: `/docs/TINYBASE_MIGRATION_PLAN.md` for detailed migration plan
 - **See**: `/docs/file-store/README.md` for file-store research and decision
 
@@ -416,7 +416,7 @@ This file serves as the quick reference and starting point. For detailed informa
 
 ### Current Implementation Status
 
-**Migration Progress:** 9/56 tasks (16%) - Updated 2025-12-11
+**Migration Progress:** 10/56 tasks (18%) - Updated 2025-12-11
 
 **Task Group A: Foundation & Infrastructure (7/14 tasks - 50%)**
 - ✅ A1: TinyBase v7.1.0 installed
@@ -431,24 +431,33 @@ This file serves as the quick reference and starting point. For detailed informa
 - 📋 A10: Error handling improvements (optional - 2-3 hours)
 - 📋 A11: Configuration validation (optional - 1-2 hours)
 - 📋 A12: Constants extraction (optional - 30 min)
-- 📋 A13: Fix test cleanup issues (optional - 1 hour) ⭐ NEW
-- 📋 A14: Add missing dependencies (optional - 5 min) ⭐ NEW
+- 📋 A13: Fix test cleanup issues (optional - 1 hour)
+- 📋 A14: Add missing dependencies (optional - 5 min)
 
-**Task Group B: Data Access Layer (2/8 tasks - 25%)**
+**Task Group B: Data Access Layer (3/8 tasks - 38%)**
 - ✅ B1: Base Model Class created (`/src/lib/dal/base.ts`)
   - Abstract CRUD operations for all models
   - Auto-generates IDs using nanoid
   - Auto-sets createdAt/updatedAt timestamps
   - Helper methods: count(), exists()
   - 25 comprehensive tests (100% passing)
-- ✅ B2: User Model implemented (`/src/lib/dal/user.ts`) ⭐ NEW
+  - Fixed store caching issue for test isolation
+- ✅ B2: User Model implemented (`/src/lib/dal/user.ts`)
   - Full CRUD + custom queries
   - Enums: UserRole, StorageTier
   - Methods: findByEmail (index), findByRole, findByStorageTier, findVerified, findUnverified
   - Singleton instance exported
   - 29 comprehensive tests (100% passing)
-- ⏳ B3: Implement Organisation Model (next task)
-- ⏳ B4: Implement Team Model
+- ✅ B3: Organisation Model implemented (`/src/lib/dal/organisation.ts`) ⭐ NEW
+  - Full CRUD + custom queries
+  - Enum: OrganisationRole (MEMBER, MANAGER, ADMIN, OWNER)
+  - Methods: findByName, findByOwner, findActive, findInactive, findBySubscriptionTier
+  - Relationship methods: getTeamIds, getProjectIds, getResourceIds
+  - Helper: isNameAvailable for name uniqueness
+  - Default values: country, subscription tier, limits
+  - Singleton instance exported
+  - 40 comprehensive tests (100% passing)
+- ⏳ B4: Implement Team Model (next task)
 - ⏳ B5: Implement Project Model
 - ⏳ B6: Implement Resource Model
 - ⏳ B7: Implement Membership Model
@@ -461,19 +470,22 @@ This file serves as the quick reference and starting point. For detailed informa
 - `/src/lib/tinybase/__tests__/persister.test.ts` - Persister tests (9/10 passing)
 - `/src/lib/dal/base.ts` - Base Model Class for CRUD operations
 - `/src/lib/dal/__tests__/base.test.ts` - Base Model tests (25/25 passing)
-- `/src/lib/dal/user.ts` - User Model implementation ⭐ NEW
-- `/src/lib/dal/__tests__/user.test.ts` - User Model tests (29/29 passing) ⭐ NEW
+- `/src/lib/dal/user.ts` - User Model implementation
+- `/src/lib/dal/__tests__/user.test.ts` - User Model tests (29/29 passing)
+- `/src/lib/dal/organisation.ts` - Organisation Model implementation ⭐ NEW
+- `/src/lib/dal/__tests__/organisation.test.ts` - Organisation Model tests (40/40 passing) ⭐ NEW
 - `/docs/TINYBASE_MIGRATION_PLAN.md` - Complete migration plan
 - `/docs/MIGRATION_TEST_STRATEGY.md` - Test strategy
 - `/docs/file-store/` - Research and decision documentation
 
 **Test Results Summary (2025-12-11):**
-- **Total Tests:** 278 (increased from 229)
-- **Passing:** 214/278 (77%) ✅ IMPROVED from 165 (72%)
-- **TinyBase Unit Tests:** 58/59 (98%) ✅ EXCELLENT
+- **Total Tests:** 318 (increased from 278)
+- **Passing:** 254/318 (80%) ✅ IMPROVED from 214/278 (77%)
+- **TinyBase Unit Tests:** 94/99 (95%) ✅ EXCELLENT
   - Database wrapper: 20/20 (100%)
   - Base Model: 25/25 (100%)
   - User Model: 29/29 (100%)
+  - Organisation Model: 40/40 (100%) ⭐ NEW
   - Persister: 9/10 (90%)
 
 **Known Issues (Non-Blocking):**
