@@ -103,9 +103,9 @@ npm run test:tinybase       # Run TinyBase-specific tests only
 
 **🔄 TinyBase Migration (In Progress)**:
 - **Status**: Migrating from PostgreSQL + Prisma to TinyBase with file-based storage
-- **Progress**: 11/58 tasks completed (19%) - Task Group A: 44%, Task Group B: 50% ✅
-- **Current**: B4 (Team Model) COMPLETE ✅ - Next: B5 (Project Model)
-- **Tests**: 277/341 passing (81%) - TinyBase unit tests: 142/143 (99%) ✅ EXCELLENT
+- **Progress**: 13/58 tasks completed (22%) - Task Group A: 44%, Task Group B: 75% ✅
+- **Current**: B6 (Resource Model) COMPLETE ✅ - Next: B7 (Membership Model)
+- **Tests**: 350/414 passing (85%) - TinyBase unit tests: 215/216 (99.5%) ✅ EXCELLENT
 - **Quality Tasks**: 9 optional tasks available (A10-A16) - Total effort: 5-10 hours
 - **See**: `/docs/TINYBASE_MIGRATION_PLAN.md` for detailed migration plan
 - **See**: `/docs/file-store/README.md` for file-store research and decision
@@ -435,7 +435,7 @@ This file serves as the quick reference and starting point. For detailed informa
 - 📋 A13: Fix test cleanup issues (optional - 1 hour)
 - 📋 A14: Add missing dependencies (optional - 5 min)
 
-**Task Group B: Data Access Layer (5/8 tasks - 63%) ✅ UPDATED**
+**Task Group B: Data Access Layer (6/8 tasks - 75%) ✅ UPDATED**
 - ✅ B1: Base Model Class created (`/src/lib/dal/base.ts`)
   - Abstract CRUD operations for all models
   - Auto-generates IDs using nanoid
@@ -468,7 +468,7 @@ This file serves as the quick reference and starting point. For detailed informa
   - Default values: teamType, visibility, flags, tags
   - Singleton instance exported
   - 48 comprehensive tests (100% passing)
-- ✅ B5: Project Model implemented (`/src/lib/dal/project.ts`) ⭐ NEW
+- ✅ B5: Project Model implemented (`/src/lib/dal/project.ts`)
   - Full CRUD + custom queries
   - Enums: ProjectStatus (PLANNING, ACTIVE, ON_HOLD, COMPLETED, CANCELLED), ProjectPriority (LOW, MEDIUM, HIGH, URGENT)
   - Methods: findByOrganisation, findByNameInOrganisation, findByStatus, findByPriority, findByOrganisationAndStatus
@@ -478,8 +478,20 @@ This file serves as the quick reference and starting point. For detailed informa
   - Default values: development, status, priority, currency, progress, isActive
   - Singleton instance exported
   - 33 comprehensive tests (100% passing)
-- ⏳ B6: Implement Resource Model (next task)
-- ⏳ B7: Implement Membership Model
+- ✅ B6: Resource Model implemented (`/src/lib/dal/resource.ts`) ⭐ NEW
+  - Full CRUD + custom queries
+  - Enums: ResourceType (COMPUTE, STORAGE, NETWORK, DATABASE, API, OTHER), ResourceStatus (PROVISIONING, ACTIVE, INACTIVE, MAINTENANCE, DELETED)
+  - Methods: findByOrganisation, findByNameInOrganisation, findByOwner, findByType, findByStatus
+  - Combined filters: findByOrganisationAndStatus, findByOrganisationAndType
+  - Special resource methods: findActive, findInactive, findPublic, findPrivate, findByTag, findProvisioning, findInMaintenance, findDeleted
+  - Relationship methods: getProjectIds (placeholder)
+  - Helper: isNameAvailable for name uniqueness within organisation, getUsagePercentage for quota monitoring
+  - Default values: type, status, currentUsage, isPublic, tags, isActive
+  - BigInt support for quotaLimit and currentUsage
+  - JSON support for configuration and credentials
+  - Singleton instance exported
+  - 40 comprehensive tests (100% passing)
+- ⏳ B7: Implement Membership Model (next task)
 - ⏳ B8: Create DAL Tests
 
 **Key Files:**
@@ -495,25 +507,28 @@ This file serves as the quick reference and starting point. For detailed informa
 - `/src/lib/dal/__tests__/organisation.test.ts` - Organisation Model tests (40/40 passing)
 - `/src/lib/dal/team.ts` - Team Model implementation
 - `/src/lib/dal/__tests__/team.test.ts` - Team Model tests (48/48 passing)
-- `/src/lib/dal/project.ts` - Project Model implementation ⭐ NEW
-- `/src/lib/dal/__tests__/project.test.ts` - Project Model tests (33/33 passing) ⭐ NEW
+- `/src/lib/dal/project.ts` - Project Model implementation
+- `/src/lib/dal/__tests__/project.test.ts` - Project Model tests (33/33 passing)
+- `/src/lib/dal/resource.ts` - Resource Model implementation ⭐ NEW
+- `/src/lib/dal/__tests__/resource.test.ts` - Resource Model tests (40/40 passing) ⭐ NEW
 - `/docs/TINYBASE_MIGRATION_PLAN.md` - Complete migration plan
 - `/docs/MIGRATION_TEST_STRATEGY.md` - Test strategy
 - `/docs/file-store/` - Research and decision documentation
 
-**Test Results Summary (2025-12-11 - FULL SUITE - UPDATED AFTER B5):**
-- **Total Tests:** 374 (increased from 341)
-- **Passing:** 310/374 (83%) ✅ IMPROVED from 277/341 (81%)
-- **Failing:** 64/374 (17%)
+**Test Results Summary (2025-12-11 - FULL SUITE - UPDATED AFTER B6):**
+- **Total Tests:** 414 (increased from 374)
+- **Passing:** 350/414 (85%) ✅ IMPROVED from 310/374 (83%)
+- **Failing:** 64/414 (15%) - Reduced from 17%
 
 **Breakdown by Test Type:**
-- ✅ **TinyBase Unit Tests:** 175/176 (99%) ✅ EXCELLENT
+- ✅ **TinyBase Unit Tests:** 215/216 (99.5%) ✅ EXCELLENT
   - Database wrapper: 20/20 (100%)
   - Base Model: 25/25 (100%)
   - User Model: 29/29 (100%)
   - Organisation Model: 40/40 (100%)
   - Team Model: 48/48 (100%)
-  - Project Model: 33/33 (100%) ⭐ NEW
+  - Project Model: 33/33 (100%)
+  - Resource Model: 40/40 (100%) ⭐ NEW
   - Persister: 9/10 (90%) - 1 known mock limitation
 - ✅ **Service Tests:** 12/12 (100%)
 - ❌ **Component Tests:** 0/1 (0%) - Missing @testing-library/dom
