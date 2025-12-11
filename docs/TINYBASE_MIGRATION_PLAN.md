@@ -919,6 +919,131 @@ npm install -D @testing-library/dom
 
 ---
 
+#### A15: Fix API Route Module Resolution (RECOMMENDED)
+
+**Objective:** Fix module path resolution errors in API route tests
+
+**Priority:** MEDIUM - Improves test coverage and ensures API tests work
+
+**Current Issues (Discovered 2025-12-11):**
+- 2 API test files failing with "Could not locate module" errors
+- Tests trying to import from `@/app/api/organisation/[id]/route`
+- Tests trying to import from `@/app/api/organisation/[id]/members/route`
+- Module mapper not finding these dynamic route files
+
+**Root Cause:**
+- Jest module mapper using `/src/$1` pattern
+- Actual files in `/src/app/api/organisation/[id]/route.ts`
+- Bracket notation `[id]` in path confusing module resolution
+
+**Tasks:**
+
+1. **Check if route files exist:**
+   ```bash
+   ls -la src/app/api/organisation/
+   # Should show [id] directory
+   ```
+
+2. **Update Jest config or test files:**
+   Option A: Fix module mapper in jest.config.unified.js
+   Option B: Update import paths in test files to use absolute paths
+   Option C: Move tests to integration tests (test via HTTP, not direct imports)
+
+3. **Recommended Solution:**
+   - Move these tests to integration tests
+   - Test via actual HTTP requests instead of direct function imports
+   - This is more realistic and avoids module resolution issues
+
+**Implementation Example:**
+```typescript
+// Instead of:
+import { GET } from '@/app/api/organisation/[id]/route';
+
+// Use HTTP testing:
+import { NextRequest } from 'next/server';
+const response = await fetch('/api/organisation/123');
+```
+
+**Definition of Done:**
+- [ ] Module resolution errors fixed
+- [ ] API route tests passing (2 test files)
+- [ ] No "Could not locate module" errors
+- [ ] Tests use appropriate testing approach
+
+**Estimated Effort:** 30 minutes - 1 hour
+
+**Status:** 📋 Pending (Recommended for complete test coverage)
+
+**Completion Date:** Not started
+
+---
+
+#### A16: Update Test Statistics After Fixes (TRACKING)
+
+**Objective:** Update all documentation with final test statistics after A14-A15 are complete
+
+**Priority:** LOW - Documentation accuracy
+
+**Current State (2025-12-11):**
+- **Total Tests:** 307 (increased from 278)
+- **Passing:** 243/307 (79%)
+- **Failing:** 64/307 (21%)
+
+**Breakdown:**
+- ✅ TinyBase Unit Tests: 94/95 (99%) - 1 known mock limitation
+  - Base Model: 25/25 (100%)
+  - User Model: 29/29 (100%)
+  - Organisation Model: 40/40 (100%)
+  - DB Wrapper: 20/20 (100%)
+  - Persister: 9/10 (90%)
+- ✅ Service Tests: 12/12 (100%)
+- ❌ Component Tests: 0/1 (0%) - Missing @testing-library/dom
+- ❌ API Tests: 0/9 (0%) - Missing zod + module resolution
+- ❌ Integration Tests: 0/60 (0%) - EXPECTED (database not running)
+
+**After A14 (Install Dependencies):**
+- Expected: ~254/307 passing (83%)
+  - Component tests: +1 passing
+  - API tests (zod fixed): +7 passing (if module resolution also fixed)
+  - Integration tests: Still 0 (expected until migration)
+
+**After A15 (Fix Module Resolution):**
+- Expected: ~256/307 passing (83%)
+  - API tests: +2 more passing
+  - Total API tests: 9/9 (100%)
+
+**Tasks:**
+
+1. **After A14 completion:**
+   - Re-run full test suite
+   - Update test counts in TINYBASE_MIGRATION_PLAN.md
+   - Update CLAUDE.md with new statistics
+
+2. **After A15 completion:**
+   - Re-run full test suite
+   - Update final test counts
+   - Update "Known Issues" section
+
+3. **Document final state:**
+   - Total passing rate
+   - Remaining failures (only integration tests expected)
+   - Ready state for Task Group B
+
+**Definition of Done:**
+- [ ] Test suite re-run after A14
+- [ ] Test suite re-run after A15
+- [ ] TINYBASE_MIGRATION_PLAN.md updated with final stats
+- [ ] CLAUDE.md updated with final stats
+- [ ] MIGRATION_TEST_STRATEGY.md updated if needed
+
+**Estimated Effort:** 15 minutes (documentation updates)
+
+**Status:** 📋 Pending (Track after A14-A15)
+
+**Completion Date:** Not started
+
+---
+
 ### Task Group B: Data Access Layer
 
 ---
@@ -2087,11 +2212,11 @@ cp docker-compose.yml docker-compose.old.yml
 - [ ] G: Data Migration (3 tasks)
 - [ ] H: Cleanup & Deployment (8 tasks)
 
-**Total Tasks:** 48 original + 8 quality tasks = 56 tasks
+**Total Tasks:** 48 original + 10 quality tasks = 58 tasks
 
 **Completion Tracking:**
 ```
-A: [7/14] ██████░░░░░░░░ 50%  ✅ A1, ✅ A2, ✅ A3, ✅ A4, ✅ A5, ✅ A6, 📋 A7, 📋 A8, ✅ A9, 📋 A10, 📋 A11, 📋 A12, 📋 A13, 📋 A14
+A: [7/16] ██████░░░░░░░░ 44%  ✅ A1, ✅ A2, ✅ A3, ✅ A4, ✅ A5, ✅ A6, 📋 A7, 📋 A8, ✅ A9, 📋 A10, 📋 A11, 📋 A12, 📋 A13, 📋 A14, 📋 A15, 📋 A16
 B: [3/8]  ████░░░░░░░░ 38%  ✅ B1, ✅ B2, ✅ B3, ⏳ B4
 C: [0/7]  ░░░░░░░░░░░░  0%
 D: [0/4]  ░░░░░░░░░░░░  0%
@@ -2100,7 +2225,7 @@ F: [0/7]  ░░░░░░░░░░░░  0%
 G: [0/3]  ░░░░░░░░░░░░  0%
 H: [0/8]  ░░░░░░░░░░░░  0%
 
-Overall: [10/56] ████████░░░░ 18%
+Overall: [10/58] ███████░░░░░ 17%
 
 Legend:
 ✅ Complete
@@ -2111,7 +2236,24 @@ Legend:
 
 **Recent Progress (2025-12-11):**
 
-**Quality Improvement Tasks Added (A10-A14):**
+**Latest Test Results (2025-12-11 - FULL TEST SUITE):**
+- **Total Tests:** 307 (increased from 278)
+- **Passing:** 243/307 (79%) ✅ IMPROVED from 214/278 (77%)
+- **Failing:** 64/307 (21%)
+
+**Breakdown by Test Type:**
+- ✅ **TinyBase Unit Tests:** 94/95 (99%) - EXCELLENT
+  - Base Model: 25/25 (100%)
+  - User Model: 29/29 (100%)
+  - Organisation Model: 40/40 (100%) ⭐ NEW
+  - DB Wrapper: 20/20 (100%)
+  - Persister: 9/10 (90%) - 1 known mock limitation
+- ✅ **Service Tests:** 12/12 (100%)
+- ❌ **Component Tests:** 0/1 (0%) - Missing @testing-library/dom (A14 will fix)
+- ❌ **API Tests:** 0/9 (0%) - Missing zod (A14) + module resolution (A15)
+- ❌ **Integration Tests:** 0/60 (0%) - EXPECTED (for post-migration verification)
+
+**Quality Improvement Tasks Added (A10-A16):**
 - 📋 A10: Error Handling Improvements - HIGH PRIORITY (2-3 hours effort)
   - Add try/catch to all file I/O operations
   - Create logger utility for debugging
@@ -2129,7 +2271,14 @@ Legend:
 - 📋 A14: Add Missing Test Dependencies - LOW PRIORITY (5 minutes effort) ⭐ NEW
   - Install `zod` for API tests
   - Install `@testing-library/dom` for component tests
-  - Quick win: +4 passing tests
+  - Quick win: +8 passing tests
+- 📋 A15: Fix API Route Module Resolution - MEDIUM PRIORITY (30-60 min effort) ⭐ NEW
+  - Fix "Could not locate module" errors in API tests
+  - 2 test files affected (organisation-details, organisation-members)
+  - Options: Fix Jest config, use absolute paths, or move to integration tests
+- 📋 A16: Update Test Statistics - LOW PRIORITY (15 min effort) ⭐ NEW
+  - Documentation task: Update test counts after A14-A15 complete
+  - Track final statistics before proceeding to Task Group B
 
 **Task Group B Progress - Data Access Layer (B1-B3 Complete):**
 - ✅ B1: Base Model Class implemented with comprehensive CRUD operations

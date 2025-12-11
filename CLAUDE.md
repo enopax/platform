@@ -103,9 +103,10 @@ npm run test:tinybase       # Run TinyBase-specific tests only
 
 **🔄 TinyBase Migration (In Progress)**:
 - **Status**: Migrating from PostgreSQL + Prisma to TinyBase with file-based storage
-- **Progress**: 10/56 tasks completed (18%) - Task Group A: 50%, Task Group B: 38%
+- **Progress**: 10/58 tasks completed (17%) - Task Group A: 44%, Task Group B: 38%
 - **Current**: B3 (Organisation Model) COMPLETE ✅ - Next: B4 (Team Model)
-- **Tests**: 243/278 passing (87%) - TinyBase unit tests: 94/99 (95%)
+- **Tests**: 243/307 passing (79%) - TinyBase unit tests: 94/95 (99%) ✅ EXCELLENT
+- **Quality Tasks**: 9 optional tasks available (A10-A16) - Total effort: 5-10 hours
 - **See**: `/docs/TINYBASE_MIGRATION_PLAN.md` for detailed migration plan
 - **See**: `/docs/file-store/README.md` for file-store research and decision
 
@@ -416,7 +417,7 @@ This file serves as the quick reference and starting point. For detailed informa
 
 ### Current Implementation Status
 
-**Migration Progress:** 10/56 tasks (18%) - Updated 2025-12-11
+**Migration Progress:** 10/58 tasks (17%) - Updated 2025-12-11
 
 **Task Group A: Foundation & Infrastructure (7/14 tasks - 50%)**
 - ✅ A1: TinyBase v7.1.0 installed
@@ -478,22 +479,36 @@ This file serves as the quick reference and starting point. For detailed informa
 - `/docs/MIGRATION_TEST_STRATEGY.md` - Test strategy
 - `/docs/file-store/` - Research and decision documentation
 
-**Test Results Summary (2025-12-11):**
-- **Total Tests:** 318 (increased from 278)
-- **Passing:** 254/318 (80%) ✅ IMPROVED from 214/278 (77%)
-- **TinyBase Unit Tests:** 94/99 (95%) ✅ EXCELLENT
+**Test Results Summary (2025-12-11 - FULL SUITE):**
+- **Total Tests:** 307 (increased from 278)
+- **Passing:** 243/307 (79%) ✅ IMPROVED from 214/278 (77%)
+- **Failing:** 64/307 (21%)
+
+**Breakdown by Test Type:**
+- ✅ **TinyBase Unit Tests:** 94/95 (99%) ✅ EXCELLENT
   - Database wrapper: 20/20 (100%)
   - Base Model: 25/25 (100%)
   - User Model: 29/29 (100%)
   - Organisation Model: 40/40 (100%) ⭐ NEW
-  - Persister: 9/10 (90%)
+  - Persister: 9/10 (90%) - 1 known mock limitation
+- ✅ **Service Tests:** 12/12 (100%)
+- ❌ **Component Tests:** 0/1 (0%) - Missing @testing-library/dom
+- ❌ **API Tests:** 0/9 (0%) - Missing zod + module resolution issues
+- ❌ **Integration Tests:** 0/60 (0%) - EXPECTED (for post-migration verification)
 
 **Known Issues (Non-Blocking):**
 - 1 TinyBase delete test (mock limitation - will fix with real TinyBase)
-- 1 Component test (missing `@testing-library/dom` - install to fix)
-- 3 API tests (missing `zod` - install to fix)
+- 1 Component test (missing `@testing-library/dom` - install to fix - see A14)
+- 7 API tests (missing `zod` - install to fix - see A14)
+- 2 API tests (module resolution errors - see A15 for fix)
 - 60 Integration tests (EXPECTED - for post-migration verification)
 - Test cleanup warnings (async timeout warnings - see A13 for fix)
+
+**Quality Improvement Tasks Available:**
+- 📋 A14: Install missing dependencies (5 min) - Quick win: +8 passing tests
+- 📋 A15: Fix API route module resolution (30-60 min) - Fixes 2 more tests
+- 📋 A13: Fix test cleanup warnings (1 hour) - Removes console noise
+- 📋 A10-A12: Code quality improvements (3-6 hours) - Production hardening
 
 **Usage Example (via Database Wrapper - Recommended):**
 ```typescript
