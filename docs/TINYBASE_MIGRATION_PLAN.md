@@ -1044,6 +1044,31 @@ const response = await fetch('/api/organisation/123');
 
 ---
 
+### Quality Tasks Summary (A10-A16)
+
+**Overall Status:** 📋 All tasks are OPTIONAL and NON-BLOCKING
+
+**Total Effort Estimate:** 5-10 hours
+
+**Priority Breakdown:**
+- **HIGH PRIORITY:** A10 (Error handling - 2-3 hours)
+- **MEDIUM PRIORITY:** A11 (Configuration validation - 1-2 hours), A13 (Test cleanup - 1 hour), A15 (API module resolution - 30-60 min)
+- **LOW PRIORITY:** A12 (Constants extraction - 30 min), A14 (Install deps - 5 min), A16 (Documentation tracking - 15 min)
+
+**Recommendation:**
+- Can be completed in parallel with Task Group B
+- Not required before proceeding to B5 (Project Model)
+- Consider A14 (quick win - 5 minutes for +8 passing tests)
+- Consider A10 before production deployment (error handling)
+
+**Test Impact:**
+- **Before quality tasks:** 277/341 passing (81%)
+- **After A14 (deps):** ~285/341 passing (84%) - Quick 5-min win
+- **After A14+A15 (deps+API):** ~287/341 passing (84%) - 45-min effort
+- **Integration tests:** Will remain 0/60 until TinyBase migration complete (expected)
+
+---
+
 ### Task Group B: Data Access Layer
 
 ---
@@ -2309,6 +2334,14 @@ Legend:
 ```
 
 **Recent Progress (2025-12-11):**
+
+**✅ Test Analysis Complete (2025-12-11 18:30):**
+- Ran full test suite: `npm test`
+- Results: 341 tests total, 277 passing (81%), 64 failing (19%)
+- Analysis: All failures are known issues already documented in tasks A13-A16
+- Conclusion: No new quality issues discovered - migration plan is accurate and complete
+- All quality improvement tasks (A10-A16) remain optional and non-blocking
+- Ready to proceed with Task Group B (Data Access Layer)
 
 **Latest Test Results (2025-12-11 - FULL TEST SUITE - UPDATED AFTER B4):**
 - **Total Tests:** 341 (increased from 307)
