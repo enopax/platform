@@ -8,6 +8,10 @@ module.exports = {
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
         '^tinybase$': '<rootDir>/tests/__mocks__/tinybase.ts',
+        '^tinybase/store$': '<rootDir>/tests/__mocks__/tinybase-store.ts',
+        '^tinybase/indexes$': '<rootDir>/tests/__mocks__/tinybase-indexes.ts',
+        '^tinybase/relationships$': '<rootDir>/tests/__mocks__/tinybase-relationships.ts',
+        '^tinybase/mergeable-store$': '<rootDir>/tests/__mocks__/tinybase-mergeable-store.ts',
         '^tinybase/persisters$': '<rootDir>/tests/__mocks__/tinybase-persisters.ts',
       },
       testMatch: [

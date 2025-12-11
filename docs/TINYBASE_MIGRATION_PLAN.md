@@ -178,22 +178,53 @@ await persister.startAutoSave();
 - Index definitions (e.g., users by email)
 
 **Definition of Done:**
-- [ ] File `/src/lib/tinybase/db.ts` exists
-- [ ] Exports `getDB()` async function
-- [ ] Returns object with `{store, indexes, relationships, persister}`
-- [ ] Relationships configured for all foreign keys
-- [ ] Indexes configured for all lookup fields
-- [ ] Persister auto-starts on init
-- [ ] Can call `const db = await getDB()` from any file
-- [ ] Singleton: multiple calls return same instance
-- [ ] TypeScript compiles without errors
+- [x] File `/src/lib/tinybase/db.ts` exists
+- [x] Exports `getDB()` async function
+- [x] Returns object with `{store, indexes, relationships, persister}`
+- [x] Relationships configured for all foreign keys
+- [x] Indexes configured for all lookup fields
+- [x] Persister auto-starts on init
+- [x] Can call `const db = await getDB()` from any file
+- [x] Singleton: multiple calls return same instance
+- [x] TypeScript compiles without errors
+
+**Status:** ✅ Completed
+
+**Implementation Details:**
+- Created `/src/lib/tinybase/db.ts` with full singleton implementation
+- Exports `getDB(dataPath?)` async function
+- Exports `resetDB()` for testing
+- Database interface includes: `{store, indexes, relationships, persister}`
+- Configured 40+ indexes for all lookup fields (email, slug, organisationId, etc.)
+- Configured 15+ relationships for all foreign keys (team→org, project→org, resource→project, etc.)
+- Auto-initialization with persister loading and auto-save
+- Comprehensive TypeScript types and JSDoc documentation
+
+**Testing:**
+- Created `/src/lib/tinybase/__tests__/db.test.ts`
+- 20 tests covering:
+  - Singleton pattern (2 tests)
+  - Store operations (2 tests)
+  - Index lookups (5 tests)
+  - Relationship navigation (6 tests)
+  - Data persistence (3 tests)
+  - Complex queries (2 tests)
+- **All 20 tests passing (100%)**
 
 **Validation:**
 ```typescript
 const db = await getDB();
 db.store.setRow('users', 'id1', {email: 'test@example.com'});
 const user = db.store.getRow('users', 'id1');
-// user.email === 'test@example.com'
+// user.email === 'test@example.com' ✓
+
+// Index lookup
+const userIds = db.indexes.getSliceRowIds('usersByEmail', 'test@example.com');
+// userIds === ['id1'] ✓
+
+// Relationship navigation
+const teamIds = db.relationships.getLocalRowIds('teamOrganisation', 'org1');
+// Returns all team IDs for org1 ✓
 ```
 
 ---
@@ -314,7 +345,7 @@ const user = db.store.getRow('users', 'id1');
 **Checklist:**
 - [x] A1: TinyBase installed (v7.1.0)
 - [x] A2: Custom file persister implemented
-- [ ] A3: TinyBase database wrapper created
+- [x] A3: TinyBase database wrapper created (20/20 tests passing)
 - [x] A4: Persister tests created (9/10 passing)
 - [ ] A5: Existing tests fixed
 - [ ] A6: Test scripts added
@@ -322,12 +353,14 @@ const user = db.store.getRow('users', 'id1');
 
 **Acceptance Criteria:**
 - [ ] All Task Group A tasks completed
-- [ ] Persister tests ≥90% passing
+- [x] Persister tests ≥90% passing (90%)
+- [x] Database wrapper tests 100% passing (20/20)
+- [x] TinyBase mocks created for all modules
 - [ ] Integration test infrastructure ready
-- [ ] Documentation up-to-date
+- [x] Documentation updated (CLAUDE.md)
 - [ ] Ready to proceed to Task Group B
 
-**Status:** 🔄 In Progress (3/8 tasks complete)
+**Status:** 🔄 In Progress (4/8 tasks complete - 50%)
 
 ---
 
@@ -1334,7 +1367,7 @@ cp docker-compose.yml docker-compose.old.yml
 ## 📈 Progress Tracking
 
 **Task Groups:**
-- [🔄] A: Foundation & Infrastructure (3/8 tasks completed - 38%)
+- [🔄] A: Foundation & Infrastructure (4/8 tasks completed - 50%)
 - [ ] B: Data Access Layer (8 tasks)
 - [ ] C: Server Actions Migration (7 tasks)
 - [ ] D: API Routes Migration (4 tasks)
@@ -1347,7 +1380,7 @@ cp docker-compose.yml docker-compose.old.yml
 
 **Completion Tracking:**
 ```
-A: [3/8]  ███░░░░░ 38%  ✅ A1, ✅ A2, ✅ A4 (9/10 tests passing)
+A: [4/8]  ████░░░░ 50%  ✅ A1, ✅ A2, ✅ A3, ✅ A4
 B: [0/8]  ░░░░░░░░ 0%
 C: [0/7]  ░░░░░░░  0%
 D: [0/4]  ░░░░     0%
@@ -1356,14 +1389,17 @@ F: [0/7]  ░░░░░░░  0%
 G: [0/3]  ░░░      0%
 H: [0/8]  ░░░░░░░░ 0%
 
-Overall: [3/56] ██░░░░░░░░ 5%
+Overall: [4/56] ███░░░░░░░ 7%
 ```
 
 **Recent Progress (2025-12-11):**
+- ✅ A3: TinyBase database wrapper created with singleton pattern
+- ✅ A3: Configured 40+ indexes for efficient lookups
+- ✅ A3: Configured 15+ relationships for foreign key navigation
+- ✅ A3: Database wrapper tests created (20/20 passing)
 - ✅ A4: Persister unit tests created (9/10 passing)
-- ✅ Jest config updated for unit and integration tests
-- ✅ TinyBase mocks created for testing
-- 🔄 A5-A8: Quality improvement tasks added
+- ✅ TinyBase mocks created for all modules (store, indexes, relationships, persisters)
+- 🔄 A5-A8: Quality improvement tasks remaining
 
 ---
 
