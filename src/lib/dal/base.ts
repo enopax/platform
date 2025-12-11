@@ -38,16 +38,11 @@ export abstract class BaseModel<T extends { id: string; createdAt?: Date; update
 
   /**
    * Get the TinyBase store instance.
-   * Cached for performance.
+   * Always fetches fresh instance to ensure proper reset between tests.
    */
-  private storeCache?: Store;
-
   protected async getStore(): Promise<Store> {
-    if (!this.storeCache) {
-      const db = await getDB();
-      this.storeCache = db.store;
-    }
-    return this.storeCache;
+    const db = await getDB();
+    return db.store;
   }
 
   /**

@@ -18,3 +18,11 @@ export const customAlphabet = (alphabet: string, size: number) => {
     return `custom-${idCounter.toString().padStart(size, '0')}`;
   };
 };
+
+/**
+ * Reset the ID counter (for testing)
+ * This function is exported for test setup/teardown
+ */
+export const resetNanoid = (): void => {
+  idCounter = 0;
+};
