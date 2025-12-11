@@ -107,9 +107,9 @@ npm run test:tinybase       # Run TinyBase-specific tests only
 
 **🔄 TinyBase Migration (In Progress)**:
 - **Status**: Migrating from PostgreSQL + Prisma to TinyBase with file-based storage
-- **Progress**: 10/58 tasks completed (17%) - Task Group A: 44%, Task Group B: 38%
-- **Current**: B3 (Organisation Model) COMPLETE ✅ - Next: B4 (Team Model)
-- **Tests**: 243/307 passing (79%) - TinyBase unit tests: 94/95 (99%) ✅ EXCELLENT
+- **Progress**: 11/58 tasks completed (19%) - Task Group A: 44%, Task Group B: 50% ✅
+- **Current**: B4 (Team Model) COMPLETE ✅ - Next: B5 (Project Model)
+- **Tests**: 277/341 passing (81%) - TinyBase unit tests: 142/143 (99%) ✅ EXCELLENT
 - **Quality Tasks**: 9 optional tasks available (A10-A16) - Total effort: 5-10 hours
 - **See**: `/docs/TINYBASE_MIGRATION_PLAN.md` for detailed migration plan
 - **See**: `/docs/file-store/README.md` for file-store research and decision
@@ -560,9 +560,9 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
 
 ### Current Implementation Status
 
-**Migration Progress:** 10/58 tasks (17%) - Updated 2025-12-11
+**Migration Progress:** 11/58 tasks (19%) - Updated 2025-12-11
 
-**Task Group A: Foundation & Infrastructure (7/14 tasks - 50%)**
+**Task Group A: Foundation & Infrastructure (7/16 tasks - 44%)**
 - ✅ A1: TinyBase v7.1.0 installed
 - ✅ A2: Custom file persister implemented (`/src/lib/tinybase/persister.ts`)
 - ✅ A3: TinyBase database wrapper implemented (`/src/lib/tinybase/db.ts`)
@@ -578,7 +578,7 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
 - 📋 A13: Fix test cleanup issues (optional - 1 hour)
 - 📋 A14: Add missing dependencies (optional - 5 min)
 
-**Task Group B: Data Access Layer (3/8 tasks - 38%)**
+**Task Group B: Data Access Layer (4/8 tasks - 50%)**
 - ✅ B1: Base Model Class created (`/src/lib/dal/base.ts`)
   - Abstract CRUD operations for all models
   - Auto-generates IDs using nanoid
@@ -592,7 +592,7 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
   - Methods: findByEmail (index), findByRole, findByStorageTier, findVerified, findUnverified
   - Singleton instance exported
   - 29 comprehensive tests (100% passing)
-- ✅ B3: Organisation Model implemented (`/src/lib/dal/organisation.ts`) ⭐ NEW
+- ✅ B3: Organisation Model implemented (`/src/lib/dal/organisation.ts`)
   - Full CRUD + custom queries
   - Enum: OrganisationRole (MEMBER, MANAGER, ADMIN, OWNER)
   - Methods: findByName, findByOwner, findActive, findInactive, findBySubscriptionTier
@@ -601,8 +601,17 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
   - Default values: country, subscription tier, limits
   - Singleton instance exported
   - 40 comprehensive tests (100% passing)
-- ⏳ B4: Implement Team Model (next task)
-- ⏳ B5: Implement Project Model
+- ✅ B4: Team Model implemented (`/src/lib/dal/team.ts`) ⭐ NEW
+  - Full CRUD + custom queries
+  - Enums: TeamType (ADMIN, DEV, GUEST, CUSTOM), TeamVisibility (PUBLIC, PRIVATE, INVITE_ONLY), TeamRole (MEMBER, LEAD, ADMIN)
+  - Methods: findByOrganisation, findByNameInOrganisation, findByOwner, findByType, findByVisibility
+  - Special team methods: findActive, findInactive, findPersonal, findDefault, findDeletable
+  - Relationship methods: getMemberIds, getProjectIds (placeholders)
+  - Helper: isNameAvailable for name uniqueness within organisation
+  - Default values: teamType, visibility, flags, tags
+  - Singleton instance exported
+  - 48 comprehensive tests (100% passing)
+- ⏳ B5: Implement Project Model (next task)
 - ⏳ B6: Implement Resource Model
 - ⏳ B7: Implement Membership Model
 - ⏳ B8: Create DAL Tests
@@ -616,23 +625,26 @@ Integrate AWS, DigitalOcean, or Hetzner APIs for cloud deployment.
 - `/src/lib/dal/__tests__/base.test.ts` - Base Model tests (25/25 passing)
 - `/src/lib/dal/user.ts` - User Model implementation
 - `/src/lib/dal/__tests__/user.test.ts` - User Model tests (29/29 passing)
-- `/src/lib/dal/organisation.ts` - Organisation Model implementation ⭐ NEW
-- `/src/lib/dal/__tests__/organisation.test.ts` - Organisation Model tests (40/40 passing) ⭐ NEW
+- `/src/lib/dal/organisation.ts` - Organisation Model implementation
+- `/src/lib/dal/__tests__/organisation.test.ts` - Organisation Model tests (40/40 passing)
+- `/src/lib/dal/team.ts` - Team Model implementation ⭐ NEW
+- `/src/lib/dal/__tests__/team.test.ts` - Team Model tests (48/48 passing) ⭐ NEW
 - `/docs/TINYBASE_MIGRATION_PLAN.md` - Complete migration plan
 - `/docs/MIGRATION_TEST_STRATEGY.md` - Test strategy
 - `/docs/file-store/` - Research and decision documentation
 
-**Test Results Summary (2025-12-11 - FULL SUITE):**
-- **Total Tests:** 307 (increased from 278)
-- **Passing:** 243/307 (79%) ✅ IMPROVED from 214/278 (77%)
-- **Failing:** 64/307 (21%)
+**Test Results Summary (2025-12-11 - FULL SUITE - UPDATED AFTER B4):**
+- **Total Tests:** 341 (increased from 307)
+- **Passing:** 277/341 (81%) ✅ IMPROVED from 243/307 (79%)
+- **Failing:** 64/341 (19%)
 
 **Breakdown by Test Type:**
-- ✅ **TinyBase Unit Tests:** 94/95 (99%) ✅ EXCELLENT
+- ✅ **TinyBase Unit Tests:** 142/143 (99%) ✅ EXCELLENT
   - Database wrapper: 20/20 (100%)
   - Base Model: 25/25 (100%)
   - User Model: 29/29 (100%)
-  - Organisation Model: 40/40 (100%) ⭐ NEW
+  - Organisation Model: 40/40 (100%)
+  - Team Model: 48/48 (100%) ⭐ NEW
   - Persister: 9/10 (90%) - 1 known mock limitation
 - ✅ **Service Tests:** 12/12 (100%)
 - ❌ **Component Tests:** 0/1 (0%) - Missing @testing-library/dom
