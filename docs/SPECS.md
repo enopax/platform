@@ -1,20 +1,21 @@
 # Web Application Specifications
 
-**IPFS Storage Cluster Web Interface - Technical Specifications**
+**Infrastructure Deployment Platform - Technical Specifications**
 
-This document provides comprehensive technical specifications for the Next.js web application that interfaces with the IPFS distributed storage cluster.
+This document provides comprehensive technical specifications for the Next.js web application that manages organisations, projects, and deploys infrastructure resources.
 
 ---
 
 ## 📋 System Overview
 
 ### Application Type
-**Next.js 15 + TypeScript Web Application** providing a modern interface for IPFS distributed storage management with comprehensive user management, team collaboration, and file operations.
+**Next.js 15 + TypeScript Web Application** providing a comprehensive platform for managing organisations, projects, and deploying infrastructure resources (IPFS clusters, PostgreSQL databases, etc.) with role-based access control and team collaboration.
 
 ### Core Purpose
-- **Primary**: Web interface for IPFS storage cluster operations
-- **Secondary**: User and team management for collaborative file storage
-- **Tertiary**: Analytics and monitoring dashboard for storage usage
+- **Primary**: Infrastructure resource deployment and management platform
+- **Secondary**: Organisation and project structure with hierarchical access control
+- **Tertiary**: Real-time resource deployment tracking and monitoring
+- **Quaternary**: Integration with external Resource API for production provisioning
 
 ---
 
@@ -41,17 +42,19 @@ This document provides comprehensive technical specifications for the Next.js we
 
 ### 1. User Management System
 
-#### User Roles
-- **GUEST**: Limited read-only access
-- **CUSTOMER**: Full application access (default for new users)
-- **ADMIN**: Administrative access to all resources
+#### Organisation Roles
+- **MEMBER**: Basic access to organisation resources and projects
+- **MANAGER**: Can invite members, create projects, and manage teams
+- **ADMIN**: Full administrative access except organisation deletion
+- **OWNER**: Full control including organisation deletion and billing
 
 #### Authentication Features
 - NextAuth.js v5 integration
 - Multiple provider support
 - Session-based authentication
-- Role-based access control
+- Role-based access control (organisation-scoped)
 - Secure cookie handling
+- Single role per organisation per user
 
 ### 2. Organisation Management
 
@@ -83,40 +86,37 @@ model Organisation {
 
 #### Team Features
 - Create and manage teams within organisations
-- Team leader assignments
-- Member invitation system
-- Role-based permissions
-- Team-specific storage quotas
+- Team member assignments
+- Team-based collaboration for projects
+- Flexible team composition
 
-#### API Endpoints
-```
-POST   /api/team/create           # Create new team
-GET    /api/team/list             # List teams
-GET    /api/team/[id]             # Get team details
-PUT    /api/team/[id]             # Update team
-DELETE /api/team/[id]             # Soft delete team
-GET    /api/team/[id]/members     # List team members
-POST   /api/team/[id]/members     # Add team member
-DELETE /api/team/[id]/members     # Remove team member
-```
+**Note**: Teams are simplified in the current design. All organisation members can access all projects regardless of team assignment.
 
 ### 4. Project Management System
 
 #### Project Features
-- Create and manage projects
-- Assign projects to teams
-- Project-specific file management
-- Storage allocation per project
-- Project documentation and repository links
+- Create and manage projects within organisations
+- Project-level resource allocation
+- Resource grouping by project
+- Project-level settings and configuration
+- Team assignment to projects (for collaboration)
 
-#### API Endpoints
-```
-POST   /api/project/create        # Create new project
-GET    /api/project/list          # List projects
-GET    /api/project/[id]          # Get project details
-PUT    /api/project/[id]          # Update project
-DELETE /api/project/[id]          # Soft delete project
-GET    /api/project/[id]/files    # List project files
+**Routing**: Projects use name-based URLs: `/orga/[orgName]/[projectName]`
+
+#### Project Data Model
+```prisma
+model Project {
+  id              String    @id @default(cuid())
+  name            String    // URL-safe name, unique per organisation
+  description     String?
+  organisationId  String
+  organisation    Organisation @relation(fields: [organisationId], references: [id])
+  resources       Resource[]
+  teams           Team[]     // Teams assigned to project
+  createdBy       String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
 ```
 
 ### 5. Resource Management System
@@ -336,42 +336,18 @@ GET    /api/resources/[id]
 - Terraform infrastructure-as-code
 - User-linked cloud accounts or reseller billing
 
-### 6. File Management System
-
-#### IPFS Integration
-- **Cluster API**: Primary interface (port 9094)
-- **Storage Nodes**: 4 IPFS nodes for distributed storage
-- **Replication**: Automatic content replication via cluster
-- **Pinning**: Cluster-managed pin operations
-
-#### File Operations
-- Upload files to IPFS cluster
-- Real-time file sync monitoring
-- Advanced search and filtering
-- Team-based file organisation
-- Storage quota management
-
-#### File Storage Architecture
-```
-IPFS Cluster (9094) ← Primary API for all operations
-│
-├── Storage Node 1 (5001, 8080, 4001)
-├── Storage Node 2 (5002, 8081, 4002)
-├── Storage Node 3 (5003, 8082, 4003)
-└── Storage Node 4 (5004, 8083, 4004)
-```
-
 ---
 
 ## 📊 Data Architecture
 
 ### Database Schema Overview
 - **Users**: Authentication and profile management
-- **Organisations**: Top-level grouping entity
+- **Organisations**: Top-level grouping entity with name-based uniqueness
+- **User Roles**: Organisation-scoped role assignments
 - **Teams**: Collaboration units within organisations
-- **Projects**: Work containers with file associations
-- **Files**: IPFS content metadata and ownership
-- **Metrics**: Storage usage and analytics
+- **Projects**: Work containers linked to organisations
+- **Resources**: Infrastructure resources within projects
+- **Deployments**: Deployment status and configuration tracking
 
 ### Validation Strategy
 **Prisma-First Validation Approach**:
@@ -411,39 +387,49 @@ IPFS Cluster (9094) ← Primary API for all operations
 ### User Journey Specifications
 
 #### Post-Registration Flow
-1. **Welcome/Onboarding** (`/main/welcome`)
+
+**Route Structure**: Name-based URLs using organisation and project names
+
+1. **Welcome/Onboarding** (`/welcome`)
    - Multi-step setup wizard
    - Organisation creation (user becomes owner)
-   - Team creation (user becomes leader)
+   - Optional team creation
    - First project setup
 
 2. **Main Dashboard** (`/main`)
-   - Overview cards for projects, storage, team members
+   - Overview of organisations
+   - Quick links to recent projects
    - Quick actions for common tasks
-   - Recent activity feed
-   - Storage metrics visualisation
+   - Resource overview
 
-3. **Organisation Management** (`/main/organizations`)
-   - Organisation-level settings
-   - Member management across teams
-   - Storage limits and billing
+3. **Organisation Overview** (`/orga/[orgName]`)
+   - Organisation dashboard
+   - Project listings with resource usage
+   - Member overview
+   - Quick navigation to manage areas
 
-4. **Team Management** (`/main/teams`)
+4. **Members Management** (`/orga/[orgName]/members`)
+   - View organisation members
+   - Invite new members
+   - Manage member roles
+   - Remove members
+
+5. **Teams Management** (`/orga/[orgName]/teams`)
+   - Create and manage teams
+   - Assign members to teams
    - Team collaboration features
-   - Member permissions
-   - Team-specific quotas
 
-5. **Project Management** (`/main/projects`)
-   - Project dashboards
-   - File management interface
-   - Storage allocation controls
-   - Team collaboration tools
+6. **Project Details** (`/orga/[orgName]/[projectName]`)
+   - Project dashboard
+   - Resource listings for project
+   - Project settings
+   - Team assignments
 
-6. **File Management** (`/main/files`)
-   - IPFS file browser
-   - Upload interface
-   - Storage analytics
-   - Pinning management
+7. **Resource Management** (`/orga/[orgName]/[projectName]/[resourceName]`)
+   - Resource details
+   - Deployment status
+   - Endpoint and credentials display
+   - Resource configuration
 
 ---
 
@@ -518,35 +504,31 @@ interface ErrorResponse {
 ```
 
 ### External Integration Points
-- **Team Management API**: Complete REST API for team operations
-- **Project Management API**: Full CRUD operations with file associations
-- **File Management API**: IPFS cluster integration endpoints
+- **Resource API Integration**: External API for infrastructure provisioning
+- **Deployment Status Polling**: Real-time deployment progress tracking
+- **Credential Management**: Secure credential storage and retrieval
 
 ---
 
-## 📈 Monitoring & Analytics
+## 📈 Deployment Monitoring
 
-### Metrics System Architecture
-**Single Point of Truth**: IPFS Cluster API as authoritative source
+### Deployment Progress Tracking
+- Real-time status polling via `/api/resources/[id]/deployment-status`
+- 2-second polling interval for live updates
+- Six-stage deployment progress (init → allocate → configure → provision → verify → complete)
+- Detailed status messages for each stage
 
-```
-Next.js App ← → PostgreSQL ← → IPFS Cluster (9094)
-                  (Cache)        (Truth Source)
-                     ↑                ↓
-              Computed Views    Real Storage State
-```
+### Resource Status Tracking
+- **PROVISIONING**: Resource currently being deployed
+- **ACTIVE**: Resource running and operational
+- **INACTIVE**: Resource stopped or failed
+- **MAINTENANCE**: Resource under maintenance
 
-### Real-time Analytics Features
-- Storage usage tracking (real IPFS data)
-- Pin status monitoring
-- Node distribution visibility
-- Replication health tracking
-- Performance metrics
-
-### Background Sync Strategy
-- Periodic sync with IPFS cluster (15-minute intervals)
-- Database caching for performance
-- Real-time accuracy for user metrics
+### Health & Performance
+- Endpoint availability verification
+- Credential validity checking
+- Resource quota monitoring
+- Deployment failure tracking and alerts
 
 ---
 
@@ -581,20 +563,20 @@ Next.js App ← → PostgreSQL ← → IPFS Cluster (9094)
 
 ## 🔧 Infrastructure Integration
 
-### IPFS Cluster Connection
-- **Primary API**: http://localhost:9094 (cluster management)
-- **Storage Nodes**: Individual node access for debugging
-- **Gateway Access**: Ports 8080-8083 for content serving
-- **Monitoring**: Prometheus metrics from individual nodes
-
 ### Database Integration
 - **PostgreSQL**: Primary data store (port 5432)
 - **Prisma ORM**: Type-safe database operations
-- **Migration Strategy**: Prisma migrate for schema changes
+- **Schema Synchronisation**: `prisma db push` for schema updates (no migrations)
 
-### External Services
-- **Prometheus**: Metrics collection (port 9090)
-- **Grafana**: Dashboard visualisation (port 3001)
+### Resource API Integration
+- **External API**: Communication with Resource API for infrastructure provisioning
+- **JSON Payloads**: Request/response via JSON
+- **Authentication**: API key or credential-based authentication
+- **Timeout Handling**: Request timeouts for failed deployments
+
+### Development Services
+- **Next.js Development**: Port 3000 (standalone)
+- **PostgreSQL**: Port 5432 (Docker container)
 - **NextAuth Providers**: Authentication integration
 
 ---

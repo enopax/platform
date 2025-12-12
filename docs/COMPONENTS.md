@@ -39,19 +39,19 @@ User management and profile related components.
 Project management and display components.
 
 - **`ProjectGrid.tsx`** - Basic grid layout for displaying projects
+- **`ProjectCard.tsx`** - Project card with resource usage, allocation, and status badges
+- **`ProjectDetailsClient.tsx`** - Enhanced project details page with resource management
 - **`EnhancedProjectGrid.tsx`** - Advanced project grid with filtering and search
 - **`ProjectsToolbar.tsx`** - Toolbar with project actions and filters
 
-### `/components/file/`
-File management and upload functionality.
+### `/components/organisation/`
+Organisation management and display components.
 
-- **`FileManagement.tsx`** - Complete file management interface
-- **`FileUpload.tsx`** - File upload component with drag-and-drop support
-
-### `/components/payment/`
-Payment processing and billing components.
-
-- **`PayPalCheckout.tsx`** - PayPal integration for payment processing
+- **`OrganisationOverviewClient.tsx`** - Organisation dashboard with overview and quick actions
+- **`OrganisationCard.tsx`** - Reusable card component for displaying organisation summary
+- **`AllOrganisationsClient.tsx`** - Browse and manage all organisations
+- **`MembersManagementClient.tsx`** - Organisation member management interface
+- **`RolesManagementClient.tsx`** - Organisation role and permission management
 
 ### `/components/common/`
 Reusable UI components and design system elements.
@@ -93,8 +93,6 @@ Components that don't fit into specific categories.
 - **`GenericTable.tsx`** - Reusable table component
 - **`TeamFilter.tsx`** - Team filtering interface
 - **`GenericSearch.tsx`** - Generic search component
-- **`NodesClient.tsx`** - IPFS nodes management
-- **`DiscordSection.tsx`** - Discord integration
 - And other utility components
 
 ## 🎨 Design Principles
@@ -142,9 +140,9 @@ import { Button } from '@/components/common/Button';
 - **Layout**: Structural components that define page layout
 - **Dashboard**: Data visualisation and monitoring components
 - **User**: User profile, authentication, and member management
+- **Organisation**: Organisation management, member management, and role assignment
 - **Project**: Project-specific functionality and displays
-- **File**: File operations, uploads, and management
-- **Payment**: Billing, payments, and subscription components
+- **Resource**: Resource deployment, status tracking, and management
 - **Common**: Reusable UI components used across multiple features
 
 ## 📋 Component Index
