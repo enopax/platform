@@ -81,9 +81,7 @@ export default function AddResourcePage() {
       <div className="mb-6">
         <Breadcrumbs
           items={[
-            { label: 'Organisations', href: '/orga/organisations' },
             { label: organisation.name, href: `/orga/${organisation.name}` },
-            { label: 'Projects', href: `/orga/${organisation.name}/projects` },
             { label: project.name, href: `/orga/${organisation.name}/${project.name}` },
             { label: 'Add Resource' }
           ]}

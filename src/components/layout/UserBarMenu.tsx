@@ -38,18 +38,25 @@ export default function UserBarMenu({
       <DropdownMenuContent>
         {/* ----- Account ----- */}
         <DropdownMenuLabel>
+          <u>Main</u>
+        </DropdownMenuLabel>
+
+        <DropdownMenuGroup>
+          <Link href="/orga">
+             <DropdownMenuItem>
+               Organisations
+             </DropdownMenuItem>
+          </Link>
+        </DropdownMenuGroup>
+
+        <DropdownMenuLabel>
           <u>Account</u>
         </DropdownMenuLabel>
 
         <DropdownMenuGroup>
-            <Link href="/orga/organisations">
+          <Link href="/account/developer">
              <DropdownMenuItem>
-               Dashboard
-             </DropdownMenuItem>
-          </Link>
-          <Link href="/account/upload">
-             <DropdownMenuItem>
-               Upload Files
+               Developer
              </DropdownMenuItem>
           </Link>
           <Link href="/account/settings">

@@ -7,48 +7,6 @@ import { prisma } from '@/lib/prisma';
 import { UserRole, StorageTier } from '@prisma/client';
 import { userService } from '@/lib/services/user';
 
-// Storage tier to bytes mapping
-const STORAGE_TIER_BYTES: Record<StorageTier, bigint> = {
-  FREE_500MB: BigInt(500 * 1024 * 1024),        // 500 MB
-  BASIC_5GB: BigInt(5 * 1024 * 1024 * 1024),    // 5 GB
-  PRO_50GB: BigInt(50 * 1024 * 1024 * 1024),    // 50 GB
-  ENTERPRISE_500GB: BigInt(500 * 1024 * 1024 * 1024), // 500 GB
-  UNLIMITED: BigInt(Number.MAX_SAFE_INTEGER),    // Unlimited (max safe integer)
-};
-
-async function createOrUpdateUserStorageQuota(userId: string, tier: StorageTier) {
-  const allocatedBytes = STORAGE_TIER_BYTES[tier];
-
-  // Check if user already has a quota record
-  const existingQuota = await prisma.userStorageQuota.findUnique({
-    where: { userId }
-  });
-
-  if (existingQuota) {
-    // Update existing quota
-    await prisma.userStorageQuota.update({
-      where: { userId },
-      data: {
-        tier,
-        allocatedBytes,
-        tierUpdatedAt: new Date(),
-        lastUpdated: new Date(),
-      }
-    });
-  } else {
-    // Create new quota record
-    await prisma.userStorageQuota.create({
-      data: {
-        userId,
-        tier,
-        allocatedBytes,
-        usedBytes: BigInt(0),
-        tierUpdatedAt: new Date(),
-      }
-    });
-  }
-}
-
 export async function sendCredentials(state: object | null, formData: FormData) {
   try {
     const email = formData.get('email') as string;
@@ -136,9 +94,6 @@ export async function register(state: object | null, formData: FormData) {
       }
     });
 
-    // Create initial storage quota for the user
-    await createOrUpdateUserStorageQuota(user.id, StorageTier.FREE_500MB);
-
     await signIn('credentials', {
       email: email,
       password: password,
@@ -195,9 +150,6 @@ export async function settings(state: object | null, formData: FormData) {
       }
     });
 
-    // Create or update user storage quota based on tier
-    await createOrUpdateUserStorageQuota(session?.userId!, storageTier);
-
     revalidatePath('/account/settings');
     return {
       payload: {
@@ -240,88 +192,5 @@ export async function findUsers(query: string) {
   } catch (error) {
     console.error('Failed to search users:', error);
     return [];
-  }
-}
-
-export interface UpdateUserState {
-  success?: boolean;
-  error?: string;
-  fieldErrors?: {
-    firstname?: string;
-    lastname?: string;
-    name?: string;
-    email?: string;
-    role?: string;
-  };
-}
-
-export async function updateUserAdmin(
-  userId: string,
-  prevState: UpdateUserState,
-  formData: FormData
-): Promise<UpdateUserState> {
-  try {
-    const firstname = formData.get('firstname') as string;
-    const lastname = formData.get('lastname') as string;
-    const name = formData.get('name') as string;
-    const email = formData.get('email') as string;
-    const role = formData.get('role') as UserRole;
-    const adminUserId = formData.get('adminUserId') as string;
-
-    // Basic validation
-    if (!email || !email.includes('@')) {
-      return {
-        error: 'Valid email address is required',
-        fieldErrors: { email: 'Valid email address is required' }
-      };
-    }
-
-    if (!role || !['GUEST', 'NOMAD', 'ADMIN'].includes(role)) {
-      return {
-        error: 'Valid role is required',
-        fieldErrors: { role: 'Valid role is required' }
-      };
-    }
-
-    if (!adminUserId) {
-      return {
-        error: 'Admin user ID is required',
-        fieldErrors: { name: 'Admin user ID is required' }
-      };
-    }
-
-    // Check if email is already taken by another user
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        email,
-        NOT: { id: userId }
-      }
-    });
-
-    if (existingUser) {
-      return {
-        error: 'Email address is already in use',
-        fieldErrors: { email: 'Email address is already in use' }
-      };
-    }
-
-    // Use service to update user
-    await userService.updateUserAdmin(userId, {
-      firstname: firstname || undefined,
-      lastname: lastname || undefined,
-      name: name || undefined,
-      email,
-      role,
-    }, adminUserId);
-
-    revalidatePath('/admin/user');
-    revalidatePath(`/admin/user/${userId}`);
-
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to update user:', error);
-    return {
-      error: error instanceof Error ? error.message : 'Failed to update user. Please try again.',
-    };
   }
 }

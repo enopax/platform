@@ -51,7 +51,6 @@ export default function ResourceDetailPage() {
       <div className="mb-6">
         <Breadcrumbs
           items={[
-            { label: 'Organisations', href: '/orga/organisations' },
             { label: organisation.name, href: `/orga/${organisation.name}` },
             { label: project.name, href: `/orga/${organisation.name}/${project.name}` },
             { label: resource.name }
