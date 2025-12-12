@@ -76,7 +76,6 @@ export default async function OrganisationSettingsPage({ params }: OrganisationS
       _count: {
         select: {
           members: true,
-          teams: true,
           joinRequests: true
         }
       }
@@ -91,15 +90,6 @@ export default async function OrganisationSettingsPage({ params }: OrganisationS
     <div>
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Link href={`/orga/${orgaName}`}>
-            <Button variant="light" className="text-sm px-3 py-2">
-              <RiArrowLeftLine className="mr-2 h-4 w-4" />
-              Back to Organisation
-            </Button>
-          </Link>
-        </div>
-
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
@@ -213,7 +203,6 @@ export default async function OrganisationSettingsPage({ params }: OrganisationS
         <div className="xl:col-span-1 space-y-6">
           <OrganisationSettingsOverviewClient
             memberCount={organisationCounts._count.members}
-            teamCount={organisationCounts._count.teams}
             pendingRequests={organisationCounts._count.joinRequests}
           />
 

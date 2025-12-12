@@ -6,7 +6,6 @@ import { auth, signIn } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole, StorageTier } from '@prisma/client';
 import { userService } from '@/lib/services/user';
-import { teamService } from '@/lib/services/team';
 
 // Storage tier to bytes mapping
 const STORAGE_TIER_BYTES: Record<StorageTier, bigint> = {

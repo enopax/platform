@@ -8,7 +8,6 @@ import {
   RiServerLine,
   RiBuildingLine,
   RiProjectorLine,
-  RiTeamLine,
   RiArrowDownSLine,
   RiFileTextLine,
   RiBarChartLine,
@@ -37,7 +36,6 @@ type Organisation = {
   description?: string | null;
   _count?: {
     projects: number;
-    teams: number;
     members: number;
   };
   projects?: Project[];
@@ -168,7 +166,7 @@ export default function SidebarNavigation({
                             </div>
                             {org._count && (
                               <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {org._count.projects} projects • {org._count.teams} teams
+                                {org._count.projects} projects • {org._count.members} members
                               </div>
                             )}
                           </div>
@@ -234,8 +232,8 @@ export default function SidebarNavigation({
                   {
                     name: 'Projects',
                     icon: RiProjectorLine,
-                    href: `/orga/${organisationName}/projects`,
-                    active: pathname === `/orga/${organisationName}` || pathname.startsWith(`/orga/${organisationName}/projects`) || pathname.match(new RegExp(`^/orga/${organisationName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/[^/]+/?$`))
+                    href: `/orga/${organisationName}`,
+                    active: pathname === `/orga/${organisationName}`
                   },
                   {
                     name: 'Members',
@@ -287,9 +285,6 @@ export default function SidebarNavigation({
       <div className="border-t p-4 flex-shrink-0">
         <div className="flex items-center mb-3">
           <div className="ml-3 flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-              {user.name || 'User'}
-            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {user.email || 'customer@example.com'}
             </p>

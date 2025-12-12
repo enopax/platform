@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 
 export const metadata: Metadata = {
-  title: 'Account erstellen',
+  title: 'Sign Up',
   description: process.env.NEXT_PUBLIC_META_DESC,
   openGraph: {
     images: [process.env.NEXT_PUBLIC_OG_IMAGE || ''],

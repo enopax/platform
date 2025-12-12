@@ -23,7 +23,7 @@ interface ResourceWizardProps {
   projectId?: string;
   projectName?: string;
   currentUserId: string;
-  teams: any[];
+  organisationName?: string;
   onCancel: () => void;
   onComplete?: (resourceData: any) => void;
 }
@@ -41,7 +41,7 @@ export default function ResourceWizard({
   projectId,
   projectName,
   currentUserId,
-  teams,
+  organisationName,
   onCancel,
   onComplete
 }: ResourceWizardProps) {
@@ -51,8 +51,7 @@ export default function ResourceWizard({
   const [customConfig, setCustomConfig] = useState({
     name: '',
     description: '',
-    storageSize: 5,
-    teamId: teams.find(t => t.isPersonal)?.id || teams[0]?.id || ''
+    storageSize: 5
   });
   const [state, formAction, isPending] = useActionState<CreateResourceState, FormData>(
     createResource,
@@ -86,21 +85,18 @@ export default function ResourceWizard({
 
   useEffect(() => {
     if (state.success) {
-      const selectedTeam = teams.find(t => t.id === customConfig.teamId);
-      const orgName = selectedTeam?.organisation?.name;
-
       setTimeout(() => {
-        if (projectId && orgName) {
-          router.push(`/orga/${orgName}/${projectId}`);
-        } else if (orgName) {
-          router.push(`/orga/${orgName}/projects`);
+        if (projectId && organisationName) {
+          router.push(`/orga/${organisationName}/${projectId}`);
+        } else if (organisationName) {
+          router.push(`/orga/${organisationName}/projects`);
         } else {
           router.push('/main/resources');
         }
         router.refresh();
       }, 1500);
     }
-  }, [state.success, router, projectId, customConfig.teamId, teams]);
+  }, [state.success, router, projectId, organisationName]);
 
   return (
     <form action={formAction}>
@@ -109,7 +105,6 @@ export default function ResourceWizard({
       <input type="hidden" name="type" value={selectedTemplate?.type || ''} />
       <input type="hidden" name="status" value="PROVISIONING" />
       <input type="hidden" name="ownerId" value={currentUserId} />
-      <input type="hidden" name="teamId" value={customConfig.teamId} />
       <input type="hidden" name="templateId" value={selectedTemplate?.id || ''} />
       {selectedTemplate && (
         <input

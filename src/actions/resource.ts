@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { deployResource } from '@/lib/deployment-service';
+import { validateNameFormat } from '@/lib/name-validation';
 
 export interface CreateResourceState {
   success?: boolean;
@@ -55,11 +56,12 @@ export async function createResource(
     const isPublic = formData.get('isPublic') === 'on';
     const templateId = formData.get('templateId') as string;
 
-    // Basic validation
-    if (!name || name.trim().length < 2) {
+    // Validate resource name format
+    const nameValidation = validateNameFormat(name);
+    if (!nameValidation.isValid) {
       return {
-        error: 'Resource name must be at least 2 characters long',
-        fieldErrors: { name: 'Resource name must be at least 2 characters long' }
+        error: nameValidation.error || 'Invalid resource name',
+        fieldErrors: { name: nameValidation.error || 'Invalid resource name' }
       };
     }
 
@@ -269,11 +271,12 @@ export async function updateResource(
     const tagsStr = formData.get('tags') as string;
     const isPublic = formData.get('isPublic') === 'on';
 
-    // Basic validation
-    if (!name || name.trim().length < 2) {
+    // Validate resource name format
+    const nameValidation = validateNameFormat(name);
+    if (!nameValidation.isValid) {
       return {
-        error: 'Resource name must be at least 2 characters long',
-        fieldErrors: { name: 'Resource name must be at least 2 characters long' }
+        error: nameValidation.error || 'Invalid resource name',
+        fieldErrors: { name: nameValidation.error || 'Invalid resource name' }
       };
     }
 

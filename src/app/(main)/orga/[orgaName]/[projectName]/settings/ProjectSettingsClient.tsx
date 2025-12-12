@@ -10,21 +10,13 @@ import { RiSettingsLine, RiProjectorLine } from '@remixicon/react';
 import Link from 'next/link';
 
 interface ProjectSettingsClientProps {
-  userTeams: any[];
   currentUserId: string;
 }
 
-export default function ProjectSettingsClient({ userTeams, currentUserId }: ProjectSettingsClientProps) {
+export default function ProjectSettingsClient({ currentUserId }: ProjectSettingsClientProps) {
   const project = useProject();
   const organisation = useOrganisation();
   const orgName = organisation.name;
-
-  // Prepare project data for the form
-  const projectForForm = {
-    ...project,
-    teamId: project.assignedTeams?.[0]?.team.id || null,
-    team: project.assignedTeams?.[0]?.team || null,
-  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -107,8 +99,7 @@ export default function ProjectSettingsClient({ userTeams, currentUserId }: Proj
             </div>
             <div className="p-6">
               <ProjectForm
-                project={projectForForm}
-                teams={userTeams}
+                project={project}
                 successMessage="Project updated successfully!"
                 currentUserId={currentUserId}
                 redirectUrl={`/orga/${orgName}/${project.name}`}
@@ -128,15 +119,6 @@ export default function ProjectSettingsClient({ userTeams, currentUserId }: Proj
             </div>
 
             <div className="space-y-3 text-sm">
-              <div>
-                <span className="text-gray-500">Teams:</span>
-                <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                  {(project.assignedTeams?.length || 0) > 0
-                    ? project.assignedTeams?.map(at => at.team.name).join(', ')
-                    : 'Unassigned'}
-                </span>
-              </div>
-
               <div>
                 <span className="text-gray-500">Organisation:</span>
                 <span className="ml-2 font-medium text-gray-900 dark:text-white">{organisation.name}</span>

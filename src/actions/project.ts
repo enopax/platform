@@ -5,6 +5,7 @@ import { type ProjectStatus, type ProjectPriority } from '@prisma/client';
 import { projectService } from '@/lib/services/project';
 import { userService } from '@/lib/services/user';
 import { prisma } from '@/lib/prisma';
+import { validateNameFormat } from '@/lib/name-validation';
 
 export interface UpdateProjectState {
   success?: boolean;
@@ -23,7 +24,6 @@ export interface UpdateProjectState {
     progress?: string;
     repositoryUrl?: string;
     documentationUrl?: string;
-    teamId?: string;
   };
 }
 
@@ -44,7 +44,6 @@ export interface CreateProjectState {
     progress?: string;
     repositoryUrl?: string;
     documentationUrl?: string;
-    teamId?: string;
   };
 }
 
@@ -76,7 +75,6 @@ export async function updateProject(
     const progressStr = formData.get('progress') as string;
     const repositoryUrl = formData.get('repositoryUrl') as string;
     const documentationUrl = formData.get('documentationUrl') as string;
-    const teamId = formData.get('teamId') as string;
     const userId = formData.get('userId') as string; // Should be passed from client
 
     // Basic validation
@@ -87,10 +85,12 @@ export async function updateProject(
       };
     }
 
-    if (!name || name.trim().length < 2) {
+    // Validate project name format
+    const nameValidation = validateNameFormat(name);
+    if (!nameValidation.isValid) {
       return {
-        error: 'Project name must be at least 2 characters long',
-        fieldErrors: { name: 'Project name must be at least 2 characters long' }
+        error: nameValidation.error || 'Invalid project name',
+        fieldErrors: { name: nameValidation.error || 'Invalid project name' }
       };
     }
 
@@ -159,26 +159,13 @@ export async function updateProject(
       };
     }
 
-    // Validate team if provided
-    if (teamId && teamId.trim() && teamId !== '__NONE__') {
-      const teamExists = await prisma.team.findUnique({
-        where: { id: teamId },
-        select: { id: true, organisationId: true }
-      });
-
-      if (!teamExists) {
-        return {
-          error: 'Selected team does not exist',
-          fieldErrors: { teamId: 'Selected team does not exist' }
-        };
-      }
-
-      if (teamExists.organisationId !== currentProject.organisationId) {
-        return {
-          error: 'Team must belong to the same organisation as the project',
-          fieldErrors: { teamId: 'Team must belong to the same organisation as the project' }
-        };
-      }
+    // Validate project name is not already in use (excluding current project)
+    const nameAvailability = await projectService.validateProjectName(name.trim(), currentProject.organisationId, projectId);
+    if (!nameAvailability.isValid) {
+      return {
+        error: nameAvailability.error || 'Project name is not available',
+        fieldErrors: { name: nameAvailability.error || 'Project name is not available' }
+      };
     }
 
     // Update project
@@ -200,28 +187,6 @@ export async function updateProject(
         documentationUrl: documentationUrl?.trim() || null,
       }
     });
-
-    // Handle team assignment
-    if (teamId && teamId.trim() && teamId !== '__NONE__') {
-      // Remove existing team assignments
-      await prisma.projectTeam.deleteMany({
-        where: { projectId }
-      });
-
-      // Add new team assignment
-      await prisma.projectTeam.create({
-        data: {
-          projectId,
-          teamId: teamId.trim(),
-          assignedBy: userId,
-        }
-      });
-    } else if (teamId === '__NONE__') {
-      // Remove all team assignments if explicitly unassigning
-      await prisma.projectTeam.deleteMany({
-        where: { projectId }
-      });
-    }
 
     // Get organisation name for revalidation
     const org = await prisma.organisation.findUnique({
@@ -263,7 +228,6 @@ export async function createProject(
     const progressStr = formData.get('progress') as string;
     const repositoryUrl = formData.get('repositoryUrl') as string;
     const documentationUrl = formData.get('documentationUrl') as string;
-    const teamId = formData.get('teamId') as string;
     const currentUserId = formData.get('currentUserId') as string;
 
     // Basic validation
@@ -273,15 +237,15 @@ export async function createProject(
         fieldErrors: { name: 'User authentication required' }
       };
     }
-    if (!name || name.trim().length < 2) {
+
+    // Validate project name format
+    const nameValidation = validateNameFormat(name);
+    if (!nameValidation.isValid) {
       return {
-        error: 'Project name must be at least 2 characters long',
-        fieldErrors: { name: 'Project name must be at least 2 characters long' }
+        error: nameValidation.error || 'Invalid project name',
+        fieldErrors: { name: nameValidation.error || 'Invalid project name' }
       };
     }
-
-
-    // Team is now optional
 
     // Validate dates
     const startDate = startDateStr ? new Date(startDateStr) : null;
@@ -328,49 +292,21 @@ export async function createProject(
       };
     }
 
-
-    // Validate team exists (only if team is provided and not "skip")
-    let organisationId = null;
-    if (teamId && teamId.trim() && teamId !== '__NONE__') {
-      const teamExists = await prisma.team.findUnique({
-        where: { id: teamId },
-        select: { id: true, organisationId: true }
-      });
-
-      if (!teamExists) {
-        return {
-          error: 'Selected team does not exist',
-          fieldErrors: { teamId: 'Selected team does not exist' }
-        };
-      }
-      organisationId = teamExists.organisationId;
-    }
-
-    // For now, we need to get organisationId from somewhere if no team is provided
-    // This should be passed from the form
+    // Get organisation ID from form
+    const organisationId = formData.get('organisationId') as string;
     if (!organisationId) {
-      const orgId = formData.get('organisationId') as string;
-      if (!orgId) {
-        return {
-          error: 'Organisation context is required',
-          fieldErrors: { name: 'Organisation context is required' }
-        };
-      }
-      organisationId = orgId;
+      return {
+        error: 'Organisation context is required',
+        fieldErrors: { name: 'Organisation context is required' }
+      };
     }
 
-    // Check for duplicate project name within the organisation
-    const duplicateProject = await prisma.project.findFirst({
-      where: {
-        name: name.trim(),
-        organisationId
-      }
-    });
-
-    if (duplicateProject) {
+    // Validate project name is not already in use within the organisation
+    const nameAvailability = await projectService.validateProjectName(name.trim(), organisationId);
+    if (!nameAvailability.isValid) {
       return {
-        error: 'A project with this name already exists in this organisation',
-        fieldErrors: { name: 'A project with this name already exists in this organisation' }
+        error: nameAvailability.error || 'Project name is not available',
+        fieldErrors: { name: nameAvailability.error || 'Project name is not available' }
       };
     }
 
@@ -392,17 +328,6 @@ export async function createProject(
         organisationId,
       },
     });
-
-    // If a team was provided (and not "skip"), create the project-team relationship
-    if (teamId && teamId.trim() && teamId !== '__NONE__') {
-      await prisma.projectTeam.create({
-        data: {
-          projectId: project.id,
-          teamId: teamId.trim(),
-          assignedBy: currentUserId,
-        },
-      });
-    }
 
     // Get organisation name for revalidation
     const org = await prisma.organisation.findUnique({

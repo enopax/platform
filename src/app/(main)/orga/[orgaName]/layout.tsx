@@ -60,7 +60,6 @@ export default async function OrganisationLayout({
         select: {
           members: true,
           projects: true,
-          teams: true,
         },
       },
     },

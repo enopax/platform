@@ -38,7 +38,6 @@ export default async function OrganisationsPage() {
       _count: {
         select: {
           projects: true,
-          teams: true,
           members: true
         }
       }

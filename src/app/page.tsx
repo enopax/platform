@@ -4,12 +4,11 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import Container from '@/components/common/Container';
 import { Button } from '@/components/common/Button';
-import IPFSParallax from '@/components/animation/IPFSParallax';
 
 export default async function Page() {
   const session = await auth();
   if (session) {
-    redirect('/orga/organisations');
+    redirect('/orga');
   }
 
   return (
@@ -48,13 +47,6 @@ export default async function Page() {
               </div>
             </div>
           </div>
-        </Container>
-      </section>
-
-      {/* Parallax Section */}
-      <section className="mx-auto max-w-6xl py-16">
-        <Container>
-          <IPFSParallax />
         </Container>
       </section>
     </main>

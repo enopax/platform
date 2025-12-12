@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/common/Checkbox';
 import { Slider } from '@/components/common/Slider';
 import ClientDate from '@/components/common/ClientDate';
 import { DatePicker } from '@/components/common/DatePicker';
-import { type Project, type User, type Organisation, type Team } from '@prisma/client';
+import { type Project, type User, type Organisation } from '@prisma/client';
 import { RiCheckLine, RiErrorWarningLine, RiDatabase2Line } from '@remixicon/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -32,12 +32,7 @@ const STORAGE_OPTIONS = [
   { value: 100, label: '100 GB', bytes: 100 * 1024 * 1024 * 1024 },
 ];
 
-type ProjectWithDetails = Project & {
-  team: Team & {
-    owner: User;
-    organisation?: Organisation | null;
-  };
-};
+type ProjectWithDetails = Project;
 
 // Form state that matches both create and update action return types
 type ProjectFormState = CreateProjectState | UpdateProjectState;
@@ -51,12 +46,10 @@ const initialState: ProjectFormState = {
 
 interface ProjectFormProps {
   project?: ProjectWithDetails;
-  teams: (Team & { owner: User; organisation?: Organisation | null })[];
   onSuccess?: () => void;
   successMessage?: string;
   redirectUrl?: string;
   currentUserId?: string;
-  preselectedTeamId?: string;
   organisationId?: string;
 }
 
@@ -72,12 +65,10 @@ const PROJECT_TYPES = [
 
 export default function ProjectForm({
   project,
-  teams,
   onSuccess,
   successMessage,
   redirectUrl,
   currentUserId,
-  preselectedTeamId,
   organisationId
 }: ProjectFormProps) {
   const action = project ? updateProject : createProject;
@@ -180,35 +171,8 @@ export default function ProjectForm({
           )}
         </div>
 
-        {/* Team and Project Type - Side by side */}
+        {/* Project Type */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="teamId">
-              Assign Team (Optional)
-            </Label>
-            <Select
-              name="teamId"
-              defaultValue={project?.teamId || preselectedTeamId || ''}
-            >
-              <SelectTrigger className="mt-1" hasError={!!state.fieldErrors?.teamId}>
-                <SelectValue placeholder="Select team or skip for now" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__NONE__">
-                  <span className="text-gray-500 italic">Skip for now</span>
-                </SelectItem>
-                {teams.map((team) => (
-                  <SelectItem key={team.id} value={team.id}>
-                    {team.name} {team.isPersonal ? '(Personal)' : ''}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {state.fieldErrors?.teamId && (
-              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.teamId}</p>
-            )}
-          </div>
-
           <div>
             <Label htmlFor="projectType">
               Project Type

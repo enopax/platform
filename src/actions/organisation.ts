@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { organisationService } from '@/lib/services/organisation';
 import { userService } from '@/lib/services/user';
+import { validateNameFormat } from '@/lib/name-validation';
 
 export interface UpdateOrganisationState {
   success?: boolean;
@@ -53,11 +54,12 @@ export async function updateOrganisation(
     const ownerId = formData.get('ownerId') as string;
     const isActive = formData.get('isActive') === 'true';
 
-    // Basic validation
-    if (!name || name.trim().length < 2) {
+    // Validate name format
+    const nameValidation = validateNameFormat(name);
+    if (!nameValidation.isValid) {
       return {
-        error: 'Organisation name must be at least 2 characters long',
-        fieldErrors: { name: 'Organisation name must be at least 2 characters long' }
+        error: nameValidation.error || 'Invalid organisation name',
+        fieldErrors: { name: nameValidation.error || 'Invalid organisation name' }
       };
     }
 
@@ -74,6 +76,15 @@ export async function updateOrganisation(
       return {
         error: 'Selected owner does not exist',
         fieldErrors: { ownerId: 'Selected owner does not exist' }
+      };
+    }
+
+    // Validate organisation name is not already in use (excluding current organisation)
+    const nameAvailability = await organisationService.validateOrganisationName(name.trim(), organisationId);
+    if (!nameAvailability.isValid) {
+      return {
+        error: nameAvailability.error || 'Organisation name is not available',
+        fieldErrors: { name: nameAvailability.error || 'Organisation name is not available' }
       };
     }
 
@@ -134,11 +145,12 @@ export async function createOrganisation(
     const address = formData.get('address') as string;
     const ownerId = formData.get('ownerId') as string;
 
-    // Basic validation
-    if (!name || name.trim().length < 2) {
+    // Validate name format
+    const nameValidation = validateNameFormat(name);
+    if (!nameValidation.isValid) {
       return {
-        error: 'Organisation name must be at least 2 characters long',
-        fieldErrors: { name: 'Organisation name must be at least 2 characters long' }
+        error: nameValidation.error || 'Invalid organisation name',
+        fieldErrors: { name: nameValidation.error || 'Invalid organisation name' }
       };
     }
 
@@ -155,6 +167,15 @@ export async function createOrganisation(
       return {
         error: 'Selected owner does not exist',
         fieldErrors: { ownerId: 'Selected owner does not exist' }
+      };
+    }
+
+    // Validate organisation name is not already in use
+    const nameAvailability = await organisationService.validateOrganisationName(name.trim());
+    if (!nameAvailability.isValid) {
+      return {
+        error: nameAvailability.error || 'Organisation name is not available',
+        fieldErrors: { name: nameAvailability.error || 'Organisation name is not available' }
       };
     }
 

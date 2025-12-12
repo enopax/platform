@@ -11,21 +11,6 @@ interface SearchableProject extends Project {
     id: string;
     name: string;
   };
-  assignedTeams: {
-    team: {
-      id: string;
-      name: string;
-      owner: {
-        name: string | null;
-        firstname: string | null;
-        lastname: string | null;
-        email: string;
-      };
-      _count: {
-        members: number;
-      };
-    };
-  }[];
 }
 
 interface ProjectSearchProps extends Omit<GenericSearchProps<SearchableProject>, 'searchFunction' | 'getDisplayName' | 'getSecondaryText' | 'getBadgeText' | 'getBadgeVariant'> {
@@ -48,8 +33,7 @@ export default function ProjectSearch({
         ? `${project.description.substring(0, 60)}...`
         : project.description;
     }
-    const teamNames = project.assignedTeams.map(at => at.team.name).join(', ');
-    return `${project.organisation.name} • Teams: ${teamNames || 'Unassigned'}`;
+    return project.organisation.name;
   };
 
   const getBadgeText = (project: SearchableProject): string => {
