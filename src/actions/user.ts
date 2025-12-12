@@ -219,8 +219,12 @@ export async function settings(state: object | null, formData: FormData) {
 export async function setAvatar(userId: string, images: string[]) {
   try {
     const session = await auth();
-    await userService.setUserAvatar(session?.userId!, images);
+    if (!session?.user?.id) {
+      throw new Error('User not authenticated');
+    }
+    await userService.setUserAvatar(session.user.id, images);
     revalidatePath('/account/settings');
+    revalidatePath('/');
 
     return {
       success: true,
