@@ -10,7 +10,6 @@ export type OrganisationPermissions = {
 
 export type ProjectPermissions = {
   isMember: boolean;
-  isTeamMember: boolean;
   canManage: boolean;
 };
 
@@ -56,7 +55,7 @@ export async function checkOrganisationPermissions(
 
 /**
  * Check project access permissions
- * Assumes user is already an organisation member
+ * All organisation members have access to all projects in their organisation
  */
 export async function checkProjectPermissions(
   userId: string,
@@ -66,7 +65,7 @@ export async function checkProjectPermissions(
 ): Promise<ProjectPermissions> {
   const isAdmin = userRole === 'ADMIN';
 
-  // First check organisation membership (required for project access)
+  // Check organisation membership (required for project access)
   const orgMembership = isAdmin
     ? { role: 'OWNER' }
     : await prisma.organisationMember.findUnique({
@@ -83,33 +82,16 @@ export async function checkProjectPermissions(
 
   const isMember = !!orgMembership;
 
-  // Check if user is part of any team assigned to this project
-  const teamMembership = await prisma.teamMember.findFirst({
-    where: {
-      userId,
-      team: {
-        assignedProjects: {
-          some: {
-            projectId,
-          },
-        },
-      },
-    },
-  });
-
-  const isTeamMember = !!teamMembership;
-
-  // Can manage if: admin, org owner/manager, or team lead/admin on assigned team
+  // All org members can access all projects in the organisation
+  // Management permissions are based on organisation role only
   const canManage =
     isAdmin ||
     orgMembership?.role === 'OWNER' ||
     orgMembership?.role === 'MANAGER' ||
-    teamMembership?.role === 'LEAD' ||
-    teamMembership?.role === 'ADMIN';
+    orgMembership?.role === 'ADMIN';
 
   return {
     isMember,
-    isTeamMember,
     canManage,
   };
 }

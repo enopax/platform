@@ -21,28 +21,5 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
     notFound();
   }
 
-  // Get teams where the user is a member (they can edit projects in their teams)
-  const userTeams = await prisma.team.findMany({
-    where: {
-      OR: [
-        // Teams they own
-        { ownerId: session.user.id },
-        // Teams they're a member of
-        {
-          members: {
-            some: {
-              userId: session.user.id,
-            },
-          },
-        },
-      ],
-    },
-    include: {
-      owner: true,
-      organisation: true,
-    },
-    orderBy: { name: 'asc' },
-  });
-
-  return <ProjectSettingsClient userTeams={userTeams} currentUserId={session.user.id} />;
+  return <ProjectSettingsClient currentUserId={session.user.id} />;
 }

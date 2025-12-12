@@ -47,8 +47,7 @@ export default async function EditOrganisationPage({ params }: EditOrganisationP
         _count: {
           select: {
             members: true,
-            teams: true,
-            assignedProjects: true
+            projects: true
           }
         }
       },

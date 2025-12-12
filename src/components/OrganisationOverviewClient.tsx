@@ -52,10 +52,6 @@ export default function OrganisationOverviewClient({
                 <RiProjectorLine className="h-4 w-4" />
                 {organisation._count?.projects} projects
               </span>
-              <span className="flex items-center gap-1">
-                <RiTeamLine className="h-4 w-4" />
-                {organisation._count?.teams} teams
-              </span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -234,7 +230,7 @@ export default function OrganisationOverviewClient({
               <RiProjectorLine className="mx-auto h-16 w-16 text-gray-400 mb-4" />
               <p className="text-gray-500 dark:text-gray-400 mb-6 text-lg">No projects yet</p>
               {canManage && (
-                <Link href={`/orga/${organisation.name}/new-project`}>
+                <Link href={`/orga/${organisation.name}/new`}>
                   <Button>
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Create First Project

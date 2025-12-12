@@ -1,4 +1,5 @@
 import { PrismaClient, Organisation, OrganisationRole } from '@prisma/client';
+import { validateNameFormat } from '../name-validation';
 
 const prisma = new PrismaClient();
 
@@ -14,7 +15,6 @@ export interface CreateOrganisationData {
 
 export interface OrganisationInfo extends Organisation {
   memberCount: number;
-  teamCount: number;
 }
 
 export class OrganisationService {
@@ -47,7 +47,6 @@ export class OrganisationService {
       return {
         ...organisation,
         memberCount: 1, // Just the owner
-        teamCount: 0,
       };
     } catch (error) {
       console.error('Failed to create organisation:', error);
@@ -63,7 +62,6 @@ export class OrganisationService {
           _count: {
             select: {
               members: true,
-              teams: true,
             },
           },
         },
@@ -76,7 +74,6 @@ export class OrganisationService {
       return {
         ...organisation,
         memberCount: organisation._count.members,
-        teamCount: organisation._count.teams,
       };
     } catch (error) {
       console.error('Failed to get organisation:', error);
@@ -92,7 +89,6 @@ export class OrganisationService {
           _count: {
             select: {
               members: true,
-              teams: true,
             },
           },
         },
@@ -105,7 +101,6 @@ export class OrganisationService {
       return {
         ...organisation,
         memberCount: organisation._count.members,
-        teamCount: organisation._count.teams,
       };
     } catch (error) {
       console.error('Failed to get organisation by name:', error);
@@ -123,7 +118,6 @@ export class OrganisationService {
               _count: {
                 select: {
                   members: true,
-                  teams: true,
                   joinRequests: true,
                 },
               },
@@ -136,7 +130,6 @@ export class OrganisationService {
       return memberships.map(membership => ({
         ...membership.organisation,
         memberCount: membership.organisation._count.members,
-        teamCount: membership.organisation._count.teams,
       }));
     } catch (error) {
       console.error('Failed to get user organisations:', error);
@@ -180,7 +173,6 @@ export class OrganisationService {
           _count: {
             select: {
               members: true,
-              teams: true,
             },
           },
         },
@@ -189,7 +181,6 @@ export class OrganisationService {
       return {
         ...organisation,
         memberCount: organisation._count.members,
-        teamCount: organisation._count.teams,
       };
     } catch (error) {
       console.error('Failed to update organisation:', error);
@@ -255,8 +246,15 @@ export class OrganisationService {
     }
   }
 
-  async validateOrganisationName(name: string, excludeId?: string): Promise<boolean> {
+  async validateOrganisationName(name: string, excludeId?: string): Promise<{ isValid: boolean; error?: string }> {
     try {
+      // First validate format and blocked names
+      const formatValidation = validateNameFormat(name);
+      if (!formatValidation.isValid) {
+        return formatValidation;
+      }
+
+      // Then check if name is already in use
       const existing = await prisma.organisation.findFirst({
         where: {
           name,
@@ -265,10 +263,17 @@ export class OrganisationService {
         },
       });
 
-      return !existing; // Return true if name is available
+      if (existing) {
+        return {
+          isValid: false,
+          error: 'Organisation name is already in use',
+        };
+      }
+
+      return { isValid: true };
     } catch (error) {
       console.error('Failed to validate organisation name:', error);
-      return false;
+      return { isValid: false, error: 'Failed to validate organisation name' };
     }
   }
 
@@ -342,7 +347,6 @@ export class OrganisationService {
           _count: {
             select: {
               members: true,
-              teams: true,
               joinRequests: true,
             },
           },

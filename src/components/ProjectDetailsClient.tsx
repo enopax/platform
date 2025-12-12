@@ -136,7 +136,7 @@ export default function ProjectDetailsClient() {
                   Settings
                 </Button>
               </Link>
-              <Link href={`/orga/${orgName}/resources/new?project=${project.id}`}>
+              <Link href={`/orga/${orgName}/${project.name}/new`}>
                 <Button size="sm">
                   <RiAddLine className="mr-2 h-4 w-4" />
                   Add Resource
@@ -171,19 +171,6 @@ export default function ProjectDetailsClient() {
               {resourcesWithMetrics.length}
             </dd>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Active resources</p>
-          </div>
-
-          <div>
-            <dt className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
-              <RiTeamLine className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              Teams
-            </dt>
-            <dd className="text-3xl font-bold text-gray-900 dark:text-white">
-              {project.assignedTeams?.length || 0}
-            </dd>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {(project.assignedTeams?.length || 0) === 0 ? 'No teams assigned' : 'Assigned teams'}
-            </p>
           </div>
 
           <div>
@@ -229,85 +216,6 @@ export default function ProjectDetailsClient() {
           />
         </section>
 
-        {/* Teams Section */}
-        <section>
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Teams ({project.assignedTeams?.length || 0})
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Teams working on this project</p>
-            </div>
-            <Link href={`/orga/${orgName}/${project.name}/settings`}>
-              <Button variant="outline" size="sm">
-                <RiSettings3Line className="mr-2 h-4 w-4" />
-                Manage Teams
-              </Button>
-            </Link>
-          </div>
-          {(project.assignedTeams?.length || 0) > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {project.assignedTeams?.map(({ team }) => (
-                <Link key={team.id} href={`/orga/${orgName}/teams/${team.id}`} className="group">
-                  <div className="p-5 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all hover:border-brand-300 dark:hover:border-brand-700">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg shrink-0">
-                        <RiTeamLine className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 dark:text-white truncate mb-1 group-hover:text-brand-600 dark:group-hover:text-brand-400">
-                          {team.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                          Led by {team.owner.name || team.owner.email}
-                        </p>
-
-                        {/* Team Members Avatars */}
-                        <div className="flex items-center gap-3">
-                          <div className="flex -space-x-2">
-                            {team.members?.slice(0, 5).map(member => (
-                              <div
-                                key={member.user.id}
-                                className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-xs font-medium border-2 border-white dark:border-gray-800"
-                                title={member.user.name || member.user.email}
-                              >
-                                {(member.user.name || member.user.email).charAt(0).toUpperCase()}
-                              </div>
-                            ))}
-                            {team._count.members > 5 && (
-                              <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium border-2 border-white dark:border-gray-800 text-gray-600 dark:text-gray-400">
-                                +{team._count.members - 5}
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            {team._count.members} {team._count.members === 1 ? 'member' : 'members'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
-                <RiTeamLine className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No teams assigned</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
-                Assign teams to collaborate on this project
-              </p>
-              <Link href={`/orga/${orgName}/${project.name}/settings`}>
-                <Button>
-                  <RiAddLine className="mr-2 h-4 w-4" />
-                  Assign Teams
-                </Button>
-              </Link>
-            </div>
-          )}
-        </section>
 
         {/* Project Information Section */}
         <section>

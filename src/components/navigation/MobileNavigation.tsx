@@ -87,7 +87,7 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
   return (
     <>
       {/* Mobile Header */}
-      <div className="lg:hidden flex items-center justify-between p-4 absolute top-0 z-40 w-full bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
+      <div className="lg:hidden flex items-center justify-between px-4 absolute top-0 z-40 w-full bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -101,12 +101,6 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
               <RiMenuLine className="size-5 shrink-0" />
             )}
           </Button>
-          <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
-            <span className="text-sm font-bold text-white">IIIII</span>
-          </div>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Dashboard
-          </h1>
         </div>
       </div>
 

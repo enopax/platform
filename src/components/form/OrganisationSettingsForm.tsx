@@ -202,21 +202,7 @@ export default function OrganisationSettingsForm({
         </div>
       </div>
 
-      <div className="flex justify-end space-x-4 pt-6 border-t">
-        <Button
-          type="button"
-          variant="ghost"
-          disabled={isPending}
-          onClick={() => {
-            if (redirectUrl) {
-              router.push(redirectUrl.replace('/settings', ''));
-            } else {
-              router.back();
-            }
-          }}
-        >
-          Cancel
-        </Button>
+      <div className="flex justify-end">
         <Button type="submit" disabled={isPending || state.success}>
           {isPending ? 'Updating...' : 'Update Organisation'}
         </Button>

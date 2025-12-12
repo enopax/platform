@@ -1,6 +1,6 @@
 import { PrismaClient, ProjectStatus, ProjectPriority } from '@prisma/client';
-import { teamService } from './team';
 import { organisationService } from './organisation';
+import { validateNameFormat } from '../name-validation';
 
 const prisma = new PrismaClient();
 
@@ -17,7 +17,6 @@ export interface CreateProjectData {
   repositoryUrl?: string;
   documentationUrl?: string;
   organisationId: string;
-  assignedTeamIds?: string[];
 }
 
 export interface UpdateProjectData {
@@ -34,7 +33,6 @@ export interface UpdateProjectData {
   repositoryUrl?: string;
   documentationUrl?: string;
   organisationId?: string;
-  assignedTeamIds?: string[];
 }
 
 export interface ProjectInfo {
@@ -59,16 +57,6 @@ export interface ProjectInfo {
     id: string;
     name: string;
   };
-  assignedTeams: {
-    team: {
-      id: string;
-      name: string;
-      owner: {
-        id: string;
-        name: string | null;
-      };
-    };
-  }[];
   fileCount?: number;
 }
 
@@ -86,16 +74,6 @@ export class ProjectService {
       const isNameAvailable = await this.validateProjectName(data.name, data.organisationId);
       if (!isNameAvailable) {
         throw new Error('Project name is already taken within this organisation');
-      }
-
-      // Verify assigned teams belong to the organisation if provided
-      if (data.assignedTeamIds && data.assignedTeamIds.length > 0) {
-        for (const teamId of data.assignedTeamIds) {
-          const team = await teamService.getTeamById(teamId);
-          if (!team || team.organisationId !== data.organisationId) {
-            throw new Error(`Team ${teamId} does not belong to the specified organisation`);
-          }
-        }
       }
 
       const project = await prisma.project.create({
@@ -119,91 +97,9 @@ export class ProjectService {
               id: true,
               name: true,
             }
-          },
-          assignedTeams: {
-            include: {
-              team: {
-                select: {
-                  id: true,
-                  name: true,
-                  owner: {
-                    select: {
-                      id: true,
-                      name: true,
-                    }
-                  }
-                }
-              }
-            }
           }
         }
       });
-
-      // Assign teams to project if provided
-      if (data.assignedTeamIds && data.assignedTeamIds.length > 0) {
-        await prisma.projectTeam.createMany({
-          data: data.assignedTeamIds.map(teamId => ({
-            projectId: project.id,
-            teamId,
-            assignedBy: userId,
-          }))
-        });
-
-        // Refetch the project with assigned teams
-        const updatedProject = await prisma.project.findUnique({
-          where: { id: project.id },
-          include: {
-            organisation: {
-              select: {
-                id: true,
-                name: true,
-              }
-            },
-            assignedTeams: {
-              include: {
-                team: {
-                  select: {
-                    id: true,
-                    name: true,
-                    owner: {
-                      select: {
-                        id: true,
-                        name: true,
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        });
-
-        if (!updatedProject) {
-          throw new Error('Failed to retrieve updated project');
-        }
-
-        return {
-          id: updatedProject.id,
-          name: updatedProject.name,
-          description: updatedProject.description,
-          status: updatedProject.status,
-          priority: updatedProject.priority,
-          budget: updatedProject.budget ? Number(updatedProject.budget) : undefined,
-          currency: updatedProject.currency,
-          startDate: updatedProject.startDate,
-          endDate: updatedProject.endDate,
-          actualEndDate: updatedProject.actualEndDate,
-          progress: updatedProject.progress,
-          repositoryUrl: updatedProject.repositoryUrl,
-          documentationUrl: updatedProject.documentationUrl,
-          organisationId: updatedProject.organisationId,
-          isActive: updatedProject.isActive,
-          createdAt: updatedProject.createdAt,
-          updatedAt: updatedProject.updatedAt,
-          organisation: updatedProject.organisation,
-          assignedTeams: updatedProject.assignedTeams,
-        };
-      }
 
       return {
         id: project.id,
@@ -224,7 +120,6 @@ export class ProjectService {
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
         organisation: project.organisation,
-        assignedTeams: project.assignedTeams,
       };
     } catch (error) {
       console.error('Failed to create project:', error);
@@ -241,22 +136,6 @@ export class ProjectService {
             select: {
               id: true,
               name: true,
-            }
-          },
-          assignedTeams: {
-            include: {
-              team: {
-                select: {
-                  id: true,
-                  name: true,
-                  owner: {
-                    select: {
-                      id: true,
-                      name: true,
-                    }
-                  }
-                }
-              }
             }
           },
           _count: {
@@ -288,82 +167,10 @@ export class ProjectService {
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
         organisation: project.organisation,
-        assignedTeams: project.assignedTeams,
         fileCount: project._count.files,
       };
     } catch (error) {
       console.error('Failed to get project by ID:', error);
-      throw error;
-    }
-  }
-
-  async getProjectsForTeam(teamId: string): Promise<ProjectInfo[]> {
-    try {
-      const projects = await prisma.project.findMany({
-        where: {
-          assignedTeams: {
-            some: {
-              teamId: teamId
-            }
-          },
-          isActive: true
-        },
-        orderBy: { createdAt: 'desc' },
-        include: {
-          organisation: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
-          assignedTeams: {
-            include: {
-              team: {
-                select: {
-                  id: true,
-                  name: true,
-                  owner: {
-                    select: {
-                      id: true,
-                      name: true,
-                    }
-                  }
-                }
-              }
-            }
-          },
-          _count: {
-            select: {
-              files: true,
-            }
-          }
-        }
-      });
-
-      return projects.map(project => ({
-        id: project.id,
-        name: project.name,
-        description: project.description,
-        status: project.status,
-        priority: project.priority,
-        budget: project.budget ? Number(project.budget) : undefined,
-        currency: project.currency,
-        startDate: project.startDate,
-        endDate: project.endDate,
-        actualEndDate: project.actualEndDate,
-        progress: project.progress,
-        repositoryUrl: project.repositoryUrl,
-        documentationUrl: project.documentationUrl,
-        organisationId: project.organisationId,
-        isActive: project.isActive,
-        createdAt: project.createdAt,
-        updatedAt: project.updatedAt,
-        organisation: project.organisation,
-        assignedTeams: project.assignedTeams,
-        fileCount: project._count.files,
-      }));
-    } catch (error) {
-      console.error('Failed to get projects for team:', error);
       throw error;
     }
   }
@@ -383,20 +190,62 @@ export class ProjectService {
               name: true,
             }
           },
-          assignedTeams: {
-            include: {
-              team: {
-                select: {
-                  id: true,
-                  name: true,
-                  owner: {
-                    select: {
-                      id: true,
-                      name: true,
-                    }
-                  }
-                }
-              }
+          _count: {
+            select: {
+              files: true,
+            }
+          }
+        }
+      });
+
+      return projects.map(project => ({
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        status: project.status,
+        priority: project.priority,
+        budget: project.budget ? Number(project.budget) : undefined,
+        currency: project.currency,
+        startDate: project.startDate,
+        endDate: project.endDate,
+        actualEndDate: project.actualEndDate,
+        progress: project.progress,
+        repositoryUrl: project.repositoryUrl,
+        documentationUrl: project.documentationUrl,
+        organisationId: project.organisationId,
+        isActive: project.isActive,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+        organisation: project.organisation,
+        fileCount: project._count.files,
+      }));
+    } catch (error) {
+      console.error('Failed to get organisation projects:', error);
+      throw error;
+    }
+  }
+
+  async getUserProjects(userId: string): Promise<ProjectInfo[]> {
+    try {
+      // Get all organisations the user is a member of
+      const userOrganisations = await organisationService.getUserOrganisations(userId);
+      const organisationIds = userOrganisations.map(org => org.id);
+
+      if (organisationIds.length === 0) {
+        return [];
+      }
+
+      const projects = await prisma.project.findMany({
+        where: {
+          organisationId: { in: organisationIds },
+          isActive: true
+        },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          organisation: {
+            select: {
+              id: true,
+              name: true,
             }
           },
           _count: {
@@ -426,71 +275,6 @@ export class ProjectService {
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
         organisation: project.organisation,
-        assignedTeams: project.assignedTeams,
-        fileCount: project._count.files,
-      }));
-    } catch (error) {
-      console.error('Failed to get organisation projects:', error);
-      throw error;
-    }
-  }
-
-  async getUserProjects(userId: string): Promise<ProjectInfo[]> {
-    try {
-      // Get all teams the user is a member of
-      const userTeams = await teamService.getUserTeams(userId);
-      const teamIds = userTeams.map(team => team.id);
-
-      if (teamIds.length === 0) {
-        return [];
-      }
-
-      const projects = await prisma.project.findMany({
-        where: {
-          teamId: { in: teamIds },
-          isActive: true
-        },
-        orderBy: { createdAt: 'desc' },
-        include: {
-          team: {
-            select: {
-              id: true,
-              name: true,
-              organisation: {
-                select: {
-                  id: true,
-                  name: true,
-                }
-              }
-            }
-          },
-          _count: {
-            select: {
-              files: true,
-            }
-          }
-        }
-      });
-
-      return projects.map(project => ({
-        id: project.id,
-        name: project.name,
-        description: project.description,
-        status: project.status,
-        priority: project.priority,
-        budget: project.budget ? Number(project.budget) : undefined,
-        currency: project.currency,
-        startDate: project.startDate,
-        endDate: project.endDate,
-        actualEndDate: project.actualEndDate,
-        progress: project.progress,
-        repositoryUrl: project.repositoryUrl,
-        documentationUrl: project.documentationUrl,
-        teamId: project.teamId,
-        isActive: project.isActive,
-        createdAt: project.createdAt,
-        updatedAt: project.updatedAt,
-        team: project.team,
         fileCount: project._count.files,
       }));
     } catch (error) {
@@ -507,26 +291,26 @@ export class ProjectService {
         throw new Error('Project not found');
       }
 
-      // Verify user is a member of the project's current team
-      const isTeamMember = await teamService.isUserMember(userId, existingProject.teamId);
-      if (!isTeamMember) {
+      // Verify user is a member of the project's organisation
+      const isOrganisationMember = await organisationService.isUserMember(userId, existingProject.organisationId);
+      if (!isOrganisationMember) {
         throw new Error('You do not have permission to update this project');
       }
 
-      // If teamId is being changed, verify user is member of new team
-      if (data.teamId && data.teamId !== existingProject.teamId) {
-        const isNewTeamMember = await teamService.isUserMember(userId, data.teamId);
-        if (!isNewTeamMember) {
-          throw new Error('You are not a member of the specified team');
+      // If organisationId is being changed, verify user is member of new organisation
+      if (data.organisationId && data.organisationId !== existingProject.organisationId) {
+        const isNewOrganisationMember = await organisationService.isUserMember(userId, data.organisationId);
+        if (!isNewOrganisationMember) {
+          throw new Error('You are not a member of the specified organisation');
         }
       }
 
-      // If project name is being changed, validate uniqueness within team
+      // If project name is being changed, validate uniqueness within organisation
       if (data.name && data.name !== existingProject.name) {
-        const targetTeamId = data.teamId || existingProject.teamId;
-        const isNameAvailable = await this.validateProjectName(data.name, targetTeamId, projectId);
-        if (!isNameAvailable) {
-          throw new Error('Project name is already taken within this team');
+        const targetOrganisationId = data.organisationId || existingProject.organisationId;
+        const nameValidation = await this.validateProjectName(data.name, targetOrganisationId, projectId);
+        if (!nameValidation.isValid) {
+          throw new Error(nameValidation.error || 'Project name is already taken within this organisation');
         }
       }
 
@@ -543,22 +327,16 @@ export class ProjectService {
       if (data.progress !== undefined) updateData.progress = data.progress;
       if (data.repositoryUrl !== undefined) updateData.repositoryUrl = data.repositoryUrl;
       if (data.documentationUrl !== undefined) updateData.documentationUrl = data.documentationUrl;
-      if (data.teamId !== undefined) updateData.teamId = data.teamId;
+      if (data.organisationId !== undefined) updateData.organisationId = data.organisationId;
 
       const project = await prisma.project.update({
         where: { id: projectId },
         data: updateData,
         include: {
-          team: {
+          organisation: {
             select: {
               id: true,
               name: true,
-              organisation: {
-                select: {
-                  id: true,
-                  name: true,
-                }
-              }
             }
           },
           _count: {
@@ -583,11 +361,11 @@ export class ProjectService {
         progress: project.progress,
         repositoryUrl: project.repositoryUrl,
         documentationUrl: project.documentationUrl,
-        teamId: project.teamId,
+        organisationId: project.organisationId,
         isActive: project.isActive,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
-        team: project.team,
+        organisation: project.organisation,
         fileCount: project._count.files,
       };
     } catch (error) {
@@ -604,9 +382,9 @@ export class ProjectService {
         throw new Error('Project not found');
       }
 
-      // Verify user is a member of the project's team with sufficient permissions
-      const userRole = await teamService.getUserRole(userId, existingProject.teamId);
-      if (!userRole || userRole === 'MEMBER') {
+      // Verify user is a member of the project's organisation
+      const isOrganisationMember = await organisationService.isUserMember(userId, existingProject.organisationId);
+      if (!isOrganisationMember) {
         throw new Error('You do not have permission to delete this project');
       }
 
@@ -621,8 +399,14 @@ export class ProjectService {
     }
   }
 
-  async validateProjectName(name: string, organisationId: string, excludeId?: string): Promise<boolean> {
+  async validateProjectName(name: string, organisationId: string, excludeId?: string): Promise<{ isValid: boolean; error?: string }> {
     try {
+      // First validate format and blocked names
+      const formatValidation = validateNameFormat(name);
+      if (!formatValidation.isValid) {
+        return formatValidation;
+      }
+
       const whereClause: any = {
         name,
         organisationId,
@@ -637,7 +421,14 @@ export class ProjectService {
         where: whereClause
       });
 
-      return !existingProject;
+      if (existingProject) {
+        return {
+          isValid: false,
+          error: 'A project with this name already exists in this organisation',
+        };
+      }
+
+      return { isValid: true };
     } catch (error) {
       console.error('Failed to validate project name:', error);
       throw error;
@@ -649,7 +440,7 @@ export class ProjectService {
       const project = await this.getProjectById(projectId);
       if (!project) return false;
 
-      return await teamService.isUserMember(userId, project.teamId);
+      return await organisationService.isUserMember(userId, project.organisationId);
     } catch (error) {
       console.error('Failed to check project access:', error);
       return false;
@@ -690,33 +481,11 @@ export class ProjectService {
           repositoryUrl: true,
           documentationUrl: true,
           isActive: true,
+          organisationId: true,
           organisation: {
             select: {
               id: true,
               name: true,
-            },
-          },
-          assignedTeams: {
-            select: {
-              team: {
-                select: {
-                  id: true,
-                  name: true,
-                  owner: {
-                    select: {
-                      name: true,
-                      firstname: true,
-                      lastname: true,
-                      email: true,
-                    },
-                  },
-                  _count: {
-                    select: {
-                      members: true,
-                    },
-                  },
-                },
-              },
             },
           },
           createdAt: true,

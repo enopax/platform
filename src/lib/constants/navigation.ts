@@ -1,7 +1,6 @@
 import {
   RiDashboardLine,
   RiProjectorLine,
-  RiTeamLine,
   RiBuildingLine,
   RiCodeLine,
   RiServerLine,
@@ -31,11 +30,5 @@ export const navigation = [
     href: '/orga',
     icon: RiBuildingLine,
     description: 'Company and organisation management'
-  },
-  {
-    name: 'Teams',
-    href: '/main/teams',
-    icon: RiTeamLine,
-    description: 'Team collaboration and management'
   },
 ];

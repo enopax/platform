@@ -40,38 +40,6 @@ export default async function ProjectLayout({
           name: true,
         },
       },
-      assignedTeams: {
-        include: {
-          team: {
-            include: {
-              owner: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                },
-              },
-              members: {
-                include: {
-                  user: {
-                    select: {
-                      id: true,
-                      name: true,
-                      email: true,
-                    },
-                  },
-                },
-              },
-              _count: {
-                select: {
-                  members: true,
-                  assignedProjects: true,
-                },
-              },
-            },
-          },
-        },
-      },
       allocatedResources: {
         include: {
           resource: {
@@ -97,7 +65,6 @@ export default async function ProjectLayout({
       },
       _count: {
         select: {
-          assignedTeams: true,
           allocatedResources: true,
         },
       },

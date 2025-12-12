@@ -6,28 +6,18 @@ import { Badge } from '@/components/common/Badge';
 import {
   RiProjectorLine,
   RiAddLine,
-  RiTeamLine,
   RiCalendarLine,
   RiBarChartLine,
   RiServerLine
 } from '@remixicon/react';
 import Link from 'next/link';
-import { type Project, type Team, type User, type Organisation } from '@prisma/client';
+import { type Project } from '@prisma/client';
 
 type ProjectWithTeamsAndResources = Project & {
   organisation: {
     id: string;
     name: string;
   };
-  assignedTeams: {
-    team: Team & {
-      owner: User;
-      _count: {
-        members: number;
-        assignedProjects: number;
-      };
-    };
-  }[];
   allocatedResources?: {
     resource: {
       id: string;
@@ -120,11 +110,6 @@ export default function ProjectGrid({ projects, selectedTeamName }: ProjectGridP
 
               {/* Project Stats */}
               <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
-                <div className="flex items-center">
-                  <RiTeamLine className="h-3 w-3 mr-1" />
-                  <span className="font-medium">{project.assignedTeams.length}</span>
-                  <span className="ml-1">assigned teams</span>
-                </div>
                 {project.startDate && (
                   <div className="flex items-center">
                     <RiCalendarLine className="h-3 w-3 mr-1" />

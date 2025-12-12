@@ -7,7 +7,6 @@ import { Input } from '@/components/common/Input';
 import {
   RiProjectorLine,
   RiAddLine,
-  RiTeamLine,
   RiCalendarLine,
   RiBarChartLine,
   RiServerLine,
@@ -19,22 +18,13 @@ import {
 } from '@remixicon/react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { type Project, type Team, type User, type Organisation } from '@prisma/client';
+import { type Project } from '@prisma/client';
 
 type ProjectWithTeamsAndResources = Project & {
   organisation: {
     id: string;
     name: string;
   };
-  assignedTeams: {
-    team: Team & {
-      owner: User;
-      _count: {
-        members: number;
-        assignedProjects: number;
-      };
-    };
-  }[];
   allocatedResources?: {
     resource: {
       id: string;
@@ -59,8 +49,7 @@ export default function EnhancedProjectGrid({ projects, selectedTeamName }: Enha
     .filter(project =>
       project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       project.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.organisation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.assignedTeams.some(at => at.team.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      project.organisation.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
       switch (sortBy) {
@@ -225,11 +214,6 @@ export default function EnhancedProjectGrid({ projects, selectedTeamName }: Enha
 
                   {/* Project Stats */}
                   <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
-                    <div className="flex items-center">
-                      <RiTeamLine className="h-3 w-3 mr-1" />
-                      <span className="font-medium">{project.assignedTeams.reduce((total, at) => total + at.team._count.members, 0)}</span>
-                      <span className="ml-1">members</span>
-                    </div>
                     {project.startDate && (
                       <div className="flex items-center">
                         <RiCalendarLine className="h-3 w-3 mr-1" />
@@ -252,9 +236,6 @@ export default function EnhancedProjectGrid({ projects, selectedTeamName }: Enha
                         <RiServerLine className="h-3 w-3 mr-1" />
                         <span className="font-medium">{project.allocatedResources?.length || 0}</span>
                         <span className="ml-1">resources</span>
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        Teams: {project.assignedTeams.length > 0 ? project.assignedTeams.map(at => at.team.name).join(', ') : 'Unassigned'}
                       </div>
                     </div>
 
@@ -307,10 +288,6 @@ export default function EnhancedProjectGrid({ projects, selectedTeamName }: Enha
 
                   {/* Stats */}
                   <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center">
-                      <RiTeamLine className="h-3 w-3 mr-1" />
-                      <span>{project.assignedTeams.reduce((total, at) => total + at.team._count.members, 0)}</span>
-                    </div>
                     <div className="flex items-center">
                       <RiServerLine className="h-3 w-3 mr-1" />
                       <span>{project.allocatedResources?.length || 0}</span>

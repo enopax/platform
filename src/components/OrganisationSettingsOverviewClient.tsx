@@ -2,17 +2,15 @@
 
 import { useOrganisation } from '@/contexts/OrganisationContext';
 import { Card } from '@/components/common/Card';
-import { RiBuildingLine, RiUserLine, RiTeamLine, RiCalendarLine } from '@remixicon/react';
+import { RiBuildingLine, RiUserLine } from '@remixicon/react';
 
 interface OrganisationSettingsOverviewClientProps {
   memberCount?: number;
-  teamCount?: number;
   pendingRequests?: number;
 }
 
 export function OrganisationSettingsOverviewClient({
   memberCount = 0,
-  teamCount = 0,
   pendingRequests = 0
 }: OrganisationSettingsOverviewClientProps) {
   const organisation = useOrganisation();
@@ -40,13 +38,6 @@ export function OrganisationSettingsOverviewClient({
           <span className="text-gray-500">Members:</span>
           <span className="ml-2 font-medium text-gray-900 dark:text-white">
             {memberCount}
-          </span>
-        </div>
-
-        <div>
-          <span className="text-gray-500">Teams:</span>
-          <span className="ml-2 font-medium text-gray-900 dark:text-white">
-            {teamCount}
           </span>
         </div>
 
