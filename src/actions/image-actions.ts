@@ -7,22 +7,20 @@ export interface ImageUploadResult {
   success: boolean;
   error?: string;
   urls?: string[];
-  fileInfo?: {
-    id: string;
-    name: string;
-    size: number;
-    hash: string;
-  }[];
 }
 
-const MAX_IMAGE_SIZE = 1024 * 1024; // 1MB max
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB max
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
+/**
+ * Lightweight image upload for account profiles
+ * Converts images to base64 data URIs for storage
+ */
 export async function uploadImageAction(prevState: ImageUploadResult | null, formData: FormData): Promise<ImageUploadResult> {
   try {
     const session = await auth();
-    if (!session) {
-      return { success: false, error: 'Unauthorized' };
+    if (!session?.user) {
+      return { success: false, error: 'Unauthorised' };
     }
 
     const files = formData.getAll('images') as File[];
@@ -30,120 +28,46 @@ export async function uploadImageAction(prevState: ImageUploadResult | null, for
       return { success: false, error: 'No images selected' };
     }
 
-    // Validate each image
-    for (const file of files) {
-      // Check if it's actually a file and not empty
-      if (!file || file.size === 0) {
-        return { success: false, error: 'One or more files are invalid' };
-      }
+    // Take only the first file for profile images
+    const file = files[0];
 
-      // Check file size (max 1MB)
-      if (file.size > MAX_IMAGE_SIZE) {
-        return {
-          success: false,
-          error: `Image "${file.name}" is too large. Maximum size is 1MB.`
-        };
-      }
-
-      // Check file type
-      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        return {
-          success: false,
-          error: `Invalid file type for "${file.name}". Only JPEG, PNG, GIF, and WebP images are allowed.`
-        };
-      }
+    // Validate file
+    if (!file || file.size === 0) {
+      return { success: false, error: 'File is invalid' };
     }
 
-    // Calculate total size for quota check
-    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-    
-    // Upload all images to IPFS
-    const uploadedFiles = [];
-    const urls = [];
-
-    for (const file of files) {
-      try {
-        const uploadedFile = await userFilesService.uploadFile(session.user.id, file);
-
-        uploadedFiles.push({
-          id: uploadedFile.id,
-          name: uploadedFile.name,
-          size: uploadedFile.size,
-          hash: uploadedFile.ipfsHash,
-        });
-
-        // Create IPFS gateway URL
-        const gatewayUrl = `https://ipfs.io/ipfs/${uploadedFile.ipfsHash}`;
-        urls.push(gatewayUrl);
-      } catch (uploadError) {
-        console.error(`Failed to upload ${file.name}:`, uploadError);
-        return {
-          success: false,
-          error: `Failed to upload "${file.name}": ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`
-        };
-      }
+    if (file.size > MAX_IMAGE_SIZE) {
+      return {
+        success: false,
+        error: `Image is too large. Maximum size is 5MB.`
+      };
     }
 
-    // Revalidate the resources page to show new files
-    revalidatePath('/main/resources');
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return {
+        success: false,
+        error: 'Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.'
+      };
+    }
+
+    // Convert image to base64 data URI
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
+    const dataUri = `data:${file.type};base64,${base64}`;
+
+    // Revalidate account settings page
+    revalidatePath('/account/settings');
 
     return {
       success: true,
-      urls,
-      fileInfo: uploadedFiles,
+      urls: [dataUri],
     };
 
   } catch (error) {
     console.error('Image upload error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to upload images'
-    };
-  }
-}
-
-export async function deleteImageAction(imageId: string): Promise<ImageUploadResult> {
-  try {
-    const session = await auth();
-    if (!session) {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    await userFilesService.deleteFile(session.user.id, imageId);
-
-    // Revalidate the resources page
-    revalidatePath('/main/resources');
-
-    return { success: true };
-
-  } catch (error) {
-    console.error('Image delete error:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to delete image'
-    };
-  }
-}
-
-export async function getImageDownloadUrlAction(imageId: string): Promise<ImageUploadResult & { downloadUrl?: string }> {
-  try {
-    const session = await auth();
-    if (!session) {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    const downloadUrl = await userFilesService.getFileDownloadUrl(session.user.id, imageId);
-
-    return {
-      success: true,
-      downloadUrl,
-    };
-
-  } catch (error) {
-    console.error('Get image download URL error:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to get download URL'
+      error: error instanceof Error ? error.message : 'Failed to upload image'
     };
   }
 }

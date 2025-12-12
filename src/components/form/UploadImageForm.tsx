@@ -8,18 +8,12 @@ import { Callout } from '@/components/common/Callout';
 import { Button } from '@/components/common/Button';
 import { uploadImageAction, type ImageUploadResult } from '@/actions/image-actions';
 
-interface UploadImageProps {
-  onUploadComplete?: (urls: string[]) => void;
-}
-
-export default function UploadImage({
-  multiple,
+export default function UploadImageForm({
   id,
   action,
 }: {
-  multiple: boolean,
-  id: string,
-  action: (id: string, urls: string[]) => void,
+  id: string;
+  action: (id: string, urls: string[]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [state, formAction, isPending] = useActionState(uploadImageAction, null);
@@ -43,32 +37,22 @@ export default function UploadImage({
         </Callout>
       )}
 
-      {state?.success && state.urls && state.urls.length > 0 && (
-        <Callout variant="success" title="Uploaded">
-          <ul>
-            {state.urls.map((url) => (
-              <li key={url}>
-                <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>
-              </li>
-            ))}
-          </ul>
-        </Callout>
-      )}
+      <div className="flex flex-col items-center gap-2">
+        <Label htmlFor="file">Choose Image</Label>
+        <div className="flex justify-center items-center gap-2">
+          <Input
+            ref={inputRef}
+            type="file"
+            id="file"
+            name="images"
+            accept="image/*"
+            disabled={isPending}
+          />
 
-      <Label htmlFor="file">Upload an Image</Label>
-      <div className="w-full inline-flex justify-center items-center gap-2">
-        <Input
-          ref={inputRef}
-          type="file"
-          name="images"
-          accept="image/*"
-          disabled={isPending}
-          {...(multiple ? { multiple: true } : {})}
-        />
-
-        <Button type="submit" disabled={isPending}>
-          {isPending ? 'Uploading...' : 'Upload'}
-        </Button>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? 'Uploading...' : 'Upload'}
+          </Button>
+        </div>
       </div>
     </form>
   );
