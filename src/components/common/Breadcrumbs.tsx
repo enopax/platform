@@ -2,9 +2,9 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { RiArrowRightLine, RiHomeLine } from '@remixicon/react';
+import { RiArrowRightLine } from '@remixicon/react';
 
-interface BreadcrumbItem {
+export interface BreadcrumbItem {
   label: string;
   href?: string;
 }
@@ -18,6 +18,10 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
 
   // Auto-generate breadcrumbs from pathname if no items provided
   const breadcrumbItems = items || generateBreadcrumbsFromPath(pathname);
+
+  if (breadcrumbItems.length === 0) {
+    return null;
+  }
 
   return (
     <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
@@ -38,33 +42,36 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
 }
 
 function generateBreadcrumbsFromPath(pathname: string): BreadcrumbItem[] {
-  const segments = pathname.split('/').filter(segment => segment && segment !== 'main');
+  const segments = pathname.split('/').filter(segment => segment);
   const breadcrumbs: BreadcrumbItem[] = [];
 
-  // Check if this is an organisation-specific route
-  const isOrgRoute = segments[0] === 'organisations' && segments.length > 1;
+  // Pattern: /orga/orgaName/projectName/resourceName
+  if (segments[0] !== 'orga' || !segments[1]) {
+    return breadcrumbs;
+  }
 
-  for (let i = 0; i < segments.length; i++) {
-    const segment = segments[i];
-    const isLast = i === segments.length - 1;
+  const orgaName = segments[1];
 
-    // Skip IDs (typically UUIDs or numeric IDs) but handle organisation names
-    if (segment.match(/^[a-f0-9-]{36}$/) || segment.match(/^\d+$/)) {
-      // For organisation routes, show organisation name for the ID segment
-      if (isOrgRoute && i === 1) {
-        // This would be the organisation ID - in real app you'd fetch the name
-        breadcrumbs.push({
-          label: 'Organisation', // In real app, fetch actual name
-          href: isLast ? undefined : `/${segments.slice(0, i + 1).join('/')}`
-        });
-      }
-      continue;
+  breadcrumbs.push({
+    label: orgaName,
+    href: `/orga/${orgaName}`
+  });
+
+  // Pattern: /orga/orgaName/projectName/...
+  if (segments[2]) {
+    const projectName = segments[2];
+    breadcrumbs.push({
+      label: projectName,
+      href: `/orga/${orgaName}/${projectName}`
+    });
+
+    // Pattern: /orga/orgaName/projectName/resourceName
+    if (segments[3]) {
+      const resourceName = segments[3];
+      breadcrumbs.push({
+        label: resourceName
+      });
     }
-
-    const label = formatSegmentLabel(segment);
-    const href = isLast ? undefined : `/${segments.slice(0, i + 1).join('/')}`;
-
-    breadcrumbs.push({ label, href });
   }
 
   return breadcrumbs;

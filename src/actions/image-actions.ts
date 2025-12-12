@@ -1,8 +1,6 @@
 'use server';
 
 import { auth } from '@/lib/auth';
-import { userFilesService } from '@/lib/services/user-files';
-import { storageQuotaService } from '@/lib/services/storage-quota';
 import { revalidatePath } from 'next/cache';
 
 export interface ImageUploadResult {
@@ -58,16 +56,7 @@ export async function uploadImageAction(prevState: ImageUploadResult | null, for
 
     // Calculate total size for quota check
     const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-
-    // Check storage quota
-    const quotaCheck = await storageQuotaService.checkStorageQuota(session.user.id, totalSize);
-    if (!quotaCheck.allowed) {
-      return {
-        success: false,
-        error: quotaCheck.reason || 'Storage quota exceeded'
-      };
-    }
-
+    
     // Upload all images to IPFS
     const uploadedFiles = [];
     const urls = [];

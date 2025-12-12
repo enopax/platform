@@ -38,7 +38,7 @@ export default async function Page() {
                       Start Now
                     </Button>
                   </Link>
-                  <Link href="/api">
+                  <Link href="/docs/api">
                     <Button variant="outline" className="px-8 py-3 text-lg font-semibold">
                       View API Docs
                     </Button>

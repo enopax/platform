@@ -381,3 +381,4 @@ This file serves as the quick reference and starting point. For detailed informa
 ---
 
 *Last updated: This documentation structure guides all development work in this repository.*
+- to memorize **ALWAYS** Use existing folder structure before creating new folders

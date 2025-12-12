@@ -19,7 +19,7 @@ export default function CredentialsForm() {
 
   useEffect(() => {
     if (state?.payload?.status == 'accepted') {
-      router.replace('/main');
+      router.replace('/orga');
       router.refresh();
     }
   }, [state, router]);
