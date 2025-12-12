@@ -2,7 +2,8 @@
 
 **Next.js 15 + TypeScript Web Application**
 
-A modern web application for deploying and managing infrastructure services with a single click. Deploy IPFS storage clusters, databases, and other services through an intuitive web interface.
+A comprehensive platform for managing organisations, projects, and deploying infrastructure resources with a single click. Deploy IPFS clusters, databases, and other services through an intuitive web interface with role-based access control.
+
 ---
 
 ## 🚀 Quick Start
@@ -83,23 +84,25 @@ Next.js 15 web application with Server Actions, unified API architecture, and co
 ### Infrastructure Setup
 
 **Development**:
-- Docker runs: PostgreSQL, Grafana, Prometheus
+- Docker runs: PostgreSQL only
 - Next.js runs standalone: `npm run dev` (port 3000)
 - Hot reloading enabled for fast development
+- Automatic database schema synchronisation via Prisma
 
 **Production**:
-- Docker runs: PostgreSQL, Grafana, Prometheus, Next.js (production build), Nginx
+- Docker runs: PostgreSQL + Next.js (containerised production build)
 - Full stack containerised with automatic restarts
-- Nginx reverse proxy for production traffic
+- Automatic database schema synchronisation on restart
+- Git-pull deployment workflow with `./deploy.sh`
 
 ### Key Technologies
-- **Framework**: Next.js 15 with App Router
+- **Framework**: Next.js 15 with App Router and Server Actions
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS + Radix UI
+- **Styling**: Tailwind CSS + Radix UI + Tremor
 - **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: NextAuth.js v5
 - **Testing**: Jest with multi-environment configuration
-- **Monitoring**: Grafana + Prometheus
+- **API Integration**: External Resource API for infrastructure provisioning
 - **Validation**: Zod schemas for type-safe data validation
 
 ### Core Architecture Principles
@@ -189,101 +192,89 @@ tests/
 
 ## 🌟 Key Features
 
-### Unified API Architecture
-- **Server Actions**: For internal form submissions and UI interactions
-- **API Routes**: For external integrations and third-party access
-- **Shared Services**: Both use identical business logic for consistency
+### Organisation & Project Management
+- Create and manage organisations with hierarchical structure
+- Name-based URL routing for human-readable URLs
+- Organisation-wide teams with role-based permissions
+- Project creation and management within organisations
+- Resource allocation and tracking per project
 
-### File Management
-- Upload and manage files with metadata
-- Real-time file status monitoring
-- Advanced search and filtering capabilities
-- Team-based file organisation
+### Resource Deployment System
+- One-click infrastructure deployment with resource templates
+- Real-time deployment progress tracking with live updates
+- Support for IPFS clusters, PostgreSQL databases, and more
+- Mock deployment service for rapid UI/UX validation
+- Automatic endpoint and credentials generation
 
-### Team Management API
-- Complete CRUD operations for team management
-- Team member management with role-based permissions
-- Organisation-scoped team operations
-- RESTful API endpoints for external integrations
+### Resource API Integration
+- External Resource API for real infrastructure provisioning
+- Test panels for API connectivity and debugging
+- Multi-provider resource support
+- Secure credential management and storage
 
-### Project Management API
-- Complete CRUD operations for project management
-- Project assignment to teams with permission controls
-- Project file management and organisation
-- RESTful API endpoints for external integrations
-
-### Authentication & Security
-- NextAuth.js v5 with multiple provider support
-- Session-based authentication with secure cookie handling
-- Role-based access control for team features
+### Permission & Access Control
+- Organisation roles: MEMBER, MANAGER, ADMIN, OWNER
+- Project-level access control
+- Simplified permission model (all org members can access all projects)
+- Authentication via NextAuth.js v5 with multiple provider support
 
 ### User Experience
-- Responsive design with Tailwind CSS
-- Real-time feedback with loading states
-- Progressive enhancement for accessibility
+- Responsive design with Tailwind CSS + Radix UI + Tremor
+- Real-time deployment status with progress indicators
+- Intuitive organisation and project navigation
 - Comprehensive error handling and user feedback
+- Progressive enhancement for accessibility
 
 ---
 
-## 🔌 API Endpoints
+## 🛠️ Architecture Details
 
-### Team Management API
-Complete RESTful API for team operations:
+### Name-Based Routing
+The platform uses human-readable names in URLs instead of IDs:
+- Organisation paths: `/orga/[orgaName]`
+- Project paths: `/orga/[orgaName]/[projectName]`
+- Resource paths: `/orga/[orgaName]/[projectName]/[resourceName]`
 
-```bash
-# Team CRUD Operations
-POST   /api/team/create           # Create new team
-GET    /api/team/list             # List teams (with optional organisationId filter)
-GET    /api/team/[id]             # Get team details
-PUT    /api/team/[id]             # Update team
-DELETE /api/team/[id]             # Delete team (soft delete)
+**Name Validation**:
+- Alphanumeric characters and hyphens only
+- Unique per scope (organisation/project names are globally unique)
+- Blocked names list prevents conflicts with reserved routes
+- Automatic validation on creation and updates
 
-# Team Member Management
-GET    /api/team/[id]/members     # List team members
-POST   /api/team/[id]/members     # Add team member
-DELETE /api/team/[id]/members     # Remove team member
-```
+### Context API Architecture
+Shared context providers avoid prop drilling across nested route groups:
+- **OrganisationContext**: Share organisation data across components
+- **ProjectContext**: Share project data across components
+- **ResourceContext**: Share resource data across components
 
-### Project Management API
-Complete RESTful API for project operations:
+### Permission System
+Role-based access control with hierarchical roles:
+- **MEMBER**: Basic access to organisation and projects
+- **MANAGER**: Can invite members and manage teams
+- **ADMIN**: Can manage roles and project configurations
+- **OWNER**: Full control over organisation
 
-```bash
-# Project CRUD Operations
-POST   /api/project/create        # Create new project
-GET    /api/project/list          # List projects (with optional organisationId/teamId filter)
-GET    /api/project/[id]          # Get project details
-PUT    /api/project/[id]          # Update project
-DELETE /api/project/[id]          # Delete project (soft delete)
+Simplified permission model:
+- All organisation members can access all projects
+- Team assignments provide additional organisational grouping
+- Roles determine what actions users can perform
 
-# Project File Management
-GET    /api/project/[id]/files    # List project files
-```
-
-All endpoints require authentication and follow role-based permission controls.
+### Resource API Integration
+Integration with external Resource API for infrastructure provisioning:
+- Secure communication with JSON payload exchanges
+- Test panels at `/account/test-resource-api`
+- Support for multiple providers and resource types
+- Automatic credential and endpoint generation
 
 ---
 
-## 🔗 Integration
-
-### Database Schema
+## 🗄️ Database Schema
 - **PostgreSQL**: Primary database with Prisma ORM
-- **File Metadata**: Hash, size, ownership, and team associations
-- **User Management**: Authentication, teams, and permissions
-
----
-
-## 📊 Monitoring & Observability
-
-### Available Services
-- **Grafana**: http://localhost:3001 (admin/admin)
-- **Prometheus**: http://localhost:9090
-- **PostgreSQL**: localhost:5432
-
-### Available Metrics
-- File upload/download statistics
-- Storage quota usage and limits
-- User activity and engagement metrics
-- System health and performance
+- **Organisations**: With name-based unique constraints
+- **Projects**: Linked to organisations, with name validation
+- **Resources**: Infrastructure provisioning configurations
+- **Users & Authentication**: NextAuth.js session management
+- **Roles**: Organisation and project role assignments
 
 ---
 
@@ -309,10 +300,11 @@ Production-ready Docker setup with:
 
 ### Getting Started
 1. Set up environment variables (copy from `.default.env`)
-2. Start Docker infrastructure: `npm run docker:dev`
-3. Run database migrations: `npx prisma migrate dev`
-4. Start development server: `npm run dev`
-5. Access application: http://localhost:3000
+2. Install dependencies: `npm install`
+3. Start Docker infrastructure: `npm run docker:dev`
+4. Database schema automatically synchronises on startup
+5. Start development server: `npm run dev`
+6. Access application: http://localhost:3000
 
 ### Testing Workflow
 1. **Development**: Use specific test commands for faster feedback
@@ -337,4 +329,4 @@ Production-ready Docker setup with:
 
 ---
 
-*Modern storage platform with team collaboration, role-based permissions, and comprehensive monitoring.*
+*Complete infrastructure deployment platform with organisation management, role-based permissions, and real-time resource provisioning.*
