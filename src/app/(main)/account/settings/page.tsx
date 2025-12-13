@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma';
 import Avatar from '@/components/common/Avatar';
 import UploadImageForm from '@/components/form/UploadImageForm';
 import { setAvatar } from '@/actions/user';
+import Breadcrumbs from '@/components/common/Breadcrumbs';
 
 export default async function Page() {
   const session = await auth();
@@ -28,9 +29,12 @@ export default async function Page() {
   });
 
   if (!user) return notFound();
-  
+
   return (
     <main>
+      <div className="sm:mx-auto sm:w-full sm:max-w-md mb-4">
+        <Breadcrumbs />
+      </div>
       <Card className="m-20 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
           <h2 className="mb-8 text-2xl font-extrabold text-gray-900 dark:text-gray-300">

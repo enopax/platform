@@ -1,8 +1,8 @@
 import { type User } from '@prisma/client';
 
 import Link from 'next/link';
-import { RiAccountCircleFill } from '@remixicon/react';
 import { Button } from '@/components/common/Button';
+import Avatar from '@/components/common/Avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,8 +30,12 @@ export default function UserBarMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost">
-          <RiAccountCircleFill className="size-5 shrink-0" />
+        <Button variant="ghost" className="p-1">
+          <Avatar
+            name={user.name || user.email}
+            image={user.image}
+            size="small"
+          />
         </Button>
       </DropdownMenuTrigger>
 

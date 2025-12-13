@@ -16,16 +16,21 @@ export default function UploadImageForm({
   action: (id: string, urls: string[]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const hasCalledAction = useRef(false);
   const [state, formAction, isPending] = useActionState(uploadImageAction, null);
 
   // Handle successful upload
   useEffect(() => {
-    if (state?.success && state.urls) {
+    if (state?.success && state.urls && !hasCalledAction.current) {
+      hasCalledAction.current = true;
       action(id, state.urls);
       // Reset form
       if (inputRef.current) {
         inputRef.current.value = '';
       }
+    } else if (!state?.success) {
+      // Reset flag for next upload
+      hasCalledAction.current = false;
     }
   }, [state, id, action]);
 

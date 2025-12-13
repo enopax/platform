@@ -15,11 +15,17 @@ import {
   RiAddLine,
   RiUserLine,
   RiShieldLine,
+  RiCodeLine,
+  RiDatabaseLine,
+  RiTeamLine,
+  RiMailLine,
 } from '@remixicon/react';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
+import Avatar from '@/components/common/Avatar';
 import { User } from '@prisma/client';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
+import { handleSignOut } from '@/actions/auth';
 
 type Project = {
   id: string;
@@ -302,15 +308,26 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
 
           {/* User section */}
           <div className="border-t border-gray-200 dark:border-gray-800 p-4 flex-shrink-0">
-            <div className="flex items-center mb-3">
-              <div className="ml-3 flex-1 min-w-0">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+            {/* User info with avatar */}
+            <div className="flex items-center gap-3 mb-4">
+              <Avatar
+                name={user.name || user.email || 'User'}
+                image={user.image || null}
+                size="medium"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                  {user.name || 'User'}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {user.email || 'customer@example.com'}
                 </p>
               </div>
             </div>
 
+            {/* Action buttons */}
             <div className="space-y-1">
+              {/* Smart Search (keep existing) */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -325,6 +342,19 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
                 </span>
                 Smart Search
               </Button>
+
+              {/* Account Menu Items */}
+              <Link href="/account/developer" onClick={handleLinkClick}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                >
+                  <RiCodeLine className="mr-2 h-4 w-4" />
+                  Developer
+                </Button>
+              </Link>
+
               <Link href="/account/settings" onClick={handleLinkClick}>
                 <Button
                   variant="ghost"
@@ -332,9 +362,73 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
                   className="w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 >
                   <RiSettings3Line className="mr-2 h-4 w-4" />
-                  Account Settings
+                  Settings
                 </Button>
               </Link>
+
+              {/* Admin Menu Items (conditional) */}
+              {user.role === 'ADMIN' && (
+                <>
+                  <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
+
+                  <Link href="/admin" onClick={handleLinkClick}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <RiDatabaseLine className="mr-2 h-4 w-4" />
+                      Nodes
+                    </Button>
+                  </Link>
+
+                  <Link href="/admin/users" onClick={handleLinkClick}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <RiUserLine className="mr-2 h-4 w-4" />
+                      Users
+                    </Button>
+                  </Link>
+
+                  <Link href="/admin/organisations" onClick={handleLinkClick}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <RiBuildingLine className="mr-2 h-4 w-4" />
+                      Organisations
+                    </Button>
+                  </Link>
+
+                  <Link href="/admin/teams" onClick={handleLinkClick}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <RiTeamLine className="mr-2 h-4 w-4" />
+                      Teams
+                    </Button>
+                  </Link>
+
+                  <Link href="/admin/projects" onClick={handleLinkClick}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <RiProjectorLine className="mr-2 h-4 w-4" />
+                      Projects
+                    </Button>
+                  </Link>
+
+                  <Link href="/admin/previews/email" onClick={handleLinkClick}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <RiMailLine className="mr-2 h-4 w-4" />
+                      Preview Email
+                    </Button>
+                  </Link>
+                </>
+              )}
+
+              {/* Separator before Sign Out */}
+              <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
+
+              {/* Sign Out Button */}
+              <form action={handleSignOut}>
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-red-600 dark:text-red-500 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  Sign Out
+                </Button>
+              </form>
             </div>
           </div>
         </div>

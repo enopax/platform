@@ -2,6 +2,8 @@
 
 import { auth } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
 
 export interface ImageUploadResult {
   success: boolean;
@@ -11,15 +13,16 @@ export interface ImageUploadResult {
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB max
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'avatars');
 
 /**
- * Lightweight image upload for account profiles
- * Converts images to base64 data URIs for storage
+ * Filesystem-based image upload for account profiles
+ * Saves images to the public directory and stores URL in database
  */
 export async function uploadImageAction(prevState: ImageUploadResult | null, formData: FormData): Promise<ImageUploadResult> {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return { success: false, error: 'Unauthorised' };
     }
 
@@ -39,7 +42,7 @@ export async function uploadImageAction(prevState: ImageUploadResult | null, for
     if (file.size > MAX_IMAGE_SIZE) {
       return {
         success: false,
-        error: `Image is too large. Maximum size is 5MB.`
+        error: 'Image is too large. Maximum size is 5MB.'
       };
     }
 
@@ -50,17 +53,28 @@ export async function uploadImageAction(prevState: ImageUploadResult | null, for
       };
     }
 
-    // Convert image to base64 data URI
-    const arrayBuffer = await file.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString('base64');
-    const dataUri = `data:${file.type};base64,${base64}`;
+    // Create uploads directory if it doesn't exist
+    await mkdir(UPLOAD_DIR, { recursive: true });
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const ext = file.name.split('.').pop();
+    const filename = `${session.user.id}-${timestamp}.${ext}`;
+    const filepath = join(UPLOAD_DIR, filename);
+
+    // Write file to filesystem
+    const buffer = await file.arrayBuffer();
+    await writeFile(filepath, Buffer.from(buffer));
+
+    // Return relative URL for the image
+    const imageUrl = `/uploads/avatars/${filename}`;
 
     // Revalidate account settings page
     revalidatePath('/account/settings');
 
     return {
       success: true,
-      urls: [dataUri],
+      urls: [imageUrl],
     };
 
   } catch (error) {

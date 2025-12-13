@@ -17,3 +17,6 @@ Dockerfile
 .dockerignore
 .default.env*
 .last_deploy_hash
+
+# Uploaded files
+public/uploads/

@@ -16,7 +16,7 @@ export default function SignUpForm() {
 
   useEffect(() => {
     if (state?.payload?.status == 'accepted') {
-      router.replace('/main');
+      router.replace('/orga');
       router.refresh();
     }
   }, [state, router]);

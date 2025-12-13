@@ -35,7 +35,7 @@ export default function GenericTable({
   tableSize: number;
   tableData: Object[];
   tableColumns: Object[];
-  actions: { [key: string]: Function };
+  actions?: { [key: string]: Function };
 }) {
   const router = useRouter();
   const pageSize = tableData.length;
@@ -77,9 +77,6 @@ export default function GenericTable({
                 </TableHeaderCell>
 
               ))}
-              {actions && (
-                <TableHeaderCell scope="col" />
-              )}
             </TableRow>
           ))}
         </TableHead>
@@ -91,11 +88,6 @@ export default function GenericTable({
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
               ))}
-              {actions && (
-                <TableCell>
-                  <Actions row={row.original} actions={actions} />
-                </TableCell>
-              )}
             </TableRow>
           ))}
         </TableBody>

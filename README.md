@@ -14,13 +14,13 @@ A modern web application for deploying and managing infrastructure services with
 npm install
 
 # Start PostgreSQL database
-npm run docker:dev
+npm run docker:dev:up
 
 # Start Next.js development server (runs standalone)
 npm run dev
 
 # Stop database when done
-npm run docker:dev:stop
+npm run docker:dev:down
 ```
 
 ### Production Mode (Local Testing)

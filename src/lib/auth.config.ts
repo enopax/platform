@@ -1,4 +1,5 @@
 import { NextAuthConfig } from "next-auth";
+import { prisma } from "@/lib/prisma";
 
 export default {
   providers: [
@@ -9,17 +10,23 @@ export default {
       if (user) {
         token.role = user.role;
         token.name = `${user.firstname} ${user.lastname}`;
-        token.sub = user.id; // Ensure user ID is in token
+        token.sub = user.id;
       }
       return token;
     },
-    session: async ({ session, token }) => {
+    async session({ session, token }) {
       if (token.sub) {
+        const user = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: { image: true, role: true },
+        });
+
         session.user.id = token.sub;
+        session.user.role = user?.role as string;
+        session.user.name = token.name as string;
+        session.user.image = user?.image || undefined;
       }
-      if (token.role) {
-        session.user.role = token.role as string;
-      }
+
       return session;
     },
   },

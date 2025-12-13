@@ -24,12 +24,12 @@ export default function NewOrganisationForm({ userId }: NewOrganisationFormProps
   const [state, formAction, isPending] = useActionState(createOrganisation, null);
   const router = useRouter();
 
-  // Redirect to organisations page on success
+  // Redirect to newly created organisation page on success
   useEffect(() => {
-    if (state?.success) {
-      router.push('/orga');
+    if (state?.success && state?.organisationName) {
+      router.push(`/orga/${encodeURIComponent(state.organisationName)}`);
     }
-  }, [state?.success, router]);
+  }, [state?.success, state?.organisationName, router]);
 
   return (
     <>

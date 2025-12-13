@@ -25,6 +25,9 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
 
   return (
     <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+      <Link href="/orga" className="hover:text-gray-900 dark:hover:text-gray-100">
+        Home
+      </Link>
       {breadcrumbItems.map((item, index) => (
         <div key={index} className="flex items-center space-x-2">
           <RiArrowRightLine className="h-3 w-3" />
@@ -44,6 +47,23 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
 function generateBreadcrumbsFromPath(pathname: string): BreadcrumbItem[] {
   const segments = pathname.split('/').filter(segment => segment);
   const breadcrumbs: BreadcrumbItem[] = [];
+
+  // Pattern: /account/...
+  if (segments[0] === 'account') {
+    breadcrumbs.push({
+      label: 'Account',
+      href: '/account/settings'
+    });
+
+    if (segments[1]) {
+      const page = segments[1];
+      breadcrumbs.push({
+        label: formatSegmentLabel(page)
+      });
+    }
+
+    return breadcrumbs;
+  }
 
   // Pattern: /orga/orgaName/projectName/resourceName
   if (segments[0] !== 'orga' || !segments[1]) {

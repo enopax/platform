@@ -12,9 +12,11 @@ export async function sendCredentials(state: object | null, formData: FormData) 
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     if (email.length < 3) throw new Error('Your email is too short!');
+
     await signIn('credentials', {
       email: email,
       password: password,
+      redirect: false,
     });
 
     return {

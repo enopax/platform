@@ -26,13 +26,13 @@ type OrganisationType = {
   createdAt: Date;
 };
 
-interface AllOrganisationsClientProps {
+interface OrganisationsClientProps {
   organisations: OrganisationType[];
 }
 
-export function AllOrganisationsClient({
+export function OrganisationsClient({
   organisations
-}: AllOrganisationsClientProps) {
+}: OrganisationsClientProps) {
   return (
     <div className="max-w-7xl mx-auto px-4">
       {/* Header */}

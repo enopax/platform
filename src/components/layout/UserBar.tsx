@@ -9,7 +9,7 @@ export default function UserBar({
   user?: Object,
 }) {
   return (
-    <header className="border-b">
+    <header className="hidden lg:flex border-b">
       <div className="px-4 text-sm w-full">
         <div className="mx-auto max-w-6xl w-full relative flex items-center">          
           {/* UserBarMenu positioned on the right */}
