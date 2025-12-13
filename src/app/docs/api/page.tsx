@@ -246,6 +246,6 @@ export default async function APIDocsPage() {
 }
 
 export const metadata = {
-  title: 'API Documentation - IPFS Storage',
-  description: 'Complete API reference for IPFS Storage platform endpoints and authentication',
+  title: 'API Documentation - Enopax',
+  description: 'Complete API reference for Enopax infrastructure deployment platform endpoints and authentication',
 };

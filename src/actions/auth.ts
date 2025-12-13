@@ -1,11 +1,9 @@
 'use server';
 
 import { signOut } from '@/lib/auth';
-import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 
 export async function handleSignOut() {
-  revalidatePath('/', 'layout');
-  await signOut({
-    redirectTo: '/signin',
-  });
+  await signOut();
+  redirect('/signin');
 }
