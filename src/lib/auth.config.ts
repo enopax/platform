@@ -11,20 +11,16 @@ export default {
         token.role = user.role;
         token.name = `${user.firstname} ${user.lastname}`;
         token.sub = user.id;
+        token.image = user.image;
       }
       return token;
     },
     async session({ session, token }) {
       if (token.sub) {
-        const user = await prisma.user.findUnique({
-          where: { id: token.sub },
-          select: { image: true, role: true },
-        });
-
         session.user.id = token.sub;
-        session.user.role = user?.role as string;
+        session.user.role =token.role as string;
         session.user.name = token.name as string;
-        session.user.image = user?.image || undefined;
+        session.user.image = token.image || undefined;
       }
 
       return session;
