@@ -1,25 +1,12 @@
 'use client'
 
-import Link from 'next/link';
-import { useState, useEffect, useActionState } from 'react';
+import { useEffect, useActionState } from 'react';
 import { Callout } from '@/components/common/Callout';
 import { Label } from '@/components/common/Label';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { Divider } from '@/components/common/Divider';
-import { Switch } from '@/components/common/Switch';
-import { Badge } from '@/components/common/Badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectGroup,
-  SelectGroupLabel,
-} from '@/components/common/Select';
 import { settings } from '@/actions/user';
-import StorageTierSelector, { StorageTier } from './StorageTierSelector';
 
 
 export default function SettingsForm({
@@ -28,7 +15,6 @@ export default function SettingsForm({
   user: any,
 }) {
   const [state, formAction, isPending] = useActionState(settings, null);
-  const [selectedTier, setSelectedTier] = useState<StorageTier>(user.storageTier || 'FREE_500MB');
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });

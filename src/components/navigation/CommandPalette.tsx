@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, createElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { Dialog, DialogContent, DialogTitle } from '@/components/common/Dialog';
@@ -14,138 +14,183 @@ import {
   RiServerLine,
   RiAddLine,
   RiArrowRightLine,
-  RiCloseLine
+  RiCloseLine,
+  RiArrowLeftLine,
+  RiFolderLine,
+  RiGitRepositoryLine
 } from '@remixicon/react';
+import {
+  getUserOrganisations,
+  getOrganisationProjects,
+  getProjectResources,
+  type CommandPaletteOrganisation,
+  type CommandPaletteProject,
+  type CommandPaletteResource
+} from '@/actions/command-palette';
 
-interface CommandItem {
+interface BaseCommandItem {
   id: string;
   title: string;
   subtitle?: string;
   icon: React.ComponentType<{ className?: string }>;
   action: () => void;
-  category: 'navigation' | 'actions' | 'projects' | 'resources';
+  category: 'navigation' | 'actions';
+  type: 'command';
 }
+
+interface OrganisationItem extends CommandPaletteOrganisation {
+  type: 'organisation';
+  category: 'organisation';
+}
+
+interface ProjectItem extends CommandPaletteProject {
+  type: 'project';
+  category: 'project';
+}
+
+interface ResourceItem extends CommandPaletteResource {
+  type: 'resource';
+  category: 'resource';
+}
+
+type CommandItem = BaseCommandItem | OrganisationItem | ProjectItem | ResourceItem;
+type NavigationLevel = 'root' | 'organisations' | 'projects' | 'resources';
 
 export default function CommandPalette() {
   const { isOpen, close } = useCommandPalette();
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [currentLevel, setCurrentLevel] = useState<NavigationLevel>('root');
+  const [selectedOrganisation, setSelectedOrganisation] = useState<CommandPaletteOrganisation | null>(null);
+  const [selectedProject, setSelectedProject] = useState<CommandPaletteProject | null>(null);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Base commands that are always available
-  const baseCommands: CommandItem[] = [
+  // Base static commands
+  const baseCommands: BaseCommandItem[] = [
     {
-      id: 'dashboard',
-      title: 'Dashboard',
-      subtitle: 'Go to organisations',
+      id: 'organisations',
+      title: 'Organisations',
+      subtitle: 'Browse all organisations',
       icon: RiProjectorLine,
       action: () => {
-        router.push('/orga/organisations');
+        router.push('/orga');
         close();
       },
-      category: 'navigation'
-    },
-    {
-      id: 'projects',
-      title: 'Projects',
-      subtitle: 'View all projects',
-      icon: RiProjectorLine,
-      action: () => {
-        router.push('/main/projects');
-        close();
-      },
-      category: 'navigation'
-    },
-    {
-      id: 'resources',
-      title: 'Resources',
-      subtitle: 'View all resources',
-      icon: RiServerLine,
-      action: () => {
-        router.push('/main/resources');
-        close();
-      },
-      category: 'navigation'
-    },
-    {
-      id: 'teams',
-      title: 'Teams',
-      subtitle: 'View all teams',
-      icon: RiTeamLine,
-      action: () => {
-        router.push('/main/teams');
-        close();
-      },
-      category: 'navigation'
-    },
-    {
-      id: 'profile',
-      title: 'Profile',
-      subtitle: 'View your profile',
-      icon: RiUserLine,
-      action: () => {
-        router.push('/main/profile');
-        close();
-      },
-      category: 'navigation'
+      category: 'navigation',
+      type: 'command'
     },
     {
       id: 'settings',
-      title: 'Settings',
-      subtitle: 'Application settings',
+      title: 'Account Settings',
+      subtitle: 'Manage your account',
       icon: RiSettings3Line,
       action: () => {
-        router.push('/main/settings');
+        router.push('/account/settings');
         close();
       },
-      category: 'navigation'
+      category: 'navigation',
+      type: 'command'
     },
     {
-      id: 'new-project',
-      title: 'New Project',
-      subtitle: 'Create a new project',
-      icon: RiAddLine,
+      id: 'developer',
+      title: 'Developer',
+      subtitle: 'Developer tools and API keys',
+      icon: RiGitRepositoryLine,
       action: () => {
-        router.push('/main/projects/new');
+        router.push('/account/developer');
         close();
       },
-      category: 'actions'
-    },
-    {
-      id: 'new-resource',
-      title: 'New Resource',
-      subtitle: 'Create a new resource',
-      icon: RiDatabase2Line,
-      action: () => {
-        router.push('/main/resources/new');
-        close();
-      },
-      category: 'actions'
+      category: 'navigation',
+      type: 'command'
     }
   ];
 
-  const [commands] = useState<CommandItem[]>(baseCommands);
+  // Dynamically loaded data
+  const [organisations, setOrganisations] = useState<OrganisationItem[]>([]);
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [resources, setResources] = useState<ResourceItem[]>([]);
 
-  // Filter commands based on query
-  const filteredCommands = commands.filter(command =>
-    command.title.toLowerCase().includes(query.toLowerCase()) ||
-    command.subtitle?.toLowerCase().includes(query.toLowerCase())
-  );
-
-  // Group commands by category
-  const groupedCommands = filteredCommands.reduce((acc, command) => {
-    if (!acc[command.category]) {
-      acc[command.category] = [];
+  // Fetch organisations when palette opens and user is on root level
+  useEffect(() => {
+    if (isOpen && currentLevel === 'root' && organisations.length === 0) {
+      const fetchOrgs = async () => {
+        setLoading(true);
+        try {
+          const orgs = await getUserOrganisations();
+          setOrganisations(orgs.map(org => ({ ...org, type: 'organisation', category: 'organisation' as const })));
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchOrgs();
     }
-    acc[command.category].push(command);
-    return acc;
-  }, {} as Record<string, CommandItem[]>);
+  }, [isOpen, currentLevel, organisations.length]);
 
-  // Reset selection when query changes
+  // Fetch projects when organisation is selected
+  useEffect(() => {
+    if (currentLevel === 'projects' && selectedOrganisation) {
+      const fetchProjects = async () => {
+        setLoading(true);
+        try {
+          const projs = await getOrganisationProjects(selectedOrganisation.id);
+          setProjects(projs.map(proj => ({ ...proj, type: 'project', category: 'project' as const })));
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchProjects();
+    }
+  }, [currentLevel, selectedOrganisation]);
+
+  // Fetch resources when project is selected
+  useEffect(() => {
+    if (currentLevel === 'resources' && selectedProject) {
+      const fetchResourcesList = async () => {
+        setLoading(true);
+        try {
+          const res = await getProjectResources(selectedProject.id);
+          setResources(res.map(r => ({ ...r, type: 'resource', category: 'resource' as const })));
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchResourcesList();
+    }
+  }, [currentLevel, selectedProject]);
+
+  // Get current items to display
+  const getCurrentItems = (): CommandItem[] => {
+    let items: CommandItem[] = [];
+
+    if (currentLevel === 'root') {
+      // Show base commands + organisations
+      items = [...baseCommands, ...organisations];
+    } else if (currentLevel === 'projects') {
+      items = projects;
+    } else if (currentLevel === 'resources') {
+      items = resources;
+    }
+
+    return items;
+  };
+
+  const currentItems = getCurrentItems();
+
+  // Filter items based on query
+  const filteredItems = currentItems.filter(item => {
+    if (item.type === 'command') {
+      return item.title.toLowerCase().includes(query.toLowerCase()) ||
+             item.subtitle?.toLowerCase().includes(query.toLowerCase());
+    }
+    return item.name.toLowerCase().includes(query.toLowerCase());
+  });
+
+  // Reset selection when query or level changes
   useEffect(() => {
     setSelectedIndex(0);
-  }, [query]);
+  }, [query, currentLevel]);
 
   // Focus input when opened
   useEffect(() => {
@@ -163,32 +208,84 @@ export default function CommandPalette() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIndex(prev => Math.min(prev + 1, filteredCommands.length - 1));
+        setSelectedIndex(prev => Math.min(prev + 1, filteredItems.length - 1));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setSelectedIndex(prev => Math.max(prev - 1, 0));
+      } else if (e.key === 'ArrowLeft' && currentLevel !== 'root') {
+        // Go back to previous level
+        e.preventDefault();
+        if (currentLevel === 'projects') {
+          setCurrentLevel('root');
+          setSelectedOrganisation(null);
+          setProjects([]);
+          setQuery('');
+        } else if (currentLevel === 'resources') {
+          setCurrentLevel('projects');
+          setSelectedProject(null);
+          setResources([]);
+          setQuery('');
+        }
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (filteredCommands[selectedIndex]) {
-          filteredCommands[selectedIndex].action();
+        const selected = filteredItems[selectedIndex];
+        if (!selected) return;
+
+        if (selected.type === 'command') {
+          selected.action();
+        } else if (selected.type === 'organisation') {
+          setSelectedOrganisation(selected);
+          setCurrentLevel('projects');
+          setQuery('');
+        } else if (selected.type === 'project') {
+          setSelectedProject(selected);
+          setCurrentLevel('resources');
+          setQuery('');
+        } else if (selected.type === 'resource') {
+          // Navigate to resource
+          router.push(`/orga/${selected.organisationName}/${selected.projectName}/${selected.name}`);
+          close();
         }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, filteredCommands, selectedIndex]);
+  }, [isOpen, filteredItems, selectedIndex, currentLevel, router, close]);
 
   if (!isOpen) return null;
 
-  const categoryLabels = {
+  const categoryLabels: Record<string, string> = {
     navigation: 'Navigation',
     actions: 'Actions',
-    projects: 'Projects',
-    resources: 'Resources'
+    organisation: 'Organisations',
+    project: 'Projects',
+    resource: 'Resources'
   };
 
+  // Group items by category
+  const groupedItems = filteredItems.reduce((acc, item) => {
+    const category = item.category;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(item);
+    return acc;
+  }, {} as Record<string, CommandItem[]>);
+
   let currentIndex = 0;
+
+  // Get breadcrumb path
+  const getBreadcrumb = () => {
+    const parts = [];
+    if (selectedOrganisation) {
+      parts.push(selectedOrganisation.name);
+    }
+    if (selectedProject) {
+      parts.push(selectedProject.name);
+    }
+    return parts.length > 0 ? parts.join(' > ') : null;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && close()}>
@@ -198,13 +295,37 @@ export default function CommandPalette() {
         </DialogTitle>
         {/* Header */}
         <div className="flex items-center border-b border-gray-200 dark:border-gray-700 px-4">
+          {currentLevel !== 'root' && (
+            <button
+              onClick={() => {
+                if (currentLevel === 'projects') {
+                  setCurrentLevel('root');
+                  setSelectedOrganisation(null);
+                  setProjects([]);
+                } else if (currentLevel === 'resources') {
+                  setCurrentLevel('projects');
+                  setSelectedProject(null);
+                  setResources([]);
+                }
+                setQuery('');
+              }}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              title="Go back"
+            >
+              <RiArrowLeftLine className="h-5 w-5" />
+            </button>
+          )}
           <RiSearchLine className="h-5 w-5 text-gray-400" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search for commands, projects, resources..."
+            placeholder={
+              currentLevel === 'root' ? 'Search commands, organisations...' :
+              currentLevel === 'projects' ? 'Search projects...' :
+              'Search resources...'
+            }
             className="flex-1 border-0 bg-transparent py-4 px-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-0"
           />
           <button
@@ -215,26 +336,72 @@ export default function CommandPalette() {
           </button>
         </div>
 
+        {/* Breadcrumb */}
+        {getBreadcrumb() && (
+          <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+            {getBreadcrumb()}
+          </div>
+        )}
+
         {/* Results */}
         <div className="max-h-96 overflow-y-auto py-2">
-          {filteredCommands.length === 0 ? (
+          {loading ? (
             <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-              No commands found for "{query}"
+              Loading...
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+              {query ? `No results found for "${query}"` : 'No items available'}
             </div>
           ) : (
-            Object.entries(groupedCommands).map(([category, categoryCommands]) => (
+            Object.entries(groupedItems).map(([category, categoryItems]) => (
               <div key={category}>
                 <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                  {categoryLabels[category as keyof typeof categoryLabels]}
+                  {categoryLabels[category] || category}
                 </div>
-                {categoryCommands.map((command) => {
+                {categoryItems.map((item) => {
                   const isSelected = currentIndex === selectedIndex;
                   const itemIndex = currentIndex++;
 
+                  let title = '';
+                  let subtitle = '';
+                  let icon: React.ComponentType<{ className?: string }> = RiProjectorLine;
+
+                  if (item.type === 'command') {
+                    title = item.title;
+                    subtitle = item.subtitle || '';
+                    icon = item.icon;
+                  } else if (item.type === 'organisation') {
+                    title = item.name;
+                    icon = RiFolderLine;
+                  } else if (item.type === 'project') {
+                    title = item.name;
+                    icon = RiGitRepositoryLine;
+                  } else if (item.type === 'resource') {
+                    title = item.name;
+                    subtitle = item.type;
+                    icon = RiDatabase2Line;
+                  }
+
                   return (
                     <button
-                      key={command.id}
-                      onClick={command.action}
+                      key={`${item.type}-${item.id}`}
+                      onClick={() => {
+                        if (item.type === 'command') {
+                          item.action();
+                        } else if (item.type === 'organisation') {
+                          setSelectedOrganisation(item);
+                          setCurrentLevel('projects');
+                          setQuery('');
+                        } else if (item.type === 'project') {
+                          setSelectedProject(item);
+                          setCurrentLevel('resources');
+                          setQuery('');
+                        } else if (item.type === 'resource') {
+                          router.push(`/orga/${item.organisationName}/${item.projectName}/${item.name}`);
+                          close();
+                        }
+                      }}
                       onMouseEnter={() => setSelectedIndex(itemIndex)}
                       className={`w-full text-left px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 dark:hover:bg-gray-700 ${
                         isSelected ? 'bg-brand-50 dark:bg-brand-900/20' : ''
@@ -245,11 +412,13 @@ export default function CommandPalette() {
                           ? 'bg-brand-100 dark:bg-brand-800'
                           : 'bg-gray-100 dark:bg-gray-700'
                       }`}>
-                        <command.icon className={`h-4 w-4 ${
-                          isSelected
-                            ? 'text-brand-600 dark:text-brand-400'
-                            : 'text-gray-600 dark:text-gray-400'
-                        }`} />
+                        {icon && createElement(icon, {
+                          className: `h-4 w-4 ${
+                            isSelected
+                              ? 'text-brand-600 dark:text-brand-400'
+                              : 'text-gray-600 dark:text-gray-400'
+                          }`
+                        })}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className={`font-medium ${
@@ -257,11 +426,11 @@ export default function CommandPalette() {
                             ? 'text-brand-900 dark:text-brand-100'
                             : 'text-gray-900 dark:text-white'
                         }`}>
-                          {command.title}
+                          {title}
                         </div>
-                        {command.subtitle && (
+                        {subtitle && (
                           <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                            {command.subtitle}
+                            {subtitle}
                           </div>
                         )}
                       </div>
@@ -288,6 +457,12 @@ export default function CommandPalette() {
               <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">↵</kbd>
               {' '}to select
             </span>
+            {currentLevel !== 'root' && (
+              <span>
+                <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">←</kbd>
+                {' '}to go back
+              </span>
+            )}
             <span>
               <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">esc</kbd>
               {' '}to close

@@ -143,8 +143,8 @@ function generatePathDocumentation(route: string, methods: string[]) {
 // Get route description based on the route path
 function getRouteDescription(route: string, method: string): string {
   const descriptions: Record<string, string> = {
-    '/upload': 'Upload files to IPFS storage with optional team/project context',
-    '/nodes': 'Get IPFS node status and cluster health information',
+    '/upload': 'Upload files with optional team/project context',
+    '/nodes': 'Get resource node status and infrastructure health information',
     '/tracking': 'Log analytics and tracking events',
     '/developer/api-keys/create': 'Create a new API key for programmatic access',
     '/developer/api-keys/delete': 'Delete an existing API key',
@@ -340,8 +340,8 @@ export async function GET() {
     const openApiSpec: OpenAPISpec = {
       openapi: '3.0.0',
       info: {
-        title: 'IPFS Storage Cluster API',
-        description: 'API for managing IPFS storage, files, and developer tools',
+        title: 'Enopax Infrastructure Deployment API',
+        description: 'API for managing infrastructure deployment, resources, and developer tools',
         version: '1.0.0'
       },
       servers: [

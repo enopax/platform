@@ -1,14 +1,12 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
-import { Badge } from '@/components/common/Badge';
 import Breadcrumbs from '@/components/common/Breadcrumbs';
+import { Divider } from '@/components/common/Divider';
 import Table from '@/components/GenericTable';
 import { columns as apiKeyColumns } from '@/components/table/ApiKey';
 import {
   RiKeyLine,
-  RiAddLine,
   RiCodeLine,
   RiShieldLine,
   RiBookOpenLine
@@ -25,6 +23,10 @@ export default async function DeveloperPage({
   const { page = '1' } = await searchParams;
   const pageNumber = Number(page);
   const session = await auth();
+
+  if (!session?.user?.id) {
+    return null;
+  }
 
   // Get user's API keys with pagination
   const apiKeys = await prisma.apiKey.findMany({
@@ -44,146 +46,151 @@ export default async function DeveloperPage({
     },
   });
 
+  const activeKeys = apiKeys.filter(key => key.isActive && (!key.expiresAt || new Date() <= key.expiresAt)).length;
+  const totalUsage = apiKeys.reduce((total, key) => total + key.usageCount, 0);
+
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-16">
       {/* Breadcrumbs */}
-      <div className="mb-6">
-        <Breadcrumbs />
-      </div>
+      <Breadcrumbs />
 
       {/* Page Header */}
-      <div className="mb-8">
+      <section className="space-y-3">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           Developer
         </h1>
-        <p className="text-gray-600 dark:text-gray-300 mt-2">
-          Manage your API keys and developer tools for programmatic access.
+        <p className="text-gray-600 dark:text-gray-300 max-w-2xl">
+          Manage your API keys and developer tools for programmatic access to the Enopax platform.
         </p>
-      </div>
+      </section>
 
-      {/* API Keys Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Active API Keys
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {totalApiKeys > 0 ? apiKeys.filter(key => key.isActive && (!key.expiresAt || new Date() <= key.expiresAt)).length : 0}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-              <RiKeyLine className="h-6 w-6 text-green-600 dark:text-green-400" />
-            </div>
+      {/* API Keys Overview - Definition List */}
+      <section className="space-y-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Overview
+        </h2>
+        <dl className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <dt className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
+              <RiKeyLine className="size-4 text-green-600 dark:text-green-400" />
+              Active Keys
+            </dt>
+            <dd className="text-3xl font-semibold text-gray-900 dark:text-white mt-2">
+              {activeKeys}
+            </dd>
           </div>
-        </Card>
+          <div>
+            <dt className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
+              <RiCodeLine className="size-4 text-blue-600 dark:text-blue-400" />
+              Total Requests
+            </dt>
+            <dd className="text-3xl font-semibold text-gray-900 dark:text-white mt-2">
+              {totalUsage}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
+              <RiShieldLine className="size-4 text-purple-600 dark:text-purple-400" />
+              Total Keys
+            </dt>
+            <dd className="text-3xl font-semibold text-gray-900 dark:text-white mt-2">
+              {totalApiKeys}
+            </dd>
+          </div>
+        </dl>
+      </section>
 
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Usage
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {totalApiKeys > 0 ? apiKeys.reduce((total, key) => total + key.usageCount, 0) : 0}
-              </p>
-            </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <RiCodeLine className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Keys
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {totalApiKeys}
-              </p>
-            </div>
-            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-              <RiShieldLine className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-            </div>
-          </div>
-        </Card>
-      </div>
+      <Divider />
 
       {/* Create API Key Section */}
-      <Card className="p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <section className="space-y-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           Create New API Key
-        </h3>
+        </h2>
         <CreateApiKeyForm userId={session.user.id} />
-      </Card>
+      </section>
 
-      {/* API Keys Table */}
+      <Divider />
+
+      {/* API Keys Table Section */}
       {totalApiKeys > 0 ? (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-            Your API Keys ({totalApiKeys})
-          </h2>
-          <Card className="overflow-hidden">
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Your API Keys
+            </h2>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {totalApiKeys} total
+            </span>
+          </div>
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
             <Table
               pageNumber={pageNumber}
               tableSize={totalApiKeys}
               tableData={apiKeys}
               tableColumns={apiKeyColumns}
-              tableMeta={{}}
             />
-          </Card>
-        </div>
+          </div>
+        </section>
       ) : (
-        <Card className="p-8 text-center mb-8">
-          <RiKeyLine className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            No API keys yet
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Create your first API key to get started with programmatic access.
-          </p>
-        </Card>
+        <section className="space-y-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Your API Keys
+          </h2>
+          <div className="text-center py-12 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/30">
+            <RiKeyLine className="mx-auto size-8 text-gray-400 dark:text-gray-500 mb-3" />
+            <h3 className="text-base font-medium text-gray-900 dark:text-white mb-2">
+              No API keys yet
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
+              Create your first API key above to get started with programmatic access.
+            </p>
+          </div>
+        </section>
       )}
 
+      <Divider />
+
       {/* Documentation Section */}
-      <Card className="p-6 mt-8">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+      <section className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Getting Started
-          </h3>
+          </h2>
           <Link href="/api">
-            <Button variant="outline" size="sm">
-              <RiBookOpenLine className="mr-2 h-4 w-4" />
-              Full API Documentation
+            <Button variant="secondary">
+              <RiBookOpenLine className="mr-2 size-4" />
+              Full Documentation
             </Button>
           </Link>
         </div>
-        <div className="prose dark:prose-invert max-w-none">
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
-            Use your API keys to interact with our storage API programmatically. Here are some examples:
-          </p>
+        <p className="text-sm text-gray-600 dark:text-gray-300 max-w-2xl">
+          Use your API keys to interact with the Enopax platform programmatically. Include your API key in the <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm">Authorization</code> header.
+        </p>
 
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
-            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Upload a file</h4>
-            <code className="text-sm text-gray-700 dark:text-gray-300">
-              curl -X POST https://api.example.com/v1/upload \<br/>
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+              Upload a file
+            </h3>
+            <pre className="bg-gray-950 dark:bg-gray-900 text-gray-100 p-4 rounded-lg text-xs overflow-x-auto">
+              <code>curl -X POST https://api.enopax.io/v1/upload \<br/>
               &nbsp;&nbsp;-H "Authorization: Bearer YOUR_API_KEY" \<br/>
-              &nbsp;&nbsp;-F "file=@example.txt"
-            </code>
+              &nbsp;&nbsp;-F "file=@example.txt"</code>
+            </pre>
           </div>
 
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 dark:text-white mb-2">List files</h4>
-            <code className="text-sm text-gray-700 dark:text-gray-300">
-              curl -H "Authorization: Bearer YOUR_API_KEY" \<br/>
-              &nbsp;&nbsp;https://api.example.com/v1/files
-            </code>
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+              List files
+            </h3>
+            <pre className="bg-gray-950 dark:bg-gray-900 text-gray-100 p-4 rounded-lg text-xs overflow-x-auto">
+              <code>curl -H "Authorization: Bearer YOUR_API_KEY" \<br/>
+              &nbsp;&nbsp;https://api.enopax.io/v1/files</code>
+            </pre>
           </div>
         </div>
-      </Card>
+      </section>
     </div>
   );
 }

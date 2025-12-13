@@ -2,34 +2,37 @@
  * Basic structure tests for server actions
  */
 
-// Import directly instead of dynamic imports
-import { uploadFileAction, deleteFileAction, syncFilesAction, searchFilesAction } from '@/actions/file-actions'
+import { setAvatar, findUsers } from '@/actions/user'
 
-// Mock the dependencies
 jest.mock('@/lib/auth', () => ({
   auth: jest.fn(() => Promise.resolve({
-    user: { id: 'test-user', email: 'test@example.com' }
+    user: {
+      id: 'test-user-id',
+      email: 'test@example.com',
+      name: 'Test User'
+    }
   }))
 }))
 
-jest.mock('@/lib/services/user-files', () => ({
-  userFilesService: {
-    uploadFile: jest.fn(() => Promise.resolve({
-      id: 'test-file-id',
-      name: 'test.txt',
-      size: 1024,
-      ipfsHash: 'QmTestHash123',
-      userId: 'test-user'
+jest.mock('@/lib/services/user', () => ({
+  userService: {
+    setUserAvatar: jest.fn(() => Promise.resolve({
+      id: 'test-user-id',
+      image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      email: 'test@example.com'
     })),
-    deleteFile: jest.fn(() => Promise.resolve()),
-    syncUserFilesWithCluster: jest.fn(() => Promise.resolve()),
-    searchUserFiles: jest.fn(() => Promise.resolve([])),
-  }
-}))
-
-jest.mock('@/lib/services/storage-quota', () => ({
-  storageQuotaService: {
-    checkStorageQuota: jest.fn(() => Promise.resolve({ allowed: true })),
+    searchUsers: jest.fn(() => Promise.resolve([
+      {
+        id: 'user-1',
+        name: 'John Doe',
+        firstname: 'John',
+        lastname: 'Doe',
+        email: 'john@example.com',
+        image: null,
+        role: 'CUSTOMER',
+        createdAt: new Date()
+      }
+    ]))
   }
 }))
 
@@ -37,55 +40,89 @@ jest.mock('next/cache', () => ({
   revalidatePath: jest.fn(),
 }))
 
-describe('Server Actions Structure', () => {
-  it('should export uploadFileAction function', () => {
-    expect(typeof uploadFileAction).toBe('function')
+describe('Server Actions - User Actions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
   })
 
-  it('should export deleteFileAction function', () => {
-    expect(typeof deleteFileAction).toBe('function')
+  describe('setAvatar', () => {
+    it('should export setAvatar function', () => {
+      expect(typeof setAvatar).toBe('function')
+    })
+
+    it('should successfully set user avatar with valid images array', async () => {
+      const userId = 'test-user-id'
+      const images = ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==']
+
+      const result = await setAvatar(userId, images)
+
+      expect(result).toHaveProperty('success')
+      expect(result.success).toBe(true)
+    })
+
+    it('should handle errors when setting avatar', async () => {
+      const { auth } = require('@/lib/auth')
+      auth.mockImplementation(() => Promise.resolve(null))
+
+      const userId = 'test-user-id'
+      const images = ['data:image/png;base64,test']
+
+      const result = await setAvatar(userId, images)
+
+      expect(result).toHaveProperty('success')
+      expect(result.success).toBe(false)
+      expect(result).toHaveProperty('message')
+    })
+
+    it('should return error when user is not authenticated', async () => {
+      const { auth } = require('@/lib/auth')
+      auth.mockImplementation(() => Promise.resolve({ user: null }))
+
+      const userId = 'test-user-id'
+      const images = []
+
+      const result = await setAvatar(userId, images)
+
+      expect(result.success).toBe(false)
+      expect(result.message).toContain('not authenticated')
+    })
   })
 
-  it('should export syncFilesAction function', () => {
-    expect(typeof syncFilesAction).toBe('function')
-  })
+  describe('findUsers', () => {
+    it('should export findUsers function', () => {
+      expect(typeof findUsers).toBe('function')
+    })
 
-  it('should export searchFilesAction function', () => {
-    expect(typeof searchFilesAction).toBe('function')
-  })
+    it('should return array of users for valid search query', async () => {
+      const query = 'john'
+      const result = await findUsers(query)
 
-  it('should return proper result structure from uploadFileAction', async () => {
-    const formData = new FormData()
-    const file = new File(['content'], 'test.txt', { type: 'text/plain' })
-    Object.defineProperty(file, 'size', { value: 1024 })
-    formData.append('file', file)
+      expect(Array.isArray(result)).toBe(true)
+      expect(result.length).toBeGreaterThan(0)
+      expect(result[0]).toHaveProperty('id')
+      expect(result[0]).toHaveProperty('email')
+    })
 
-    const result = await uploadFileAction(formData)
+    it('should return empty array on search error', async () => {
+      const { userService } = require('@/lib/services/user')
+      userService.searchUsers.mockImplementation(() => {
+        throw new Error('Search failed')
+      })
 
-    // Should have success property
-    expect(result).toHaveProperty('success')
-    expect(typeof result.success).toBe('boolean')
+      const query = 'test'
+      const result = await findUsers(query)
 
-    // Should have either data or error
-    if (result.success) {
-      expect(result).toHaveProperty('data')
-    } else {
-      expect(result).toHaveProperty('error')
-      expect(typeof result.error).toBe('string')
-    }
-  })
+      expect(Array.isArray(result)).toBe(true)
+      expect(result.length).toBe(0)
+    })
 
-  it('should return proper result structure from syncFilesAction', async () => {
-    const result = await syncFilesAction()
+    it('should call userService.searchUsers with query', async () => {
+      const { userService } = require('@/lib/services/user')
+      const query = 'search-term'
 
-    // Should have success property
-    expect(result).toHaveProperty('success')
-    expect(typeof result.success).toBe('boolean')
+      await findUsers(query)
 
-    // If error, should have error message
-    if (!result.success) {
-      expect(result).toHaveProperty('error')
-      expect(typeof result.error).toBe('string')
-    }
+      expect(userService.searchUsers).toHaveBeenCalledWith(query)
+    })
   })
 })

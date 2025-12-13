@@ -20,7 +20,7 @@ export default async function Layout({
   if (session) return redirect(`/`);
 
   return (
-    <div className="max-w-6xl m-auto">
+    <div className="max-w-6xl m-auto pt-5">
       {children}
     </div>
   );

@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { AllOrganisationsClient } from '@/components/AllOrganisationsClient';
+import { OrganisationsClient } from '@/components/OrganisationsClient';
 import { redirect } from 'next/navigation';
 
 export default async function OrganisationsPage() {
@@ -46,5 +46,5 @@ export default async function OrganisationsPage() {
     orderBy: { createdAt: 'desc' }
   });
 
-  return <AllOrganisationsClient organisations={organisations} />;
+  return <OrganisationsClient organisations={organisations} />;
 }

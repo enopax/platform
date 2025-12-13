@@ -23,6 +23,7 @@ export interface UpdateOrganisationState {
 export interface CreateOrganisationState {
   success?: boolean;
   error?: string;
+  organisationName?: string;
   fieldErrors?: {
     name?: string;
     description?: string;
@@ -210,8 +211,12 @@ export async function createOrganisation(
     });
 
     revalidatePath('/admin/organisation');
+    revalidatePath('/orga');
 
-    return { success: true };
+    return {
+      success: true,
+      organisationName: name.trim(),
+    };
   } catch (error) {
     console.error('Failed to create organisation:', error);
     return {

@@ -43,18 +43,6 @@ export default async function Layout({
               members: true
             }
           },
-          projects: {
-            where: { isActive: true },
-            select: {
-              id: true,
-              name: true,
-              status: true,
-              progress: true,
-              organisationId: true
-            },
-            orderBy: { updatedAt: 'desc' },
-            take: 20
-          }
         },
         orderBy: { name: 'asc' }
       });
@@ -64,7 +52,7 @@ export default async function Layout({
   }
 
   return (
-    <div className="flex">
+    <div className="flex pt-10 lg:pt-5">
       {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden lg:block sticky top-0 h-screen overflow-y-auto">
         <SidebarNavigation
@@ -77,7 +65,7 @@ export default async function Layout({
       <MobileNavigation user={session?.user} organisations={organisations} />
 
       {/* Main Content */}
-      <main className="flex-1 p-6 lg:p-6 pt-4 lg:pt-6">
+      <main className="flex-1 p-6 lg:p-6 pt-5 lg:pt-6">
         {children}
       </main>
     </div>

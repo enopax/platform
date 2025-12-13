@@ -4,13 +4,14 @@ import { useOrganisation } from '@/contexts/OrganisationContext';
 import Container from '@/components/common/Container';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
-import { ProjectCard } from '@/components/project/ProjectCard';
+import ProjectCard from '@/components/project/ProjectCard';
 import Link from 'next/link';
 import {
   RiSettings3Line,
   RiProjectorLine,
   RiAddLine,
-  RiUserLine
+  RiUserLine,
+  RiTeamLine
 } from '@remixicon/react';
 
 interface OrganisationOverviewClientProps {
@@ -88,8 +89,7 @@ export default function OrganisationOverviewClient({
                 <ProjectCard
                   key={project.id}
                   project={project}
-                  showResourceUsage={true}
-                  href={`/orga/${organisation.name}/${project.name}`}
+                  organisationName={organisation.name}
                 />
               ))}
             </div>
