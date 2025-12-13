@@ -4,7 +4,7 @@ import { genSaltSync, hashSync } from 'bcrypt-ts';
 import { revalidatePath } from 'next/cache';
 import { auth, signIn } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { UserRole, StorageTier } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { userService } from '@/lib/services/user';
 
 export async function sendCredentials(state: object | null, formData: FormData) {
@@ -128,9 +128,6 @@ export async function settings(state: object | null, formData: FormData) {
     const firstname = formData.get('firstname') as string;
     const lastname = formData.get('lastname') as string;
     const email = formData.get('email') as string;
-    const storageTier = formData.get('storageTier') as StorageTier;
-    const available = formData.get('available') === 'on' ? true : false;
-    const code = formData.get('code') as string;
     const password = formData.get('password') as string;
     const password2 = formData.get('password2') as string;
     const salt = genSaltSync(10);
@@ -139,13 +136,12 @@ export async function settings(state: object | null, formData: FormData) {
     if (password != password2) throw new Error('Passwords are not the same!');
 
     const user = await prisma.user.update({
-      where: { id: session?.userId },
+      where: { id: session?.user?.id },
       data: {
         name: username,
         firstname: firstname,
         lastname: lastname,
         email: email,
-        storageTier: storageTier,
         ...(password.length > 0 && { password: hash })
       }
     });
@@ -170,8 +166,12 @@ export async function settings(state: object | null, formData: FormData) {
 export async function setAvatar(userId: string, images: string[]) {
   try {
     const session = await auth();
-    await userService.setUserAvatar(session?.userId!, images);
+    if (!session?.user?.id) {
+      throw new Error('User not authenticated');
+    }
+    await userService.setUserAvatar(session.user.id, images);
     revalidatePath('/account/settings');
+    revalidatePath('/');
 
     return {
       success: true,
