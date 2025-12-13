@@ -134,19 +134,24 @@ npm test            # Run all tests
 - **Data Fetching**: Server-side in layouts, client components only for interactivity
 
 ### Route Structure
-**Organisation-Based Routes:**
-- Teams: `/main/organisations/[orgName]/teams/[teamId]` and `/main/organisations/[orgName]/teams/new`
-- Projects: `/main/organisations/[orgName]/projects/[projectId]` and `/main/organisations/[orgName]/projects/new`
-- Resources: `/main/organisations/[orgName]/resources/[resourceId]` and `/main/organisations/[orgName]/resources/new`
+**Name-Based Routes with Hierarchical Structure:**
+- Organisations: `/orga/[orgName]` - Organisation overview and management
+- Teams: `/orga/[orgName]/teams` - Team management
+- Members: `/orga/[orgName]/members` - Organisation member management
+- Projects: `/orga/[orgName]/[projectName]` - Project details
+- Resources: `/orga/[orgName]/[projectName]/[resourceName]` - Resource details
+- Resource Creation: `/orga/[orgName]/[projectName]/resources/new` - Create new resource
+- Settings: `/orga/[orgName]/settings` and `/orga/[orgName]/[projectName]/settings`
 
 **Key Points:**
 - Organisation context uses **organisation name** in URL path (not ID)
-- Organisation names are unique in database schema
-- Resource creation centralised at `/main/organisations/[orgName]/resources/new`
-- Project context passed via query params (`?project=projectId`) when creating resources
-- Forms receive organisation name from URL params and look up organisation by name
-- Sidebar automatically detects organisation name from pathname
-- All links throughout the app use the organisation name-based structure
+- Project context uses **project name** in URL path (not ID)
+- Organisation and project names are unique within their scope
+- Names are URL-safe (alphanumeric + hyphens)
+- Forms receive names from URL params and look up entities by name
+- Sidebar automatically detects current organisation/project from pathname
+- All internal links use name-based URLs for human readability
+- Contexts provide access to entity data without prop drilling
 
 ---
 
@@ -348,12 +353,13 @@ Returns:
 
 ### Testing Deployment Flow
 
-1. Navigate to `/main/organisations/[orgName]/resources/new`
-2. Select "IPFS Cluster (3 Nodes)" template
-3. Configure resource name and team
-4. Click "Create Resource"
-5. Watch real-time deployment progress
+1. Navigate to `/orga/[orgName]/[projectName]/resources/new`
+2. Select resource template (e.g., "IPFS Cluster (3 Nodes)")
+3. Configure resource name and team assignment
+4. Review and click "Create Resource"
+5. Watch real-time deployment progress (updated every 2 seconds)
 6. See mock endpoint and credentials on completion
+7. Copy credentials and endpoint for testing
 
 ---
 

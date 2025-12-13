@@ -2,30 +2,9 @@
 
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
-import { Badge } from '@/components/common/Badge';
-import {
-  RiProjectorLine,
-  RiAddLine,
-  RiCalendarLine,
-  RiBarChartLine,
-  RiServerLine
-} from '@remixicon/react';
+import { RiProjectorLine, RiAddLine } from '@remixicon/react';
 import Link from 'next/link';
-import { type Project } from '@prisma/client';
-
-type ProjectWithTeamsAndResources = Project & {
-  organisation: {
-    id: string;
-    name: string;
-  };
-  allocatedResources?: {
-    resource: {
-      id: string;
-      name: string;
-      type: string;
-    };
-  }[];
-};
+import { ProjectCard, type ProjectWithTeamsAndResources } from './ProjectCard';
 
 interface ProjectGridProps {
   projects: ProjectWithTeamsAndResources[];
@@ -33,27 +12,6 @@ interface ProjectGridProps {
 }
 
 export default function ProjectGrid({ projects, selectedTeamName }: ProjectGridProps) {
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'ACTIVE': return 'default';
-      case 'COMPLETED': return 'secondary';
-      case 'PLANNING': return 'outline';
-      case 'ON_HOLD': return 'outline';
-      case 'CANCELLED': return 'outline';
-      default: return 'outline';
-    }
-  };
-
-  const getPriorityBadgeVariant = (priority: string) => {
-    switch (priority) {
-      case 'URGENT': return 'default';
-      case 'HIGH': return 'secondary';
-      case 'MEDIUM': return 'outline';
-      case 'LOW': return 'outline';
-      default: return 'outline';
-    }
-  };
-
   return (
     <div className="mb-8">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
@@ -63,111 +21,7 @@ export default function ProjectGrid({ projects, selectedTeamName }: ProjectGridP
       {projects.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {projects.map((project) => (
-            <Card key={project.id} className="p-4 hover:shadow-lg transition-shadow">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center min-w-0 flex-1">
-                  <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg mr-3 flex-shrink-0">
-                    <RiProjectorLine className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                      {project.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {project.organisation.name}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <Badge variant={getStatusBadgeVariant(project.status)} className="text-xs">
-                    {project.status}
-                  </Badge>
-                  <Badge variant={getPriorityBadgeVariant(project.priority)} className="text-xs">
-                    {project.priority}
-                  </Badge>
-                </div>
-              </div>
-
-              {project.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
-                  {project.description}
-                </p>
-              )}
-
-              {/* Progress Bar */}
-              <div className="mb-3">
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  <span>Progress</span>
-                  <span>{project.progress}%</span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div
-                    className="bg-brand-600 dark:bg-brand-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${project.progress}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Project Stats */}
-              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
-                {project.startDate && (
-                  <div className="flex items-center">
-                    <RiCalendarLine className="h-3 w-3 mr-1" />
-                    <span>Started {new Date(project.startDate).toLocaleDateString()}</span>
-                  </div>
-                )}
-                {project.budget && (
-                  <div className="flex items-center">
-                    <RiBarChartLine className="h-3 w-3 mr-1" />
-                    <span className="font-medium">{project.budget.toString()}</span>
-                    <span className="ml-1">{project.currency}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Resources Status */}
-              <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                    <RiServerLine className="h-3 w-3 mr-1" />
-                    <span className="font-medium">{project.allocatedResources?.length || 0}</span>
-                    <span className="ml-1">resources</span>
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Org: {project.organisation.name}
-                  </div>
-                </div>
-
-                {/* Resource types indicator */}
-                {project.allocatedResources && project.allocatedResources.length > 0 && (
-                  <div className="flex gap-1 mb-2">
-                    {Array.from(new Set(project.allocatedResources.map(r => r.resource.type))).map((type) => (
-                      <span
-                        key={type}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                      >
-                        {type}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Action buttons */}
-                <div className="flex gap-2">
-                  <Link href={`/orga/${organisation.name}`} className="flex-1">
-                    <Button variant="outline" size="sm" className="text-xs px-3 py-1 w-full">
-                      View Details
-                    </Button>
-                  </Link>
-                  <Link href={`/orga/${organisation.name}/add-resource`}>
-                    <Button size="sm" className="text-xs px-3 py-1">
-                      <RiAddLine className="mr-1 h-3 w-3" />
-                      Add Resource
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </Card>
+            <ProjectCard key={project.id} project={project} />
           ))}
         </div>
       ) : (
