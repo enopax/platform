@@ -36,6 +36,11 @@ RUN adduser --system --uid 1001 nextjs
 # Install OpenSSL for Prisma
 RUN apk add --no-cache openssl
 
+# Remove tools that could be abused for downloading malware
+RUN rm -f /usr/bin/wget /usr/bin/curl 2>/dev/null; \
+    rm -f /sbin/apk 2>/dev/null; \
+    true
+
 # Copy standalone build output
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
