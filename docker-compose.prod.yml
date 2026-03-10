@@ -3,6 +3,8 @@ name: next-app
 services:
   postgres:
     image: postgres:15
+    env_file:
+      - .env.production
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
