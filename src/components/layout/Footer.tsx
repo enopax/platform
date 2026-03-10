@@ -68,6 +68,12 @@ export default function Footer() {
                   className="transition duration-100 hover:text-brand-500 active:text-brand-600"
                 > Privacy Policy
                 </Link>
+
+                <Link
+                  href="/docs/imprint"
+                  className="transition duration-100 hover:text-brand-500 active:text-brand-600"
+                > Imprint
+                </Link>
               </nav>
             </div>
           </div>
