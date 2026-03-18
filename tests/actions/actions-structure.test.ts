@@ -2,7 +2,22 @@
  * Basic structure tests for server actions
  */
 
+jest.mock('bcrypt-ts', () => ({
+  genSaltSync: jest.fn(() => '$2a$10$salt'),
+  hashSync: jest.fn(() => '$2a$10$hashedpassword'),
+}));
+
 import { setAvatar, findUsers } from '@/actions/user'
+
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    user: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+  },
+}));
 
 jest.mock('@/lib/auth', () => ({
   auth: jest.fn(() => Promise.resolve({

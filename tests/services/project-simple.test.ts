@@ -34,16 +34,6 @@ jest.mock('@prisma/client', () => {
   };
 });
 
-// Mock team service
-jest.mock('@/lib/services/team', () => ({
-  teamService: {
-    isUserMember: jest.fn(),
-    getTeamById: jest.fn(),
-    getUserTeams: jest.fn(),
-    getUserRole: jest.fn(),
-  },
-}));
-
 describe('ProjectService - Simple Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -58,7 +48,6 @@ describe('ProjectService - Simple Tests', () => {
     const expectedMethods = [
       'createProject',
       'getProjectById',
-      'getTeamProjects',
       'getOrganisationProjects',
       'getUserProjects',
       'updateProject',

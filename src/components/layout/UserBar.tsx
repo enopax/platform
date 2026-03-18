@@ -1,6 +1,3 @@
-import Container from '@/components/common/Container';
-import Logo from '@/components/layout/Logo';
-import UserBarNav from '@/components/layout/UserBarNav';
 import UserBarMenu from '@/components/layout/UserBarMenu';
 
 export default function UserBar({

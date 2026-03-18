@@ -2,26 +2,30 @@
  * Simple tests for UserService to verify basic functionality
  */
 
-import { UserService, userService, CreateUserData, UpdateUserData } from '@/lib/services/user';
-import { PrismaClient } from '@prisma/client';
+const mockPrisma = {
+  user: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+  },
+};
 
-jest.mock('@prisma/client');
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => mockPrisma),
+  UserRole: {
+    GUEST: 'GUEST',
+    CUSTOMER: 'CUSTOMER',
+    ADMIN: 'ADMIN',
+  },
+}));
+
+import { UserService, userService, CreateUserData, UpdateUserData } from '@/lib/services/user';
 
 describe('UserService - Simple Tests', () => {
-  let mockPrisma: any;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    mockPrisma = {
-      user: {
-        create: jest.fn(),
-        findUnique: jest.fn(),
-        findFirst: jest.fn(),
-        findMany: jest.fn(),
-        update: jest.fn(),
-      },
-    };
-    (PrismaClient as jest.Mock).mockImplementation(() => mockPrisma);
   });
 
   it('should be instantiated', () => {
@@ -62,7 +66,7 @@ describe('UserService - Simple Tests', () => {
         firstname: 'John',
         lastname: 'Doe',
         email: 'john@example.com',
-        role: 'CUSTOMER',
+        role: 'CUSTOMER' as any,
       };
 
       const mockUser = {

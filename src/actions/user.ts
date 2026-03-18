@@ -187,6 +187,52 @@ export async function setAvatar(userId: string, images: string[]) {
   }
 }
 
+export type UpdateUserState = {
+  success: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string>;
+};
+
+export async function updateUserAdmin(userId: string, _prevState: UpdateUserState, formData: FormData): Promise<UpdateUserState> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const firstname = formData.get('firstname') as string;
+    const lastname = formData.get('lastname') as string;
+    const name = formData.get('name') as string;
+    const email = formData.get('email') as string;
+    const role = formData.get('role') as string;
+
+    if (!email) {
+      return { success: false, fieldErrors: { email: 'Email is required' } };
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstname: firstname || null,
+        lastname: lastname || null,
+        name: name || null,
+        email,
+        role: role as UserRole,
+      },
+    });
+
+    revalidatePath(`/admin/users/${userId}`);
+    revalidatePath('/admin/users');
+
+    return { success: true };
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
+}
+
 export async function findUsers(query: string) {
   try {
     const users = await userService.searchUsers(query);
