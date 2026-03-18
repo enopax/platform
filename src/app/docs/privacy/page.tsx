@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import Container from '@/components/common/Container';
 import BackButton from '@/components/common/BackButton';
 
@@ -16,41 +15,53 @@ export default async function Page() {
           <h2 className="text-xl font-semibold">1. Controller</h2>
           <p>
             The controller responsible for data processing on this website is:
-            <br />
-            <strong>Nomad Camp</strong> <br />
-            Email: <a href="mailto:info@nomadcamp.org" className="underline">info@nomadcamp.org</a>
+          </p>
+          <p>
+            Felix Böhm<br />
+            Josephsplatz 8<br />
+            90429 Nürnberg<br />
+            Germany<br />
+            Email: <a href="mailto:hallo@enopax.com" className="underline text-brand-500">hallo@enopax.com</a>
           </p>
 
           <h2 className="text-xl font-semibold">2. Data We Collect</h2>
-          <p>We collect the following personal data when you fill out our form:</p>
+          <p>We collect the following personal data when you use our platform:</p>
           <ul className="list-disc list-inside">
-            <li>First and last name</li>
-            <li>Email address</li>
-            <li>Phone number (optional)</li>
-            <li>Preferences and camp participation details</li>
+            <li>Name and email address (account registration)</li>
+            <li>Authentication data (login credentials, session tokens)</li>
+            <li>Usage data (resources created, actions performed)</li>
+            <li>Technical data (IP address, browser type, access times)</li>
           </ul>
 
           <h2 className="text-xl font-semibold">3. Purpose of Data Processing</h2>
-          <p>Your data is processed exclusively for the following purposes:</p>
+          <p>Your data is processed for the following purposes:</p>
           <ul className="list-disc list-inside">
-            <li>Organizing and managing the camp</li>
-            <li>Contacting you with questions or updates</li>
-            <li>Internal analytics and statistics (anonymized)</li>
+            <li>Providing and maintaining our platform services</li>
+            <li>User authentication and account management</li>
+            <li>Communication about your account and services</li>
+            <li>Improving our platform and user experience</li>
+            <li>Compliance with legal obligations</li>
           </ul>
 
           <h2 className="text-xl font-semibold">4. Legal Basis</h2>
           <p>
-            Your data is processed based on your explicit consent in accordance with Article 6(1)(a) of the GDPR.
+            Your data is processed based on the following legal bases under the GDPR:
           </p>
+          <ul className="list-disc list-inside">
+            <li>Performance of a contract (Art. 6(1)(b)) — for providing our services</li>
+            <li>Legitimate interests (Art. 6(1)(f)) — for platform improvement and security</li>
+            <li>Consent (Art. 6(1)(a)) — where explicitly given</li>
+            <li>Legal obligation (Art. 6(1)(c)) — for compliance requirements</li>
+          </ul>
 
           <h2 className="text-xl font-semibold">5. Data Sharing</h2>
           <p>
-            Your personal data will not be shared with third parties unless it is necessary for the organisation of the camp or you have explicitly consented. We only transfer data to third countries (outside the EU) if appropriate safeguards are in place.
+            Your personal data will not be shared with third parties unless necessary to provide our services or required by law. We host our infrastructure within the European Union and do not transfer data to third countries without appropriate safeguards.
           </p>
 
           <h2 className="text-xl font-semibold">6. Data Retention</h2>
           <p>
-            Your data will only be stored for as long as necessary for the purposes mentioned. In general, we delete your data within 6 months after the end of the event.
+            Your data is stored for as long as your account is active. Upon account deletion, personal data will be removed within 30 days, unless retention is required by law. Anonymised usage statistics may be retained indefinitely.
           </p>
 
           <h2 className="text-xl font-semibold">7. Your Rights</h2>
@@ -60,23 +71,23 @@ export default async function Page() {
             <li>Right to rectification (Art. 16)</li>
             <li>Right to erasure (Art. 17)</li>
             <li>Right to restrict processing (Art. 18)</li>
-            <li>Right to object (Art. 21)</li>
             <li>Right to data portability (Art. 20)</li>
+            <li>Right to object (Art. 21)</li>
           </ul>
           <p>
-            You may withdraw your consent at any time with future effect. Please contact us via email at <a href="mailto:info@nomadcamp.org" className="underline">info@nomadcamp.org</a>.
+            To exercise any of these rights, please contact us at{' '}
+            <a href="mailto:hallo@enopax.com" className="underline text-brand-500">hallo@enopax.com</a>.
           </p>
 
-          <h2 className="text-xl font-semibold">8. Cookies & Analytics</h2>
+          <h2 className="text-xl font-semibold">8. Cookies</h2>
           <p>
-            We do not use cookies for advertising purposes. Anonymous usage data (such as page views) may be logged locally to improve our website. This data is not linked to individuals and is not shared with third parties.
+            Our website uses only essential cookies required for authentication and session management. We do not use tracking, marketing, or personalisation cookies. Our analytics are self-hosted and anonymised.
           </p>
 
           <h2 className="text-xl font-semibold">9. Contact</h2>
           <p>
-            If you have any questions about data protection or wish to exercise your rights, please contact us at:
-            <br />
-            <a href="mailto:info@nomadcamp.org" className="underline">info@nomadcamp.org</a>
+            If you have any questions about data protection or wish to exercise your rights, please contact us at:{' '}
+            <a href="mailto:hallo@enopax.com" className="underline text-brand-500">hallo@enopax.com</a>
           </p>
 
           <BackButton href="/" />

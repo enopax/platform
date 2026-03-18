@@ -36,7 +36,6 @@ const columns: ColumnDef<User>[] = [
     cell: ({ row }) => (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
         row.original.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
-        row.original.role === 'NOMAD' ? 'bg-blue-100 text-blue-800' :
         'bg-gray-100 text-gray-800'
       }`}>
         {row.original.role}
