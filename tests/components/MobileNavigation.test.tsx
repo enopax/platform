@@ -12,11 +12,9 @@ jest.mock('next/link', () => {
   };
 });
 
-jest.mock('@/components/common/Button', () => {
-  return function Button({ onClick, children, ...props }: any) {
-    return <button onClick={onClick} {...props}>{children}</button>;
-  };
-});
+jest.mock('@/components/common/Button', () => ({
+  Button: ({ onClick, children, ...props }: any) => <button onClick={onClick} {...props}>{children}</button>,
+}));
 
 jest.mock('@/components/common/Badge', () => {
   return function Badge({ children }: any) {

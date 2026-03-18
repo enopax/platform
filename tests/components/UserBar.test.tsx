@@ -2,24 +2,6 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import UserBar from '@/components/layout/UserBar';
 
-jest.mock('@/components/common/Container', () => {
-  return function Container({ children }: any) {
-    return <div data-testid="container">{children}</div>;
-  };
-});
-
-jest.mock('@/components/layout/Logo', () => {
-  return function Logo() {
-    return <div data-testid="logo">Logo</div>;
-  };
-});
-
-jest.mock('@/components/layout/UserBarNav', () => {
-  return function UserBarNav() {
-    return <nav data-testid="userbar-nav">Navigation</nav>;
-  };
-});
-
 jest.mock('@/components/layout/UserBarMenu', () => {
   return function UserBarMenu() {
     return <menu data-testid="userbar-menu">Menu</menu>;

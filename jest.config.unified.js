@@ -23,6 +23,9 @@ module.exports = {
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
       },
+      transformIgnorePatterns: [
+        'node_modules/(?!(bcrypt-ts)/)',
+      ],
       testMatch: [
         '<rootDir>/tests/actions/**/*.test.ts',
       ],

@@ -8,11 +8,9 @@ jest.mock('next/link', () => {
   };
 });
 
-jest.mock('@/components/common/Button', () => {
-  return function Button({ children, ...props }: any) {
-    return <button {...props}>{children}</button>;
-  };
-});
+jest.mock('@/components/common/Button', () => ({
+  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+}));
 
 jest.mock('@/components/common/Avatar', () => {
   return function Avatar({ name, image, size }: any) {
