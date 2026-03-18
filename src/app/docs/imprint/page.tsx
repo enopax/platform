@@ -18,14 +18,17 @@ export default async function Page() {
 
           <h2 className="text-xl font-semibold">Responsible Person</h2>
           <p>
-            Felix Böhm
+            Felix Böhm<br />
+            Josephsplatz 8<br />
+            90429 Nürnberg<br />
+            Germany
           </p>
 
           <h2 className="text-xl font-semibold">Contact</h2>
           <p>
             E-Mail:{' '}
-            <a href="mailto:contact@enopax.com" className="underline text-brand-500">
-              contact@enopax.com
+            <a href="mailto:hallo@enopax.com" className="underline text-brand-500">
+              hallo@enopax.com
             </a>
           </p>
 
