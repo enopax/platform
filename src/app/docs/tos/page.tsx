@@ -10,81 +10,68 @@ export default async function Page() {
           <h1 className="text-2xl font-semibold">Terms of Service</h1>
 
           <p>
-            Welcome to Nomad Camp. By registering or attending, you agree to these Terms of Service. Our goal is to create a collaborative, respectful, and fun environment for all participants. This is a community-run, non-profit event designed to foster connection, learning, and shared adventure.
+            Welcome to Enopax. By accessing or using our platform, you agree to these Terms of Service. Please read them carefully before using our services.
           </p>
 
-          <h2 className="text-xl font-semibold">1. What We’re Doing</h2>
+          <h2 className="text-xl font-semibold">1. Service Description</h2>
           <p>
-            We will be working, cooking, relaxing, and having campfires together. Expect an open atmosphere where participation is encouraged in both scheduled and spontaneous activities.
+            Enopax provides an infrastructure-as-a-service platform that enables users to deploy and manage cloud resources including storage clusters, databases, and other services through a web interface.
           </p>
 
-          <h2 className="text-xl font-semibold">2. Unconference Format</h2>
+          <h2 className="text-xl font-semibold">2. Account Registration</h2>
           <p>
-            Our camp follows an unconference format. This means there are no pre-set speakers or formal schedules. Instead, each morning, participants propose workshops, talks, or activities that they're interested in hosting or attending.
+            To use our services, you must create an account with accurate and complete information. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.
           </p>
+
+          <h2 className="text-xl font-semibold">3. Acceptable Use</h2>
+          <p>You agree not to use our services to:</p>
           <ul className="list-disc list-inside">
-            <li>Morning Planning: Daily scheduling of sessions proposed by attendees.</li>
-            <li>Collaborative Scheduling: Everyone helps shape the day's activities.</li>
-            <li>Flexible Sessions: From technical talks to yoga, it's all up to the group.</li>
-            <li>Adaptive Schedule: Things may shift as interests evolve — that’s part of the magic.</li>
+            <li>Violate any applicable laws or regulations</li>
+            <li>Infringe on the rights of others</li>
+            <li>Distribute malware or engage in malicious activities</li>
+            <li>Attempt to gain unauthorised access to our systems</li>
+            <li>Use resources for cryptocurrency mining unless explicitly permitted</li>
           </ul>
 
-          <h2 className="text-xl font-semibold">3. What You Can Expect</h2>
+          <h2 className="text-xl font-semibold">4. Service Availability</h2>
           <p>
-            In addition to sessions, you can expect hands-on group projects like building the main tent, outdoor adventures, and plenty of campfire moments. Whether you’re new to unconferences or a seasoned nomad, your contribution matters — even just showing up and being curious.
+            We strive to maintain high availability of our services but do not guarantee uninterrupted access. Scheduled maintenance will be communicated in advance where possible. We are not liable for any downtime or service interruptions.
           </p>
 
-          <h2 className="text-xl font-semibold">4. Community Principles</h2>
-          <ul className="list-disc list-inside">
-            <li><strong>Friendship-First:</strong> Building real connections through shared experiences.</li>
-            <li><strong>Authenticity:</strong> This is not a networking event; it’s a place to be yourself.</li>
-            <li><strong>Freedom:</strong> Come and go as you like — no minimum stay required.</li>
-            <li><strong>Nature & Simplicity:</strong> We gather in beautiful outdoor settings with minimal structure.</li>
-          </ul>
-
-          <h2 className="text-xl font-semibold">5. Cost Transparency</h2>
+          <h2 className="text-xl font-semibold">5. Data and Content</h2>
           <p>
-            Nomad Camp is a non-profit initiative. We charge no more than what’s necessary to cover shared expenses like campsite rental, communal equipment, and basic logistics.
-          </p>
-          <p>
-            <strong>Registration Fee:</strong> To help cover upfront costs, we charge a small registration fee of <strong>€10*</strong> per person.
-          </p>
-          <p className="text-xs text-gray-500">
-            *The €10 fee helps us reserve the site, manage logistics, and maintain minimal operations. We do not profit from this event.
+            You retain ownership of all data you upload to our platform. We do not access, use, or share your data except as necessary to provide the services or as required by law. Please refer to our <Link href="/docs/privacy" className="underline text-brand-500">Privacy Policy</Link> for more information.
           </p>
 
-          <h2 className="text-xl font-semibold">6. Code of Conduct</h2>
+          <h2 className="text-xl font-semibold">6. Payment and Billing</h2>
           <p>
-            We expect everyone to treat others with respect, kindness, and inclusivity. Discrimination, harassment, or disruptive behavior will not be tolerated. Anyone violating this will be asked to leave without a refund.
+            Certain services may require payment. Pricing and billing terms will be clearly communicated before you incur any charges. You agree to pay all fees associated with your use of paid services.
           </p>
 
-          <h2 className="text-xl font-semibold">7. Liability</h2>
+          <h2 className="text-xl font-semibold">7. Limitation of Liability</h2>
           <p>
-            By participating in the camp, you acknowledge that you are responsible for your own health, safety, and belongings. The organizers are volunteers and not liable for accidents, injuries, or lost items.
+            To the maximum extent permitted by law, Enopax shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of our services. Our total liability shall not exceed the amount you have paid to us in the preceding 12 months.
           </p>
 
-          <h2 className="text-xl font-semibold">8. Data & Privacy</h2>
+          <h2 className="text-xl font-semibold">8. Termination</h2>
           <p>
-            We collect minimal data for registration purposes. Please refer to our <Link href="/privacy" className="underline text-brand-500">Privacy Policy</Link> for more information.
+            We may suspend or terminate your account if you violate these terms. You may also close your account at any time. Upon termination, your data will be retained for 30 days before permanent deletion, unless otherwise required by law.
           </p>
 
-          <h2 className="text-xl font-semibold">9. Cookies</h2>
+          <h2 className="text-xl font-semibold">9. Changes to Terms</h2>
           <p>
-            Our website uses only essential cookies. These include cookies required to process PayPal payments securely and — in the future — for login and session handling.
-          </p>
-          <p>
-            We do not use any tracking, marketing, or personalization cookies. Our analytics are self-hosted, anonymized, and do not rely on cookies or third-party services.
-          </p>
-          <p>
-            If you interact with PayPal (e.g. for registration or donations), their service may set cookies according to their own policy. See <a href="https://www.paypal.com/webapps/mpp/ua/cookie-full" target="_blank" rel="noopener noreferrer" className="underline">PayPal’s Cookie Policy</a> for details.
-          </p>
-          <p>
-            You can manage or delete cookies in your browser settings. Disabling essential cookies may affect payment or login functionality.
+            We may update these Terms of Service from time to time. We will notify you of significant changes via email or through the platform. Continued use of our services after changes constitutes acceptance of the updated terms.
           </p>
 
-          <h2 className="text-xl font-semibold">10. Questions?</h2>
+          <h2 className="text-xl font-semibold">10. Governing Law</h2>
           <p>
-            Feel free to reach out at <a href="mailto:info@nomadcamp.org" className="underline">info@nomadcamp.org</a> if you have any questions before registering or attending.
+            These terms are governed by the laws of the Federal Republic of Germany. The courts of Nürnberg, Germany shall have exclusive jurisdiction over any disputes arising from these terms.
+          </p>
+
+          <h2 className="text-xl font-semibold">11. Contact</h2>
+          <p>
+            If you have any questions about these terms, please contact us at{' '}
+            <a href="mailto:hallo@enopax.com" className="underline text-brand-500">hallo@enopax.com</a>.
           </p>
 
           <BackButton href="/" />
