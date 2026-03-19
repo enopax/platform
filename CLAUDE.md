@@ -12,8 +12,9 @@ This file serves as the quick reference guide for AI assistants. For comprehensi
 | Document | Purpose |
 |----------|---------|
 | **CLAUDE.md** (this file) | Quick reference for AI assistants and development commands |
-| **[SPECS.md](./docs/SPECS.md)** | Comprehensive web application technical specifications |
-| **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** | Detailed technical architecture and system design |
+| **[DATA-STORE.md](./docs/DATA-STORE.md)** | TinyBase file store, repository pattern, index configuration |
+| **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** | Technical architecture and system design |
+| **[SPECS.md](./docs/SPECS.md)** | Web application technical specifications |
 | **[COMPONENTS.md](./docs/COMPONENTS.md)** | Component folder structure and organisation guide |
 | **[DESIGN.md](./docs/DESIGN.md)** | Design system, UX guidelines, and component patterns |
 | **[BEST-PRACTICES.md](./docs/BEST-PRACTICES.md)** | Development best practices and coding standards |
