@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth';
-import { getStore } from '@/lib/store';
+import { getStoreAsync } from '@/lib/store';
 import { Button } from '@/components/common/Button';
 import Breadcrumbs from '@/components/common/Breadcrumbs';
 import { Divider } from '@/components/common/Divider';
@@ -29,13 +29,13 @@ export default async function DeveloperPage({
   }
 
   // Get user's API keys with pagination
-  const apiKeys = await getStore().apiKeys.findByUserId(session.user.id, {
+  const apiKeys = await (await getStoreAsync()).apiKeys.findByUserId(session.user.id, {
     orderBy: 'createdAt',
     skip: (pageNumber - 1) * size,
     take: size,
   });
 
-  const totalApiKeys = await getStore().apiKeys.countByUserId(session.user.id);
+  const totalApiKeys = await (await getStoreAsync()).apiKeys.countByUserId(session.user.id);
 
   const activeKeys = apiKeys.filter(key => key.isActive && (!key.expiresAt || new Date() <= key.expiresAt)).length;
   const totalUsage = apiKeys.reduce((total, key) => total + key.usageCount, 0);

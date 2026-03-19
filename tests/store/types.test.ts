@@ -334,16 +334,33 @@ describe('Store types', () => {
   });
 
   describe('DataStore', () => {
-    it('getStore returns a store with apiKeys repository', () => {
+    it('getStore throws when not initialised', () => {
       jest.resetModules();
-      jest.mock('@/lib/prisma', () => ({
-        prisma: {},
+      jest.mock('tinybase', () => ({ createStore: jest.fn() }));
+      jest.mock('tinybase/persisters/persister-file', () => ({ createFilePersister: jest.fn() }));
+      const { getStore, resetStore } = require('@/lib/store/data-store');
+      resetStore();
+      expect(() => getStore()).toThrow('DataStore not initialised');
+    });
+
+    it('getStoreAsync resolves with apiKeys repository', async () => {
+      jest.resetModules();
+      const mockStore = {
+        getRowIds: jest.fn().mockReturnValue([]),
+        getRow: jest.fn().mockReturnValue({}),
+        setRow: jest.fn(),
+      };
+      jest.mock('tinybase', () => ({ createStore: () => mockStore }));
+      jest.mock('tinybase/persisters/persister-file', () => ({
+        createFilePersister: () => ({
+          load: jest.fn().mockResolvedValue(undefined),
+          startAutoSave: jest.fn().mockResolvedValue(undefined),
+          destroy: jest.fn().mockResolvedValue(undefined),
+        }),
       }));
-      jest.mock('@/lib/store/prisma/api-key.prisma', () => ({
-        PrismaApiKeyRepository: jest.fn(),
-      }));
-      const { getStore } = require('@/lib/store/data-store');
-      const store = getStore();
+      const { getStoreAsync, resetStore } = require('@/lib/store/data-store');
+      resetStore();
+      const store = await getStoreAsync();
       expect(store).toBeDefined();
       expect(store.apiKeys).toBeDefined();
     });
