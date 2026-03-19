@@ -5,7 +5,6 @@ import { type ProjectStatus, type ProjectPriority } from '@/lib/store';
 import { getStoreAsync } from '@/lib/store';
 import { projectService } from '@/lib/services/project';
 import { userService } from '@/lib/services/user';
-import { prisma } from '@/lib/prisma';
 import { validateNameFormat } from '@/lib/name-validation';
 
 export interface UpdateProjectState {
@@ -148,10 +147,8 @@ export async function updateProject(
     }
 
     // Get current project to check organisation
-    const currentProject = await prisma.project.findUnique({
-      where: { id: projectId },
-      select: { organisationId: true }
-    });
+    const store = await getStoreAsync();
+    const currentProject = await store.projects.findById(projectId);
 
     if (!currentProject) {
       return {
@@ -170,26 +167,22 @@ export async function updateProject(
     }
 
     // Update project
-    await prisma.project.update({
-      where: { id: projectId },
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        development,
-        status,
-        priority,
-        budget,
-        currency: currency || 'USD',
-        startDate,
-        endDate,
-        actualEndDate,
-        progress,
-        repositoryUrl: repositoryUrl?.trim() || null,
-        documentationUrl: documentationUrl?.trim() || null,
-      }
+    await store.projects.update(projectId, {
+      name: name.trim(),
+      description: description?.trim() || null,
+      development,
+      status,
+      priority,
+      budget,
+      currency: currency || 'USD',
+      startDate,
+      endDate,
+      actualEndDate,
+      progress,
+      repositoryUrl: repositoryUrl?.trim() || null,
+      documentationUrl: documentationUrl?.trim() || null,
     });
 
-    const store = await getStoreAsync();
     const org = await store.organisations.findById(currentProject.organisationId);
 
     revalidatePath('/admin/project');
@@ -308,26 +301,24 @@ export async function createProject(
       };
     }
 
-    const project = await prisma.project.create({
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        development,
-        status,
-        priority,
-        budget,
-        currency: currency || 'USD',
-        startDate,
-        endDate,
-        actualEndDate,
-        progress,
-        repositoryUrl: repositoryUrl?.trim() || null,
-        documentationUrl: documentationUrl?.trim() || null,
-        organisationId,
-      },
+    const store = await getStoreAsync();
+    const project = await store.projects.create({
+      name: name.trim(),
+      description: description?.trim() || null,
+      development,
+      status,
+      priority,
+      budget,
+      currency: currency || 'USD',
+      startDate,
+      endDate,
+      actualEndDate,
+      progress,
+      repositoryUrl: repositoryUrl?.trim() || null,
+      documentationUrl: documentationUrl?.trim() || null,
+      organisationId,
     });
 
-    const store = await getStoreAsync();
     const org = await store.organisations.findById(organisationId);
 
     revalidatePath('/admin/project');

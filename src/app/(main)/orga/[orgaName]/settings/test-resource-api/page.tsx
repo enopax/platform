@@ -1,6 +1,5 @@
 import { auth } from '@/lib/auth';
 import { getStoreAsync } from '@/lib/store';
-import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { RiArrowLeftLine } from '@remixicon/react';
@@ -42,14 +41,8 @@ export default async function TestResourceApiPage({ params }: TestResourceApiPag
     );
   }
 
-  const projects = await prisma.project.findMany({
-    where: { organisationId: organisation.id },
-    select: {
-      id: true,
-      name: true,
-    },
-    take: 10,
-  });
+  const allProjects = await store.projects.findByOrgId(organisation.id);
+  const projects = allProjects.slice(0, 10).map(p => ({ id: p.id, name: p.name }));
 
   return (
     <div className="space-y-6">

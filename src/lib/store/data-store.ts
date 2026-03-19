@@ -1,5 +1,6 @@
 import type { IUserRepository } from './repositories/user.repository';
 import type { IOrganisationRepository, IOrganisationMemberRepository } from './repositories/organisation.repository';
+import type { IProjectRepository } from './repositories/project.repository';
 import type { IApiKeyRepository } from './repositories/api-key.repository';
 import type { IAuditLogRepository } from './repositories/audit-log.repository';
 import type { IJoinRequestRepository } from './repositories/join-request.repository';
@@ -10,6 +11,7 @@ import { TinyBaseUserRepository } from './tinybase/user.tinybase';
 import { TinyBaseOrganisationRepository, TinyBaseOrganisationMemberRepository } from './tinybase/organisation.tinybase';
 import { TinyBaseApiKeyRepository } from './tinybase/api-key.tinybase';
 import { TinyBaseAuditLogRepository } from './tinybase/audit-log.tinybase';
+import { TinyBaseProjectRepository } from './tinybase/project.tinybase';
 import { TinyBaseJoinRequestRepository } from './tinybase/join-request.tinybase';
 import { TinyBaseUserStorageQuotaRepository, TinyBaseUserStorageMetricsRepository, TinyBaseUserStorageActivityRepository } from './tinybase/user-storage.tinybase';
 import path from 'path';
@@ -19,6 +21,7 @@ export interface DataStore {
   users: IUserRepository;
   organisations: IOrganisationRepository;
   organisationMembers: IOrganisationMemberRepository;
+  projects: IProjectRepository;
   apiKeys: IApiKeyRepository;
   auditLogs: IAuditLogRepository;
   joinRequests: IJoinRequestRepository;
@@ -47,6 +50,7 @@ async function createDataStore(): Promise<DataStore> {
     users: new TinyBaseUserRepository(tinyStore),
     organisations: new TinyBaseOrganisationRepository(tinyStore),
     organisationMembers: new TinyBaseOrganisationMemberRepository(tinyStore),
+    projects: new TinyBaseProjectRepository(tinyStore),
     apiKeys: new TinyBaseApiKeyRepository(tinyStore),
     auditLogs: new TinyBaseAuditLogRepository(tinyStore),
     joinRequests: new TinyBaseJoinRequestRepository(tinyStore),

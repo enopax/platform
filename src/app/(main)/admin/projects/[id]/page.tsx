@@ -3,7 +3,6 @@ import Container from '@/components/common/Container';
 import Headline from '@/components/common/Headline';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
-import { prisma } from '@/lib/prisma';
 import { getStoreAsync } from '@/lib/store';
 import Link from 'next/link';
 import ProjectForm from '@/components/form/ProjectForm';
@@ -18,17 +17,7 @@ export default async function EditProjectPage({ params }: EditProjectPageProps) 
 
   const store = await getStoreAsync();
   const [projectRaw, allOrgs] = await Promise.all([
-    prisma.project.findUnique({
-      where: { id },
-      include: {
-        team: {
-          include: {
-            owner: true,
-            organisation: true,
-          },
-        },
-      },
-    }),
+    store.projects.findById(id),
     store.organisations.search('', 10000),
   ]);
 

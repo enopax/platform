@@ -122,7 +122,7 @@ User (root — no dependencies, everything depends on it)
 | 6 | User model | `feat/migrate-user` | #36 | ✅ Done |
 | 7 | Organisation + OrganisationMember | `feat/migrate-organisation` | #37 | ✅ Done |
 | 8 | OrganisationJoinRequest | `feat/migrate-join-request` | #38 | ✅ Done |
-| 9 | Project | `feat/migrate-project` | — | ⬜ |
+| 9 | Project | `feat/migrate-project` | #39 | ✅ Done |
 | 10 | Resource + ProjectResource | `feat/migrate-resource` | — | ⬜ |
 | 11 | UserFile | `feat/migrate-user-file` | — | ⬜ |
 | 12 | Switch auth to Dex OIDC | `feat/dex-oidc-auth` | — | ⬜ |

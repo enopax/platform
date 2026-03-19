@@ -60,16 +60,11 @@ export async function getOrganisationProjects(organisationId: string): Promise<C
       return [];
     }
 
-    const projects = await prisma.project.findMany({
-      where: { organisationId },
-      select: {
-        id: true,
-        name: true,
-        organisationId: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50, // Limit results for performance
-    });
+    const allProjects = await store.projects.findByOrgId(organisationId);
+    const projects = allProjects
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 50)
+      .map(p => ({ id: p.id, name: p.name, organisationId: p.organisationId }));
 
     return projects;
   } catch (error) {
@@ -86,16 +81,12 @@ export async function getProjectResources(projectId: string): Promise<CommandPal
     }
 
     // First, get the project to find its organisation
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      select: { organisationId: true },
-    });
+    const store = await getStoreAsync();
+    const project = await store.projects.findById(projectId);
 
     if (!project) {
       return [];
     }
-
-    const store = await getStoreAsync();
     const isMember = await store.organisationMembers.findByUserAndOrg(session.user.id, project.organisationId);
 
     if (!isMember) {

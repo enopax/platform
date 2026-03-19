@@ -23,64 +23,47 @@ export default async function ProjectLayout({
     notFound();
   }
 
-  const projectRaw = await prisma.project.findFirst({
-    where: {
-      name: projectName,
-      organisationId: organisation.id,
-      isActive: true,
-    },
+  const projectFound = await store.projects.findByNameAndOrg(projectName, organisation.id);
+
+  if (!projectFound || !projectFound.isActive) {
+    notFound();
+  }
+
+  const allocatedResources = await prisma.projectResource.findMany({
+    where: { projectId: projectFound.id },
     include: {
-      organisation: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      allocatedResources: {
+      resource: {
         include: {
-          resource: {
-            include: {
-              owner: {
-                select: {
-                  id: true,
-                  name: true,
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                },
-              },
-              organisation: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              firstname: true,
+              lastname: true,
+              email: true,
             },
           },
-        },
-      },
-      _count: {
-        select: {
-          allocatedResources: true,
+          organisation: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
     },
   });
 
-  if (!projectRaw) {
-    notFound();
-  }
-
-  // Filter allocated resources to only active ones
-  const filteredAllocatedResources = projectRaw.allocatedResources.filter(
+  const filteredAllocatedResources = allocatedResources.filter(
     allocation => allocation.resource.isActive && allocation.resource.status === 'ACTIVE'
   );
 
-  // Convert Decimal budget to string for client components
   const project = {
-    ...projectRaw,
-    budget: projectRaw.budget?.toString() || null,
+    ...projectFound,
+    budget: projectFound.budget?.toString() || null,
+    organisation: { id: organisation.id, name: organisation.name },
     allocatedResources: filteredAllocatedResources,
+    _count: { allocatedResources: allocatedResources.length },
   };
 
   return (
