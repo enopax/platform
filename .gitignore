@@ -1,23 +1,12 @@
 node_modules
-# Keep environment variables out of version control
 .env
 .env.production
 .env.local
 
-/src/generated/prisma
 /data/
 .next/
 .DS_Store
 logs/
 coverage/
 tsconfig.tsbuildinfo
-cluster_backup_*.json
-migration-*.sql
-prisma/migrations/
-Dockerfile
-.dockerignore
-.default.env*
-.last_deploy_hash
-
-# Uploaded files
 public/uploads/
