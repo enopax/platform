@@ -15,12 +15,13 @@ export default {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isAuthPage = nextUrl.pathname.startsWith('/signin') || nextUrl.pathname.startsWith('/register');
 
-      if (isAuthPage) {
-        if (isLoggedIn) return Response.redirect(new URL('/', nextUrl));
-        return true;
-      }
+      const publicPaths = ['/', '/signin', '/register', '/api/auth', '/api/email'];
+      const isPublic = publicPaths.some(p =>
+        nextUrl.pathname === p || nextUrl.pathname.startsWith(p + '/')
+      );
+
+      if (isPublic) return true;
 
       return isLoggedIn;
     },
