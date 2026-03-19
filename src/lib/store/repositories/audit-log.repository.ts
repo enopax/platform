@@ -13,6 +13,6 @@ export interface CreateAuditLogData {
 
 export interface IAuditLogRepository {
   create(data: CreateAuditLogData): Promise<MembershipAuditLog>;
-  findByEntity(entityType: MembershipEntity, entityId: string): Promise<MembershipAuditLog[]>;
+  findByEntity(entityType: MembershipEntity, entityId: string, options?: { limit?: number }): Promise<MembershipAuditLog[]>;
   findByUserId(userId: string): Promise<MembershipAuditLog[]>;
 }

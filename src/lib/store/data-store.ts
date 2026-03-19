@@ -1,12 +1,15 @@
 import type { IApiKeyRepository } from './repositories/api-key.repository';
+import type { IAuditLogRepository } from './repositories/audit-log.repository';
 import { createStore } from 'tinybase';
-import { createFilePersister } from 'tinybase/persisters/persister-file';
+import { createFilePersister, type FilePersister } from 'tinybase/persisters/persister-file';
 import { TinyBaseApiKeyRepository } from './tinybase/api-key.tinybase';
+import { TinyBaseAuditLogRepository } from './tinybase/audit-log.tinybase';
 import path from 'path';
 import fs from 'fs';
 
 export interface DataStore {
   apiKeys: IApiKeyRepository;
+  auditLogs: IAuditLogRepository;
   destroy(): Promise<void>;
 }
 
@@ -18,7 +21,7 @@ let _initPromise: Promise<DataStore> | null = null;
 async function createDataStore(): Promise<DataStore> {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 
-  const filePath = path.join(DATA_DIR, 'api-keys.json');
+  const filePath = path.join(DATA_DIR, 'store.json');
   const tinyStore = createStore();
   const persister = createFilePersister(tinyStore, filePath);
 
@@ -27,6 +30,7 @@ async function createDataStore(): Promise<DataStore> {
 
   return {
     apiKeys: new TinyBaseApiKeyRepository(tinyStore),
+    auditLogs: new TinyBaseAuditLogRepository(tinyStore),
     async destroy() {
       await persister.destroy();
     },

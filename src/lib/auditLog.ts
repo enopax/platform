@@ -1,20 +1,17 @@
-import { prisma } from '@/lib/prisma';
-import { MembershipEntity, MembershipAction } from '@prisma/client';
+import { getStoreAsync } from '@/lib/store';
+import type { MembershipEntity, MembershipAction, MembershipAuditLog } from '@/lib/store';
 
 interface AuditLogParams {
   entityType: MembershipEntity;
   entityId: string;
-  userId: string; // Target user
-  actorId: string; // Who performed the action
+  userId: string;
+  actorId: string;
   action: MembershipAction;
   oldRole?: string;
   newRole?: string;
   reason?: string;
 }
 
-/**
- * Create an audit log entry for membership changes
- */
 export async function createAuditLog({
   entityType,
   entityId,
@@ -26,27 +23,22 @@ export async function createAuditLog({
   reason
 }: AuditLogParams) {
   try {
-    await prisma.membershipAuditLog.create({
-      data: {
-        entityType,
-        entityId,
-        userId,
-        actorId,
-        action,
-        oldRole,
-        newRole,
-        reason
-      }
+    const store = await getStoreAsync();
+    await store.auditLogs.create({
+      entityType,
+      entityId,
+      userId,
+      actorId,
+      action,
+      oldRole,
+      newRole,
+      reason
     });
   } catch (error) {
     console.error('Failed to create audit log:', error);
-    // Don't throw error to avoid breaking the main operation
   }
 }
 
-/**
- * Log organisation membership changes
- */
 export async function logOrganisationMembershipChange(
   organisationId: string,
   targetUserId: string,
@@ -68,9 +60,6 @@ export async function logOrganisationMembershipChange(
   });
 }
 
-/**
- * Log team membership changes
- */
 export async function logTeamMembershipChange(
   teamId: string,
   targetUserId: string,
@@ -81,7 +70,7 @@ export async function logTeamMembershipChange(
   reason?: string
 ) {
   return createAuditLog({
-    entityType: 'TEAM',
+    entityType: 'TEAM' as MembershipEntity,
     entityId: teamId,
     userId: targetUserId,
     actorId,
@@ -92,56 +81,20 @@ export async function logTeamMembershipChange(
   });
 }
 
-/**
- * Get audit logs for an entity (organisation or team)
- */
 export async function getAuditLogs(
   entityType: MembershipEntity,
   entityId: string,
   limit: number = 50
-) {
+): Promise<MembershipAuditLog[]> {
   try {
-    return await prisma.membershipAuditLog.findMany({
-      where: {
-        entityType,
-        entityId
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            firstname: true,
-            lastname: true,
-            email: true,
-            image: true
-          }
-        },
-        actor: {
-          select: {
-            id: true,
-            name: true,
-            firstname: true,
-            lastname: true,
-            email: true,
-            image: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: limit
-    });
+    const store = await getStoreAsync();
+    return await store.auditLogs.findByEntity(entityType, entityId, { limit });
   } catch (error) {
     console.error('Failed to get audit logs:', error);
     return [];
   }
 }
 
-/**
- * Get user display name for audit logs
- */
 export function getUserDisplayName(user: {
   name?: string | null;
   firstname?: string | null;
@@ -154,9 +107,6 @@ export function getUserDisplayName(user: {
   return user.email;
 }
 
-/**
- * Format audit log action for display
- */
 export function formatAuditAction(
   action: MembershipAction,
   oldRole?: string | null,
