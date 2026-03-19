@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
+  env: {
+    APP_VERSION: process.env.npm_package_version || '0.0.0',
+  },
 	images: {
     remotePatterns: [
       {

@@ -21,6 +21,7 @@ services:
       - app-network
 
   nextjs-app:
+    image: ghcr.io/enopax/platform:latest
     build:
       context: .
       dockerfile: Dockerfile.prod
