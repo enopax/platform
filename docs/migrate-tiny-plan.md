@@ -119,7 +119,7 @@ User (root — no dependencies, everything depends on it)
 | 3 | MembershipAuditLog (TinyBase) | `feat/migrate-audit-log` | #33 | ✅ Done |
 | 4 | User storage models (Quota + Metrics + Activity) | `feat/migrate-user-storage` | #34 | ✅ Done |
 | 5 | Bulk type import migration (~28 components) | `refactor/store-type-imports` | #35 | ✅ Done |
-| 6 | User model | `feat/migrate-user` | — | ⬜ |
+| 6 | User model | `feat/migrate-user` | #36 | ✅ Done |
 | 7 | Organisation + OrganisationMember | `feat/migrate-organisation` | — | ⬜ |
 | 8 | OrganisationJoinRequest | `feat/migrate-join-request` | — | ⬜ |
 | 9 | Project | `feat/migrate-project` | — | ⬜ |

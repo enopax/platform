@@ -4,7 +4,7 @@ import { Card } from '@/components/common/Card';
 import BackButton from '@/components/common/BackButton';
 import SettingsForm from '@/components/form/SettingsForm';
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import Avatar from '@/components/common/Avatar';
 import UploadImageForm from '@/components/form/UploadImageForm';
 import { setAvatar } from '@/actions/user';
@@ -13,20 +13,8 @@ import Breadcrumbs from '@/components/common/Breadcrumbs';
 export default async function Page() {
   const session = await auth();
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      image: true,
-      firstname: true,
-      lastname: true,
-      role: true,
-      storageTier: true,
-      emailVerified: true
-    }
-  });
+  const store = await getStoreAsync();
+  const user = await store.users.findById(session.user.id);
 
   if (!user) return notFound();
 

@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import { revalidatePath } from 'next/cache';
 import { deployResource } from '@/lib/deployment-service';
 import { validateNameFormat } from '@/lib/name-validation';
@@ -87,9 +88,8 @@ export async function createResource(
     }
 
     // Validate owner exists
-    const ownerExists = await prisma.user.findUnique({
-      where: { id: ownerId }
-    });
+    const store = await getStoreAsync();
+    const ownerExists = await store.users.findById(ownerId);
 
     if (!ownerExists) {
       return {

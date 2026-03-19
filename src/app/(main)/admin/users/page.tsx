@@ -4,7 +4,7 @@ import { Divider } from '@/components/common/Divider';
 import { Intro } from '@/components/Intro';
 import Table from '@/components/GenericTable';
 import { columns } from '@/components/table/User';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 
 export default async function Page({
   searchParams,
@@ -15,10 +15,11 @@ export default async function Page({
   const { page = '1' } = await searchParams;
   const pageNumber = Number(page);
 
-  const count = await prisma.user.count();
+  const store = await getStoreAsync();
+  const count = await store.users.count();
 
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' },
+  const users = await store.users.findMany({
+    orderBy: 'createdAt',
     skip: (pageNumber - 1) * size,
     take: size,
   });

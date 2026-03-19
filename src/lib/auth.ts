@@ -4,6 +4,7 @@ import Credentials from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { compare } from 'bcrypt-ts';
 import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import authConfig from '@/lib/auth.config';
 
 // Build providers array conditionally
@@ -24,9 +25,8 @@ providers.push(
   Credentials({
     authorize: async (credentials: Partial<Record<string, unknown>>) => {
       const { email, password } = credentials as { email: string; password: string };
-      const user = await prisma.user.findUnique({
-        where: { email },
-      });
+      const store = await getStoreAsync();
+      const user = await store.users.findByEmail(email);
       if (!user) return null;
 
       const passwordsMatch = await compare(password, user.password);
