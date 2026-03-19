@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getStoreAsync } from '@/lib/store';
 import { prisma } from '@/lib/prisma';
 import { ResourceProvider } from '@/contexts/ResourceContext';
 
@@ -11,22 +12,17 @@ export default async function ResourceLayout({
 }>) {
   const { orgaName, projectName, resourceName } = await params;
 
-  // Validate that parameters are provided
   if (!orgaName || !projectName || !resourceName) {
     notFound();
   }
 
-  // Fetch the organisation by name
-  const organisation = await prisma.organisation.findUnique({
-    where: { name: orgaName },
-    select: { id: true },
-  });
+  const store = await getStoreAsync();
+  const organisation = await store.organisations.findByName(orgaName);
 
   if (!organisation) {
     notFound();
   }
 
-  // Fetch the project by name and organisation
   const project = await prisma.project.findFirst({
     where: {
       name: projectName,

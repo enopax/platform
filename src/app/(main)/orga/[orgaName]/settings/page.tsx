@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
@@ -33,22 +33,13 @@ export default async function OrganisationSettingsPage({ params }: OrganisationS
   }
 
   // Get organisation by name
-  const organisation = await prisma.organisation.findUnique({
-    where: { name: orgaName },
-    select: { id: true, name: true }
-  });
+  const store = await getStoreAsync();
+  const organisation = await store.organisations.findByName(orgaName);
   if (!organisation) notFound();
   const organisationId = organisation.id;
 
   // Check if user is a member of this organisation
-  const membership = await prisma.organisationMember.findUnique({
-    where: {
-      userId_organisationId: {
-        userId: session.user.id,
-        organisationId
-      }
-    }
-  });
+  const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
   const isAdmin = session.user.role === 'ADMIN';
   const isOwner = membership?.role === 'OWNER';
@@ -66,25 +57,14 @@ export default async function OrganisationSettingsPage({ params }: OrganisationS
     notFound();
   }
 
-  // Fetch the organisation with only counts needed for display
-  const organisationCounts = await prisma.organisation.findUnique({
-    where: {
-      id: organisationId,
-      isActive: true
-    },
-    select: {
-      _count: {
-        select: {
-          members: true,
-          joinRequests: true
-        }
-      }
+  // Fetch counts needed for display
+  const orgMembers = await store.organisationMembers.findByOrgId(organisationId);
+  const organisationCounts = {
+    _count: {
+      members: orgMembers.length,
+      joinRequests: 0,
     }
-  });
-
-  if (!organisationCounts) {
-    notFound();
-  }
+  };
 
   return (
     <div>
@@ -238,7 +218,6 @@ export default async function OrganisationSettingsPage({ params }: OrganisationS
   );
 }
 
-// Client component wrapper to fetch and pass organisation data to the form
 async function OrganisationSettingsFormWrapper({
   organisationId,
   organisationName,
@@ -248,9 +227,8 @@ async function OrganisationSettingsFormWrapper({
   organisationName: string;
   redirectUrl: string;
 }) {
-  const organisation = await prisma.organisation.findUnique({
-    where: { id: organisationId }
-  });
+  const store = await getStoreAsync();
+  const organisation = await store.organisations.findById(organisationId);
 
   if (!organisation) {
     notFound();

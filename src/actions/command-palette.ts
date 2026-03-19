@@ -2,6 +2,7 @@
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 
 export interface CommandPaletteOrganisation {
   id: string;
@@ -32,20 +33,13 @@ export async function getUserOrganisations(): Promise<CommandPaletteOrganisation
       return [];
     }
 
-    const memberships = await prisma.organisationMember.findMany({
-      where: { userId: session.user.id },
-      select: {
-        organisation: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: { joinedAt: 'desc' },
-    });
+    const store = await getStoreAsync();
+    const memberships = await store.organisationMembers.findByUserId(session.user.id);
 
-    return memberships.map(m => m.organisation);
+    return memberships.map(m => ({
+      id: m.organisation.id,
+      name: m.organisation.name,
+    }));
   } catch (error) {
     console.error('Failed to fetch user organisations:', error);
     return [];
@@ -59,15 +53,8 @@ export async function getOrganisationProjects(organisationId: string): Promise<C
       return [];
     }
 
-    // Verify user is a member of the organisation
-    const isMember = await prisma.organisationMember.findUnique({
-      where: {
-        userId_organisationId: {
-          userId: session.user.id,
-          organisationId,
-        },
-      },
-    });
+    const store = await getStoreAsync();
+    const isMember = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
     if (!isMember) {
       return [];
@@ -108,15 +95,8 @@ export async function getProjectResources(projectId: string): Promise<CommandPal
       return [];
     }
 
-    // Verify user is a member of the organisation
-    const isMember = await prisma.organisationMember.findUnique({
-      where: {
-        userId_organisationId: {
-          userId: session.user.id,
-          organisationId: project.organisationId,
-        },
-      },
-    });
+    const store = await getStoreAsync();
+    const isMember = await store.organisationMembers.findByUserAndOrg(session.user.id, project.organisationId);
 
     if (!isMember) {
       return [];

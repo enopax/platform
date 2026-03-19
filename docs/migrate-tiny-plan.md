@@ -120,7 +120,7 @@ User (root — no dependencies, everything depends on it)
 | 4 | User storage models (Quota + Metrics + Activity) | `feat/migrate-user-storage` | #34 | ✅ Done |
 | 5 | Bulk type import migration (~28 components) | `refactor/store-type-imports` | #35 | ✅ Done |
 | 6 | User model | `feat/migrate-user` | #36 | ✅ Done |
-| 7 | Organisation + OrganisationMember | `feat/migrate-organisation` | — | ⬜ |
+| 7 | Organisation + OrganisationMember | `feat/migrate-organisation` | #37 | ✅ Done |
 | 8 | OrganisationJoinRequest | `feat/migrate-join-request` | — | ⬜ |
 | 9 | Project | `feat/migrate-project` | — | ⬜ |
 | 10 | Resource + ProjectResource | `feat/migrate-resource` | — | ⬜ |

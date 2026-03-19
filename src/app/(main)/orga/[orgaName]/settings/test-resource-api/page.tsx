@@ -1,4 +1,5 @@
 import { auth } from '@/lib/auth';
+import { getStoreAsync } from '@/lib/store';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -15,29 +16,16 @@ export default async function TestResourceApiPage({ params }: TestResourceApiPag
 
   const { orgName } = await params;
 
-  // Validate that orgName is provided
   if (!orgName) {
     notFound();
   }
 
-  const organisation = await prisma.organisation.findUnique({
-    where: { name: orgName },
-    select: {
-      id: true,
-      name: true,
-    }
-  });
+  const store = await getStoreAsync();
+  const organisation = await store.organisations.findByName(orgName);
 
   if (!organisation) notFound();
 
-  const membership = await prisma.organisationMember.findUnique({
-    where: {
-      userId_organisationId: {
-        userId: session.user.id,
-        organisationId: organisation.id
-      }
-    }
-  });
+  const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
 
   const isAdmin = session.user.role === 'ADMIN';
   const isOwner = membership?.role === 'OWNER';

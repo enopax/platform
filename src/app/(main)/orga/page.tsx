@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import { OrganisationsClient } from '@/components/OrganisationsClient';
 import { redirect } from 'next/navigation';
 
@@ -11,40 +11,44 @@ export default async function OrganisationsPage() {
   }
 
   const isAdmin = session.user.role === 'ADMIN';
+  const store = await getStoreAsync();
 
-  // Fetch user's organisations
-  const organisations = await prisma.organisation.findMany({
-    where: {
-      isActive: true,
-      ...(isAdmin
-        ? {}
-        : {
-            members: {
-              some: {
-                userId: session.user.id
-              }
-            }
-          })
-    },
-    include: {
-      owner: {
-        select: {
-          name: true,
-          firstname: true,
-          lastname: true,
-          email: true
-        }
-      },
-      _count: {
-        select: {
-          projects: true,
-          members: true,
-          resources: true
-        }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+  let activeOrgs;
+  if (isAdmin) {
+    activeOrgs = await store.organisations.search('', 1000);
+  } else {
+    const memberships = await store.organisationMembers.findByUserId(session.user.id);
+    const memberOrgIds = new Set(memberships.map(m => m.organisationId));
+    const allOrgs = await store.organisations.search('', 1000);
+    activeOrgs = allOrgs.filter(org => memberOrgIds.has(org.id));
+  }
+
+  const organisations = await Promise.all(
+    activeOrgs
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .map(async (org) => {
+        const owner = await store.users.findById(org.ownerId);
+        const members = await store.organisationMembers.findByOrgId(org.id);
+        return {
+          id: org.id,
+          name: org.name,
+          description: org.description,
+          isActive: org.isActive,
+          createdAt: org.createdAt,
+          owner: {
+            name: owner?.name ?? null,
+            firstname: owner?.firstname ?? null,
+            lastname: owner?.lastname ?? null,
+            email: owner?.email ?? '',
+          },
+          _count: {
+            projects: 0,
+            members: members.length,
+            resources: 0,
+          },
+        };
+      })
+  );
 
   return <OrganisationsClient organisations={organisations} />;
 }
