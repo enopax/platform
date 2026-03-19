@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { RiGithubFill, RiDiscordFill, RiTwitterXFill } from '@remixicon/react';
 
 export default function Footer() {
   return (
@@ -7,16 +6,6 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 overflow-x-hidden">
 
           <div className="mb-16 pt-16 flex flex-wrap justify-center gap-12 lg:gap-16">
-            <div className="w-full max-w-xs text-left">
-              <span className="font-bold uppercase tracking-widest">
-                Socials
-              </span>
-
-              <div className="flex gap-4 justify-start">
-                {/*Socials*/}
-              </div>
-            </div>
-
             <div className="w-40 text-left">
               <span className="font-bold uppercase tracking-widest">
                 Platform
@@ -30,23 +19,9 @@ export default function Footer() {
                 </Link>
 
                 <Link
-                  href="/signup"
+                  href="/register"
                   className="transition duration-100 hover:text-brand-500 active:text-brand-600"
                 > Register
-                </Link>
-              </nav>
-            </div>
-
-            <div className="w-40 text-left">
-              <span className="font-bold uppercase tracking-widest">
-                Resources
-              </span>
-
-              <nav className="mt-4 flex flex-col gap-4">
-                <Link
-                  href="/docs/api"
-                  className="transition duration-100 hover:text-brand-500 active:text-brand-600"
-                > API Documentation
                 </Link>
               </nav>
             </div>
@@ -69,7 +44,7 @@ export default function Footer() {
           <div className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
             © {new Date().getFullYear()} Enopax
           </div>
-        
+
       </div>
     </footer>
   );
