@@ -2,6 +2,7 @@ import type { IUserRepository } from './repositories/user.repository';
 import type { IOrganisationRepository, IOrganisationMemberRepository } from './repositories/organisation.repository';
 import type { IApiKeyRepository } from './repositories/api-key.repository';
 import type { IAuditLogRepository } from './repositories/audit-log.repository';
+import type { IJoinRequestRepository } from './repositories/join-request.repository';
 import type { IUserStorageQuotaRepository, IUserStorageMetricsRepository, IUserStorageActivityRepository } from './repositories/user-storage.repository';
 import { createStore } from 'tinybase';
 import { createFilePersister, type FilePersister } from 'tinybase/persisters/persister-file';
@@ -9,6 +10,7 @@ import { TinyBaseUserRepository } from './tinybase/user.tinybase';
 import { TinyBaseOrganisationRepository, TinyBaseOrganisationMemberRepository } from './tinybase/organisation.tinybase';
 import { TinyBaseApiKeyRepository } from './tinybase/api-key.tinybase';
 import { TinyBaseAuditLogRepository } from './tinybase/audit-log.tinybase';
+import { TinyBaseJoinRequestRepository } from './tinybase/join-request.tinybase';
 import { TinyBaseUserStorageQuotaRepository, TinyBaseUserStorageMetricsRepository, TinyBaseUserStorageActivityRepository } from './tinybase/user-storage.tinybase';
 import path from 'path';
 import fs from 'fs';
@@ -19,6 +21,7 @@ export interface DataStore {
   organisationMembers: IOrganisationMemberRepository;
   apiKeys: IApiKeyRepository;
   auditLogs: IAuditLogRepository;
+  joinRequests: IJoinRequestRepository;
   storageQuotas: IUserStorageQuotaRepository;
   storageMetrics: IUserStorageMetricsRepository;
   storageActivity: IUserStorageActivityRepository;
@@ -46,6 +49,7 @@ async function createDataStore(): Promise<DataStore> {
     organisationMembers: new TinyBaseOrganisationMemberRepository(tinyStore),
     apiKeys: new TinyBaseApiKeyRepository(tinyStore),
     auditLogs: new TinyBaseAuditLogRepository(tinyStore),
+    joinRequests: new TinyBaseJoinRequestRepository(tinyStore),
     storageQuotas: new TinyBaseUserStorageQuotaRepository(tinyStore),
     storageMetrics: new TinyBaseUserStorageMetricsRepository(tinyStore),
     storageActivity: new TinyBaseUserStorageActivityRepository(tinyStore),
