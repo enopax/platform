@@ -59,6 +59,19 @@ module.exports = {
       ],
     },
 
+    // Store tests (Node environment)
+    {
+      displayName: 'store',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+      },
+      testMatch: [
+        '<rootDir>/tests/store/**/*.test.ts',
+      ],
+    },
+
     // Component tests (JSDOM environment)
     {
       displayName: 'components',
