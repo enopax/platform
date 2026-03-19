@@ -20,8 +20,8 @@ export class ProjectService {
       const isOrganisationMember = await organisationService.isUserMember(userId, data.organisationId);
       if (!isOrganisationMember) throw new Error('You are not a member of the specified organisation');
 
-      const isNameAvailable = await this.validateProjectName(data.name, data.organisationId);
-      if (!isNameAvailable) throw new Error('Project name is already taken within this organisation');
+      const nameValidation = await this.validateProjectName(data.name, data.organisationId);
+      if (!nameValidation.isValid) throw new Error(nameValidation.error || 'Project name is already taken within this organisation');
 
       const store = await getStoreAsync();
       const project = await store.projects.create(data);

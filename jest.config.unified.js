@@ -44,6 +44,13 @@ module.exports = {
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
       },
+      transformIgnorePatterns: [
+        'node_modules/(?!(tinybase)/)',
+      ],
+      transform: {
+        '^.+\\.ts$': 'ts-jest',
+        '^.+\\.js$': ['ts-jest', { useESM: false }],
+      },
       testMatch: [
         '<rootDir>/tests/services/**/*.test.ts',
       ],

@@ -80,12 +80,9 @@ Returns 501 Not Implemented. Has a comment referencing "MongoDB models" — pred
 ~~Imported `addTeamMember` action which doesn't exist.~~
 Fixed: Deleted dead `AddMemberForm.tsx`.
 
-### 11. Lost test coverage
-**Previous state**: CLAUDE.md mentions "130+ tests". The old Prisma-mocking service tests (user, organisation, project) were deleted in Phase 13.
-
-**Current state**: 173 store tests + 8 action tests = 181 tests. But no integration tests, no component tests that exercise the full stack.
-
-**Fix**: Add integration tests that test the full flow (auth → store → response).
+### ~~11. Lost test coverage~~ ✅ Fixed
+~~Old Prisma-mocking service tests deleted, not replaced.~~
+Fixed: Rewrote service tests using real TinyBase stores (no mocks). 52 new tests covering UserService, OrganisationService, ProjectService business logic (permissions, validation, soft delete, name uniqueness). Total: 233 tests. Also found and fixed a bug in `createProject` name validation.
 
 ### ~~12. getUserOrganisations doesn't return member counts~~ ✅ Fixed
 ~~Returned `memberCount: 0` for all organisations.~~
