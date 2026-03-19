@@ -3,7 +3,7 @@
   "version": "0.4.1",
   "private": true,
   "scripts": {
-    "postinstall": "prisma generate && prisma db push",
+    "postinstall": "",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -17,6 +17,8 @@
     "test:components": "jest --config jest.config.unified.js --selectProjects components",
     "docker:dev:up": "docker compose up -d",
     "docker:dev:down": "docker compose down",
+    "dex:up": "docker compose up -d dex",
+    "dex:down": "docker compose down dex",
     "docker:prod": "docker compose -f docker-compose.prod.yml up -d --build",
     "docker:prod:stop": "docker compose -f docker-compose.prod.yml down",
     "docker:prod:rebuild": "docker compose -f docker-compose.prod.yml up -d --build --no-cache nextjs-app",
@@ -24,7 +26,6 @@
     "docker:logs": "docker compose logs -f"
   },
   "dependencies": {
-    "@auth/prisma-adapter": "^2.10.0",
     "@internationalized/date": "^3.8.2",
     "@next/env": "^16.1.7",
     "@prisma/client": "^6.15.0",

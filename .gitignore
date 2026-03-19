@@ -5,6 +5,7 @@ node_modules
 .env.local
 
 /src/generated/prisma
+/data/
 .next/
 .DS_Store
 logs/
