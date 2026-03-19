@@ -8,7 +8,7 @@ import { Label } from '@/components/common/Label';
 import { Callout } from '@/components/common/Callout';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/common/Select';
 import ClientDate from '@/components/common/ClientDate';
-import { type User } from '@prisma/client';
+import { type User } from '@/lib/store';
 import { RiCheckLine, RiErrorWarningLine } from '@remixicon/react';
 import Link from 'next/link';
 

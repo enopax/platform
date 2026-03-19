@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Project } from '@prisma/client';
+import { Project } from '@/lib/store';
 
 type ProjectContextType = {
   selectedProject: Project | null;

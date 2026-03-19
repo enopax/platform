@@ -18,7 +18,7 @@ import {
   RiCheckLine,
   RiCloseLine
 } from '@remixicon/react';
-import { OrganisationJoinRequest } from '@prisma/client';
+import { OrganisationJoinRequest } from '@/lib/store';
 
 type SearchableOrganisation = {
   id: string;

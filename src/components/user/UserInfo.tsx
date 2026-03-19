@@ -1,6 +1,6 @@
 'use client'
 
-import { type User } from '@prisma/client'
+import { type User } from '@/lib/store'
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/common/Popover';
 import UserListItem from '@/components/list/UserListItem';

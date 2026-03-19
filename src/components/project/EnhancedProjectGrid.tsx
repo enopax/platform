@@ -18,7 +18,7 @@ import {
 } from '@remixicon/react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { type Project } from '@prisma/client';
+import { type Project } from '@/lib/store';
 
 type ProjectWithTeamsAndResources = Project & {
   organisation: {

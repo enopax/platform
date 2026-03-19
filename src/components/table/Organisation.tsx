@@ -4,7 +4,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { Button } from '@/components/common/Button';
 import { Tooltip } from '@/components/common/Tooltip';
-import { type Organisation, type User } from '@prisma/client';
+import { type Organisation, type User } from '@/lib/store';
 import Link from 'next/link';
 
 type OrganisationWithOwner = Organisation & {

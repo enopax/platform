@@ -17,7 +17,7 @@ import {
   RiProjectorLine
 } from '@remixicon/react';
 import { updateOrganisation } from '@/actions/organisation';
-import { type Organisation, type User } from '@prisma/client';
+import { type Organisation, type User } from '@/lib/store';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
