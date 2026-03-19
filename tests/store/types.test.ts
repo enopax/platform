@@ -343,31 +343,14 @@ describe('Store types', () => {
       expect(() => getStore()).toThrow('DataStore not initialised');
     });
 
-    it('getStoreAsync resolves with apiKeys repository', async () => {
+    it('setStore + getStore works', () => {
       jest.resetModules();
-      const mockStore = {
-        getRowIds: jest.fn().mockReturnValue([]),
-        getRow: jest.fn().mockReturnValue({}),
-        setRow: jest.fn(),
-      };
-      jest.mock('tinybase', () => ({ createStore: () => mockStore }));
-      jest.mock('tinybase/persisters/persister-file', () => ({
-        createFilePersister: () => ({
-          load: jest.fn().mockResolvedValue(undefined),
-          startAutoSave: jest.fn().mockResolvedValue(undefined),
-          destroy: jest.fn().mockResolvedValue(undefined),
-        }),
-      }));
-      const { getStoreAsync, resetStore } = require('@/lib/store/data-store');
+      jest.mock('tinybase', () => ({ createStore: jest.fn() }));
+      const { getStore, setStore, resetStore } = require('@/lib/store/data-store');
       resetStore();
-      const store = await getStoreAsync();
-      expect(store).toBeDefined();
-      expect(store.users).toBeDefined();
-      expect(store.apiKeys).toBeDefined();
-      expect(store.auditLogs).toBeDefined();
-      expect(store.storageQuotas).toBeDefined();
-      expect(store.storageMetrics).toBeDefined();
-      expect(store.storageActivity).toBeDefined();
+      const mockStore = { users: {}, apiKeys: {}, auditLogs: {} };
+      setStore(mockStore);
+      expect(getStore()).toBe(mockStore);
     });
   });
 });

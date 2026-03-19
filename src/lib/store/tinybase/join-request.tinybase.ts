@@ -1,6 +1,7 @@
 import type { Store } from 'tinybase';
 import type { OrganisationJoinRequest, JoinRequestStatus } from '../types';
 import type { IJoinRequestRepository, CreateJoinRequestData, UpdateJoinRequestData } from '../repositories/join-request.repository';
+import type { FileRecordPersister } from './file-record-persister';
 import crypto from 'crypto';
 
 const TABLE = 'join-requests';
@@ -23,7 +24,7 @@ function rowToJoinRequest(id: string, row: Record<string, any>): OrganisationJoi
 }
 
 export class TinyBaseJoinRequestRepository implements IJoinRequestRepository {
-  constructor(private store: Store) {}
+  constructor(private store: Store, private persister?: FileRecordPersister) {}
 
   async create(data: CreateJoinRequestData): Promise<OrganisationJoinRequest> {
     const id = generateId();
@@ -75,9 +76,13 @@ export class TinyBaseJoinRequestRepository implements IJoinRequestRepository {
   async findByOrgId(organisationId: string, status?: JoinRequestStatus): Promise<OrganisationJoinRequest[]> {
     const results: OrganisationJoinRequest[] = [];
 
-    for (const id of this.store.getRowIds(TABLE)) {
+    const rowIds = this.persister
+      ? this.persister.lookupIndex('join-requests', 'organisationId', organisationId)
+      : this.store.getRowIds(TABLE);
+
+    for (const id of rowIds) {
       const row = this.store.getRow(TABLE, id);
-      if (row.organisationId !== organisationId) continue;
+      if (!this.persister && row.organisationId !== organisationId) continue;
       if (status && row.status !== status) continue;
       results.push(rowToJoinRequest(id, row));
     }

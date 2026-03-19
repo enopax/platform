@@ -6,16 +6,9 @@ Technical debt, shortcuts, and incomplete work from the PostgreSQL → TinyBase 
 
 ## Critical
 
-### 1. Single store.json instead of file-per-record storage
-**File**: `src/lib/store/data-store.ts:46-54`
-
-All 15 models are stored in a single `data/store.json` file via TinyBase's default file persister. The plan called for file-per-record layout (`data/users/<id>.json`, etc.).
-
-**Why**: TinyBase's built-in `createFilePersister` writes the entire store to one file. File-per-record requires a custom persister.
-
-**Impact**: Single large JSON file, no per-record git diffs, full file rewrite on every change, risk of total data loss from single file corruption.
-
-**Fix**: Build a custom TinyBase persister that writes each row as a separate JSON file in a subdirectory per table.
+### ~~1. Single store.json instead of file-per-record storage~~ ✅ Fixed
+~~All 15 models in a single `data/store.json` file.~~
+Fixed: Custom `FileRecordPersister` writes each row as `data/<table>/<id>.json`. Atomic writes via temp-file + rename. Auto-save on row changes with 50ms debounce.
 
 ### ~~2. Organisation soft delete is broken~~ ✅ Fixed
 ~~`deleteOrganisation()` was a no-op.~~
@@ -29,19 +22,9 @@ Fixed: Removed all Prisma steps, deleted `docker-entrypoint.sh`, added `DATA_DIR
 
 ## High
 
-### 4. All repositories use linear scans (no indices)
-**Files**: All `src/lib/store/tinybase/*.tinybase.ts`
-
-Every lookup (findByEmail, findByName, findByUserAndOrg, etc.) iterates all rows in the table. No JSONL index files or TinyBase indexes are used.
-
-**Most critical**:
-- `user.findByEmail()` — called on every auth request
-- `apiKey.findByHashedKey()` — called on every API request
-- `organisationMember.findByUserAndOrg()` — called on every permission check
-
-**Why**: Linear scans are simple and correct. Performance is acceptable for small datasets (hundreds of records). Indices add complexity.
-
-**Fix**: Implement JSONL index files for high-frequency lookups, or use TinyBase's built-in `createIndexes()` API.
+### ~~4. All repositories use linear scans (no indices)~~ ✅ Fixed
+~~Every lookup iterated all rows in the table.~~
+Fixed: `FileRecordPersister` maintains JSON index files per indexed field (`data/<table>/_index/<field>.json`). Repositories use `persister.lookupIndex()` for O(1) lookups with linear scan fallback when persister is absent (tests). Indexed fields: user.email, org.name, member.userId/orgId, apiKey.hashedKey/userId, project.orgId, resource.orgId, etc.
 
 ### ~~5. Project counts hardcoded to 0 in sidebar~~ ✅ Fixed
 ~~Organisation sidebar always showed 0 projects.~~

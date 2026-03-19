@@ -8,7 +8,7 @@ import type { IAuditLogRepository } from './repositories/audit-log.repository';
 import type { IJoinRequestRepository } from './repositories/join-request.repository';
 import type { IUserStorageQuotaRepository, IUserStorageMetricsRepository, IUserStorageActivityRepository } from './repositories/user-storage.repository';
 import { createStore } from 'tinybase';
-import { createFilePersister, type FilePersister } from 'tinybase/persisters/persister-file';
+import { FileRecordPersister } from './tinybase/file-record-persister';
 import { TinyBaseUserRepository } from './tinybase/user.tinybase';
 import { TinyBaseOrganisationRepository, TinyBaseOrganisationMemberRepository } from './tinybase/organisation.tinybase';
 import { TinyBaseApiKeyRepository } from './tinybase/api-key.tinybase';
@@ -19,7 +19,6 @@ import { TinyBaseUserFileRepository } from './tinybase/user-file.tinybase';
 import { TinyBaseJoinRequestRepository } from './tinybase/join-request.tinybase';
 import { TinyBaseUserStorageQuotaRepository, TinyBaseUserStorageMetricsRepository, TinyBaseUserStorageActivityRepository } from './tinybase/user-storage.tinybase';
 import path from 'path';
-import fs from 'fs';
 
 export interface DataStore {
   users: IUserRepository;
@@ -40,30 +39,43 @@ export interface DataStore {
 
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 
+const TABLE_CONFIG = [
+  { tableName: 'users', indexes: [{ name: 'email', cellId: 'email' }] },
+  { tableName: 'organisations', indexes: [{ name: 'name', cellId: 'name' }] },
+  { tableName: 'organisation-members', indexes: [{ name: 'userId', cellId: 'userId' }, { name: 'organisationId', cellId: 'organisationId' }] },
+  { tableName: 'projects', indexes: [{ name: 'organisationId', cellId: 'organisationId' }] },
+  { tableName: 'resources', indexes: [{ name: 'organisationId', cellId: 'organisationId' }] },
+  { tableName: 'project-resources', indexes: [{ name: 'projectId', cellId: 'projectId' }, { name: 'resourceId', cellId: 'resourceId' }] },
+  { tableName: 'api-keys', indexes: [{ name: 'userId', cellId: 'userId' }, { name: 'hashedKey', cellId: 'hashedKey' }] },
+  { tableName: 'audit-logs' },
+  { tableName: 'join-requests', indexes: [{ name: 'organisationId', cellId: 'organisationId' }] },
+  { tableName: 'user-files', indexes: [{ name: 'userId', cellId: 'userId' }, { name: 'projectId', cellId: 'projectId' }] },
+  { tableName: 'storage-quotas', indexes: [{ name: 'userId', cellId: 'userId' }] },
+  { tableName: 'storage-metrics' },
+  { tableName: 'storage-activity' },
+];
+
 let _store: DataStore | null = null;
 let _initPromise: Promise<DataStore> | null = null;
 
 async function createDataStore(): Promise<DataStore> {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-
-  const filePath = path.join(DATA_DIR, 'store.json');
   const tinyStore = createStore();
-  const persister = createFilePersister(tinyStore, filePath);
+  const persister = new FileRecordPersister(tinyStore, DATA_DIR, TABLE_CONFIG);
 
   await persister.load();
-  await persister.startAutoSave();
+  persister.startAutoSave();
 
   return {
-    users: new TinyBaseUserRepository(tinyStore),
-    organisations: new TinyBaseOrganisationRepository(tinyStore),
-    organisationMembers: new TinyBaseOrganisationMemberRepository(tinyStore),
-    projects: new TinyBaseProjectRepository(tinyStore),
-    resources: new TinyBaseResourceRepository(tinyStore),
-    projectResources: new TinyBaseProjectResourceRepository(tinyStore),
-    userFiles: new TinyBaseUserFileRepository(tinyStore),
-    apiKeys: new TinyBaseApiKeyRepository(tinyStore),
+    users: new TinyBaseUserRepository(tinyStore, persister),
+    organisations: new TinyBaseOrganisationRepository(tinyStore, persister),
+    organisationMembers: new TinyBaseOrganisationMemberRepository(tinyStore, persister),
+    projects: new TinyBaseProjectRepository(tinyStore, persister),
+    resources: new TinyBaseResourceRepository(tinyStore, persister),
+    projectResources: new TinyBaseProjectResourceRepository(tinyStore, persister),
+    userFiles: new TinyBaseUserFileRepository(tinyStore, persister),
+    apiKeys: new TinyBaseApiKeyRepository(tinyStore, persister),
     auditLogs: new TinyBaseAuditLogRepository(tinyStore),
-    joinRequests: new TinyBaseJoinRequestRepository(tinyStore),
+    joinRequests: new TinyBaseJoinRequestRepository(tinyStore, persister),
     storageQuotas: new TinyBaseUserStorageQuotaRepository(tinyStore),
     storageMetrics: new TinyBaseUserStorageMetricsRepository(tinyStore),
     storageActivity: new TinyBaseUserStorageActivityRepository(tinyStore),

@@ -5,6 +5,7 @@ import type {
   IUserStorageMetricsRepository, CreateStorageMetricsData,
   IUserStorageActivityRepository, CreateStorageActivityData,
 } from '../repositories/user-storage.repository';
+import type { FileRecordPersister } from './file-record-persister';
 import crypto from 'crypto';
 
 function generateId(): string {
@@ -70,7 +71,7 @@ function rowToActivity(id: string, row: Record<string, any>): UserStorageActivit
 }
 
 export class TinyBaseUserStorageQuotaRepository implements IUserStorageQuotaRepository {
-  constructor(private store: Store) {}
+  constructor(private store: Store, private persister?: FileRecordPersister) {}
 
   async create(data: CreateStorageQuotaData): Promise<UserStorageQuota> {
     const id = generateId();
@@ -94,8 +95,15 @@ export class TinyBaseUserStorageQuotaRepository implements IUserStorageQuotaRepo
   }
 
   async findByUserId(userId: string): Promise<UserStorageQuota | null> {
-    const rowIds = this.store.getRowIds(QUOTA_TABLE);
-    for (const id of rowIds) {
+    if (this.persister) {
+      const ids = this.persister.lookupIndex('storage-quotas', 'userId', userId);
+      if (ids.length > 0) {
+        const row = this.store.getRow(QUOTA_TABLE, ids[0]);
+        if (row.userId) return rowToQuota(ids[0], row);
+      }
+      return null;
+    }
+    for (const id of this.store.getRowIds(QUOTA_TABLE)) {
       const row = this.store.getRow(QUOTA_TABLE, id);
       if (row.userId === userId) return rowToQuota(id, row);
     }
@@ -106,11 +114,15 @@ export class TinyBaseUserStorageQuotaRepository implements IUserStorageQuotaRepo
     userId: string,
     data: Partial<Pick<UserStorageQuota, 'tier' | 'allocatedBytes' | 'usedBytes' | 'tierUpdatedAt' | 'tierUpdatedBy' | 'subscriptionId' | 'subscriptionEnds'>>
   ): Promise<UserStorageQuota> {
-    const rowIds = this.store.getRowIds(QUOTA_TABLE);
     let targetId: string | null = null;
-    for (const id of rowIds) {
-      const row = this.store.getRow(QUOTA_TABLE, id);
-      if (row.userId === userId) { targetId = id; break; }
+    if (this.persister) {
+      const ids = this.persister.lookupIndex('storage-quotas', 'userId', userId);
+      if (ids.length > 0) targetId = ids[0];
+    } else {
+      for (const id of this.store.getRowIds(QUOTA_TABLE)) {
+        const row = this.store.getRow(QUOTA_TABLE, id);
+        if (row.userId === userId) { targetId = id; break; }
+      }
     }
     if (!targetId) throw new Error(`StorageQuota for user ${userId} not found`);
 

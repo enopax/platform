@@ -1,6 +1,7 @@
 import type { Store } from 'tinybase';
 import type { User, UserRole, StorageTier } from '../types';
 import type { IUserRepository, CreateUserData, UpdateUserData, UserSearchResult } from '../repositories/user.repository';
+import type { FileRecordPersister } from './file-record-persister';
 import crypto from 'crypto';
 
 const TABLE = 'users';
@@ -27,7 +28,7 @@ function rowToUser(id: string, row: Record<string, any>): User {
 }
 
 export class TinyBaseUserRepository implements IUserRepository {
-  constructor(private store: Store) {}
+  constructor(private store: Store, private persister?: FileRecordPersister) {}
 
   async create(data: CreateUserData): Promise<User> {
     const id = generateId();
@@ -57,8 +58,15 @@ export class TinyBaseUserRepository implements IUserRepository {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const rowIds = this.store.getRowIds(TABLE);
-    for (const id of rowIds) {
+    if (this.persister) {
+      const ids = this.persister.lookupIndex('users', 'email', email);
+      if (ids.length > 0) {
+        const row = this.store.getRow(TABLE, ids[0]);
+        if (row.email) return rowToUser(ids[0], row);
+      }
+      return null;
+    }
+    for (const id of this.store.getRowIds(TABLE)) {
       const row = this.store.getRow(TABLE, id);
       if (row.email === email) return rowToUser(id, row);
     }

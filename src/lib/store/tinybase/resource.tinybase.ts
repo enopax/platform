@@ -1,6 +1,7 @@
 import type { Store } from 'tinybase';
 import type { Resource, ResourceType, ResourceStatus, ProjectResource } from '../types';
 import type { IResourceRepository, CreateResourceData, UpdateResourceData, IProjectResourceRepository } from '../repositories/resource.repository';
+import type { FileRecordPersister } from './file-record-persister';
 import crypto from 'crypto';
 
 const RES_TABLE = 'resources';
@@ -45,7 +46,7 @@ function rowToProjectResource(id: string, row: Record<string, any>): ProjectReso
 }
 
 export class TinyBaseResourceRepository implements IResourceRepository {
-  constructor(private store: Store) {}
+  constructor(private store: Store, private persister?: FileRecordPersister) {}
 
   async create(data: CreateResourceData): Promise<Resource> {
     const id = generateId();
@@ -82,9 +83,14 @@ export class TinyBaseResourceRepository implements IResourceRepository {
 
   async findByOrgId(organisationId: string): Promise<Resource[]> {
     const results: Resource[] = [];
-    for (const id of this.store.getRowIds(RES_TABLE)) {
+    const rowIds = this.persister
+      ? this.persister.lookupIndex('resources', 'organisationId', organisationId)
+      : this.store.getRowIds(RES_TABLE);
+
+    for (const id of rowIds) {
       const row = this.store.getRow(RES_TABLE, id);
-      if (row.organisationId === organisationId && row.isActive === 1) {
+      if (!this.persister && row.organisationId !== organisationId) continue;
+      if (row.isActive === 1) {
         results.push(rowToResource(id, row));
       }
     }
@@ -113,6 +119,15 @@ export class TinyBaseResourceRepository implements IResourceRepository {
   }
 
   async findByNameAndOrg(name: string, organisationId: string, excludeId?: string): Promise<Resource | null> {
+    if (this.persister) {
+      const ids = this.persister.lookupIndex('resources', 'organisationId', organisationId);
+      for (const id of ids) {
+        if (id === excludeId) continue;
+        const row = this.store.getRow(RES_TABLE, id);
+        if (row.name === name && row.isActive === 1) return rowToResource(id, row);
+      }
+      return null;
+    }
     for (const id of this.store.getRowIds(RES_TABLE)) {
       const row = this.store.getRow(RES_TABLE, id);
       if (row.name === name && row.organisationId === organisationId && row.isActive === 1 && id !== excludeId) {
@@ -169,7 +184,7 @@ export class TinyBaseResourceRepository implements IResourceRepository {
 }
 
 export class TinyBaseProjectResourceRepository implements IProjectResourceRepository {
-  constructor(private store: Store) {}
+  constructor(private store: Store, private persister?: FileRecordPersister) {}
 
   async create(data: { projectId: string; resourceId: string; allocatedBy: string; quotaLimit?: bigint }): Promise<ProjectResource> {
     const id = generateId();
@@ -188,23 +203,41 @@ export class TinyBaseProjectResourceRepository implements IProjectResourceReposi
 
   async findByProjectId(projectId: string): Promise<ProjectResource[]> {
     const results: ProjectResource[] = [];
-    for (const id of this.store.getRowIds(PR_TABLE)) {
+    const rowIds = this.persister
+      ? this.persister.lookupIndex('project-resources', 'projectId', projectId)
+      : this.store.getRowIds(PR_TABLE);
+
+    for (const id of rowIds) {
       const row = this.store.getRow(PR_TABLE, id);
-      if (row.projectId === projectId) results.push(rowToProjectResource(id, row));
+      if (!this.persister && row.projectId !== projectId) continue;
+      results.push(rowToProjectResource(id, row));
     }
     return results;
   }
 
   async findByResourceId(resourceId: string): Promise<ProjectResource[]> {
     const results: ProjectResource[] = [];
-    for (const id of this.store.getRowIds(PR_TABLE)) {
+    const rowIds = this.persister
+      ? this.persister.lookupIndex('project-resources', 'resourceId', resourceId)
+      : this.store.getRowIds(PR_TABLE);
+
+    for (const id of rowIds) {
       const row = this.store.getRow(PR_TABLE, id);
-      if (row.resourceId === resourceId) results.push(rowToProjectResource(id, row));
+      if (!this.persister && row.resourceId !== resourceId) continue;
+      results.push(rowToProjectResource(id, row));
     }
     return results;
   }
 
   async findByProjectAndResource(projectId: string, resourceId: string): Promise<ProjectResource | null> {
+    if (this.persister) {
+      const ids = this.persister.lookupIndex('project-resources', 'projectId', projectId);
+      for (const id of ids) {
+        const row = this.store.getRow(PR_TABLE, id);
+        if (row.resourceId === resourceId) return rowToProjectResource(id, row);
+      }
+      return null;
+    }
     for (const id of this.store.getRowIds(PR_TABLE)) {
       const row = this.store.getRow(PR_TABLE, id);
       if (row.projectId === projectId && row.resourceId === resourceId) {

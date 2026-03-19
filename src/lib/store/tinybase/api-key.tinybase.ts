@@ -1,6 +1,7 @@
 import type { Store } from 'tinybase';
 import type { ApiKey } from '../types';
 import type { IApiKeyRepository, CreateApiKeyData } from '../repositories/api-key.repository';
+import type { FileRecordPersister } from './file-record-persister';
 import crypto from 'crypto';
 
 const TABLE = 'api-keys';
@@ -27,7 +28,7 @@ function rowToApiKey(id: string, row: Record<string, any>): ApiKey {
 }
 
 export class TinyBaseApiKeyRepository implements IApiKeyRepository {
-  constructor(private store: Store) {}
+  constructor(private store: Store, private persister?: FileRecordPersister) {}
 
   async create(data: CreateApiKeyData): Promise<ApiKey> {
     const id = generateId();
@@ -57,8 +58,15 @@ export class TinyBaseApiKeyRepository implements IApiKeyRepository {
   }
 
   async findByHashedKey(hashedKey: string): Promise<ApiKey | null> {
-    const rowIds = this.store.getRowIds(TABLE);
-    for (const id of rowIds) {
+    if (this.persister) {
+      const ids = this.persister.lookupIndex('api-keys', 'hashedKey', hashedKey);
+      if (ids.length > 0) {
+        const row = this.store.getRow(TABLE, ids[0]);
+        if (row.name) return rowToApiKey(ids[0], row);
+      }
+      return null;
+    }
+    for (const id of this.store.getRowIds(TABLE)) {
       const row = this.store.getRow(TABLE, id);
       if (row.hashedKey === hashedKey) {
         return rowToApiKey(id, row);
@@ -71,14 +79,15 @@ export class TinyBaseApiKeyRepository implements IApiKeyRepository {
     userId: string,
     options?: { skip?: number; take?: number; orderBy?: 'createdAt' }
   ): Promise<ApiKey[]> {
-    const rowIds = this.store.getRowIds(TABLE);
+    const rowIds = this.persister
+      ? this.persister.lookupIndex('api-keys', 'userId', userId)
+      : this.store.getRowIds(TABLE);
     let results: ApiKey[] = [];
 
     for (const id of rowIds) {
       const row = this.store.getRow(TABLE, id);
-      if (row.userId === userId) {
-        results.push(rowToApiKey(id, row));
-      }
+      if (!this.persister && row.userId !== userId) continue;
+      results.push(rowToApiKey(id, row));
     }
 
     if (options?.orderBy === 'createdAt') {
@@ -92,12 +101,14 @@ export class TinyBaseApiKeyRepository implements IApiKeyRepository {
   }
 
   async countByUserId(userId: string, filter?: { isActive?: boolean }): Promise<number> {
-    const rowIds = this.store.getRowIds(TABLE);
+    const rowIds = this.persister
+      ? this.persister.lookupIndex('api-keys', 'userId', userId)
+      : this.store.getRowIds(TABLE);
     let count = 0;
 
     for (const id of rowIds) {
       const row = this.store.getRow(TABLE, id);
-      if (row.userId !== userId) continue;
+      if (!this.persister && row.userId !== userId) continue;
       if (filter?.isActive !== undefined) {
         const active = row.isActive === 1;
         if (active !== filter.isActive) continue;

@@ -1,6 +1,7 @@
 import type { Store } from 'tinybase';
 import type { UserFile } from '../types';
 import type { IUserFileRepository, CreateUserFileData } from '../repositories/user-file.repository';
+import type { FileRecordPersister } from './file-record-persister';
 import crypto from 'crypto';
 
 const TABLE = 'user-files';
@@ -28,7 +29,7 @@ function rowToUserFile(id: string, row: Record<string, any>): UserFile {
 }
 
 export class TinyBaseUserFileRepository implements IUserFileRepository {
-  constructor(private store: Store) {}
+  constructor(private store: Store, private persister?: FileRecordPersister) {}
 
   async create(data: CreateUserFileData): Promise<UserFile> {
     const id = generateId();
@@ -64,9 +65,14 @@ export class TinyBaseUserFileRepository implements IUserFileRepository {
   ): Promise<UserFile[]> {
     let results: UserFile[] = [];
 
-    for (const id of this.store.getRowIds(TABLE)) {
+    const rowIds = this.persister
+      ? this.persister.lookupIndex('user-files', 'userId', userId)
+      : this.store.getRowIds(TABLE);
+
+    for (const id of rowIds) {
       const row = this.store.getRow(TABLE, id);
-      if (row.userId === userId) results.push(rowToUserFile(id, row));
+      if (!this.persister && row.userId !== userId) continue;
+      results.push(rowToUserFile(id, row));
     }
 
     if (options?.orderBy === 'uploadedAt') {
@@ -80,9 +86,14 @@ export class TinyBaseUserFileRepository implements IUserFileRepository {
 
   async findByProjectId(projectId: string): Promise<UserFile[]> {
     const results: UserFile[] = [];
-    for (const id of this.store.getRowIds(TABLE)) {
+    const rowIds = this.persister
+      ? this.persister.lookupIndex('user-files', 'projectId', projectId)
+      : this.store.getRowIds(TABLE);
+
+    for (const id of rowIds) {
       const row = this.store.getRow(TABLE, id);
-      if (row.projectId === projectId) results.push(rowToUserFile(id, row));
+      if (!this.persister && row.projectId !== projectId) continue;
+      results.push(rowToUserFile(id, row));
     }
     results.sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
     return results;
@@ -120,6 +131,9 @@ export class TinyBaseUserFileRepository implements IUserFileRepository {
   }
 
   async countByUserId(userId: string): Promise<number> {
+    if (this.persister) {
+      return this.persister.lookupIndex('user-files', 'userId', userId).length;
+    }
     let count = 0;
     for (const id of this.store.getRowIds(TABLE)) {
       if (this.store.getRow(TABLE, id).userId === userId) count++;

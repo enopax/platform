@@ -4,6 +4,7 @@ import type {
   IOrganisationRepository, CreateOrganisationData, OrganisationWithMemberCount,
   IOrganisationMemberRepository, OrganisationMemberWithUser,
 } from '../repositories/organisation.repository';
+import type { FileRecordPersister } from './file-record-persister';
 import crypto from 'crypto';
 
 const ORG_TABLE = 'organisations';
@@ -56,9 +57,12 @@ function rowToMember(id: string, row: Record<string, any>): OrganisationMember {
 }
 
 export class TinyBaseOrganisationRepository implements IOrganisationRepository {
-  constructor(private store: Store) {}
+  constructor(private store: Store, private persister?: FileRecordPersister) {}
 
   private countMembers(orgId: string): number {
+    if (this.persister) {
+      return this.persister.lookupIndex('organisation-members', 'organisationId', orgId).length;
+    }
     let count = 0;
     for (const id of this.store.getRowIds(MEMBER_TABLE)) {
       if (this.store.getRow(MEMBER_TABLE, id).organisationId === orgId) count++;
@@ -113,6 +117,14 @@ export class TinyBaseOrganisationRepository implements IOrganisationRepository {
   }
 
   async findByName(name: string): Promise<Organisation | null> {
+    if (this.persister) {
+      const ids = this.persister.lookupIndex('organisations', 'name', name);
+      if (ids.length > 0) {
+        const row = this.store.getRow(ORG_TABLE, ids[0]);
+        if (row.name) return rowToOrg(ids[0], row);
+      }
+      return null;
+    }
     for (const id of this.store.getRowIds(ORG_TABLE)) {
       const row = this.store.getRow(ORG_TABLE, id);
       if (row.name === name) return rowToOrg(id, row);
@@ -162,6 +174,15 @@ export class TinyBaseOrganisationRepository implements IOrganisationRepository {
   }
 
   async findActiveByName(name: string, excludeId?: string): Promise<Organisation | null> {
+    if (this.persister) {
+      const ids = this.persister.lookupIndex('organisations', 'name', name);
+      for (const id of ids) {
+        if (id === excludeId) continue;
+        const row = this.store.getRow(ORG_TABLE, id);
+        if (row.name === name && row.isActive === 1) return rowToOrg(id, row);
+      }
+      return null;
+    }
     for (const id of this.store.getRowIds(ORG_TABLE)) {
       const row = this.store.getRow(ORG_TABLE, id);
       if (row.name === name && row.isActive === 1 && id !== excludeId) {
@@ -173,7 +194,7 @@ export class TinyBaseOrganisationRepository implements IOrganisationRepository {
 }
 
 export class TinyBaseOrganisationMemberRepository implements IOrganisationMemberRepository {
-  constructor(private store: Store) {}
+  constructor(private store: Store, private persister?: FileRecordPersister) {}
 
   async create(data: { userId: string; organisationId: string; role: OrganisationRole }): Promise<OrganisationMember> {
     const id = generateId();
@@ -191,6 +212,14 @@ export class TinyBaseOrganisationMemberRepository implements IOrganisationMember
   }
 
   async findByUserAndOrg(userId: string, organisationId: string): Promise<OrganisationMember | null> {
+    if (this.persister) {
+      const ids = this.persister.lookupIndex('organisation-members', 'userId', userId);
+      for (const id of ids) {
+        const row = this.store.getRow(MEMBER_TABLE, id);
+        if (row.organisationId === organisationId) return rowToMember(id, row);
+      }
+      return null;
+    }
     for (const id of this.store.getRowIds(MEMBER_TABLE)) {
       const row = this.store.getRow(MEMBER_TABLE, id);
       if (row.userId === userId && row.organisationId === organisationId) {
@@ -203,9 +232,13 @@ export class TinyBaseOrganisationMemberRepository implements IOrganisationMember
   async findByUserId(userId: string): Promise<(OrganisationMember & { organisation: Organisation })[]> {
     const results: (OrganisationMember & { organisation: Organisation })[] = [];
 
-    for (const id of this.store.getRowIds(MEMBER_TABLE)) {
+    const memberIds = this.persister
+      ? this.persister.lookupIndex('organisation-members', 'userId', userId)
+      : this.store.getRowIds(MEMBER_TABLE);
+
+    for (const id of memberIds) {
       const row = this.store.getRow(MEMBER_TABLE, id);
-      if (row.userId !== userId) continue;
+      if (!this.persister && row.userId !== userId) continue;
 
       const orgRow = this.store.getRow(ORG_TABLE, row.organisationId as string);
       if (!orgRow.name) continue;
@@ -223,9 +256,13 @@ export class TinyBaseOrganisationMemberRepository implements IOrganisationMember
   async findByOrgId(organisationId: string): Promise<OrganisationMemberWithUser[]> {
     const results: OrganisationMemberWithUser[] = [];
 
-    for (const id of this.store.getRowIds(MEMBER_TABLE)) {
+    const memberIds = this.persister
+      ? this.persister.lookupIndex('organisation-members', 'organisationId', organisationId)
+      : this.store.getRowIds(MEMBER_TABLE);
+
+    for (const id of memberIds) {
       const row = this.store.getRow(MEMBER_TABLE, id);
-      if (row.organisationId !== organisationId) continue;
+      if (!this.persister && row.organisationId !== organisationId) continue;
 
       const userRow = this.store.getRow('users', row.userId as string);
       results.push({
@@ -243,6 +280,17 @@ export class TinyBaseOrganisationMemberRepository implements IOrganisationMember
   }
 
   async delete(userId: string, organisationId: string): Promise<void> {
+    if (this.persister) {
+      const ids = this.persister.lookupIndex('organisation-members', 'userId', userId);
+      for (const id of ids) {
+        const row = this.store.getRow(MEMBER_TABLE, id);
+        if (row.organisationId === organisationId) {
+          this.store.delRow(MEMBER_TABLE, id);
+          return;
+        }
+      }
+      return;
+    }
     for (const id of this.store.getRowIds(MEMBER_TABLE)) {
       const row = this.store.getRow(MEMBER_TABLE, id);
       if (row.userId === userId && row.organisationId === organisationId) {

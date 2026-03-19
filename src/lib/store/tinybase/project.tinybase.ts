@@ -1,6 +1,7 @@
 import type { Store } from 'tinybase';
 import type { Project, ProjectStatus, ProjectPriority } from '../types';
 import type { IProjectRepository, CreateProjectData, UpdateProjectData, ProjectWithFileCount } from '../repositories/project.repository';
+import type { FileRecordPersister } from './file-record-persister';
 import crypto from 'crypto';
 
 const TABLE = 'projects';
@@ -33,7 +34,7 @@ function rowToProject(id: string, row: Record<string, any>): Project {
 }
 
 export class TinyBaseProjectRepository implements IProjectRepository {
-  constructor(private store: Store) {}
+  constructor(private store: Store, private persister?: FileRecordPersister) {}
 
   async create(data: CreateProjectData): Promise<Project> {
     const id = generateId();
@@ -80,6 +81,14 @@ export class TinyBaseProjectRepository implements IProjectRepository {
   }
 
   async findByNameAndOrg(name: string, organisationId: string): Promise<Project | null> {
+    if (this.persister) {
+      const ids = this.persister.lookupIndex('projects', 'organisationId', organisationId);
+      for (const id of ids) {
+        const row = this.store.getRow(TABLE, id);
+        if (row.name === name && row.isActive === 1) return rowToProject(id, row);
+      }
+      return null;
+    }
     for (const id of this.store.getRowIds(TABLE)) {
       const row = this.store.getRow(TABLE, id);
       if (row.name === name && row.organisationId === organisationId && row.isActive === 1) {
@@ -92,9 +101,13 @@ export class TinyBaseProjectRepository implements IProjectRepository {
   async findByOrgId(organisationId: string, options?: { isActive?: boolean }): Promise<Project[]> {
     const results: Project[] = [];
 
-    for (const id of this.store.getRowIds(TABLE)) {
+    const rowIds = this.persister
+      ? this.persister.lookupIndex('projects', 'organisationId', organisationId)
+      : this.store.getRowIds(TABLE);
+
+    for (const id of rowIds) {
       const row = this.store.getRow(TABLE, id);
-      if (row.organisationId !== organisationId) continue;
+      if (!this.persister && row.organisationId !== organisationId) continue;
       if (options?.isActive !== undefined) {
         if ((row.isActive === 1) !== options.isActive) continue;
       }
