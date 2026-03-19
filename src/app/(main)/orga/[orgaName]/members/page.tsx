@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { getStoreAsync } from '@/lib/store';
-import { prisma } from '@/lib/prisma';
 import { MembersManagementClient } from '@/components/MembersManagementClient';
 
 interface MembersManagementPageProps {
@@ -40,28 +39,29 @@ export default async function MembersManagementPage({ params }: MembersManagemen
     notFound();
   }
 
-  const [storeMembers, joinRequests] = await Promise.all([
+  const [storeMembers, rawJoinRequests] = await Promise.all([
     store.organisationMembers.findByOrgId(organisationId),
-    prisma.organisationJoinRequest.findMany({
-      where: {
-        organisationId,
-        status: 'PENDING'
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            firstname: true,
-            lastname: true,
-            email: true,
-            image: true,
-          }
-        }
-      },
-      orderBy: { requestedAt: 'desc' }
-    })
+    store.joinRequests.findByOrgId(organisationId, 'PENDING'),
   ]);
+
+  const joinRequests = await Promise.all(
+    rawJoinRequests.map(async (req) => {
+      const user = await store.users.findById(req.userId);
+      return {
+        ...req,
+        user: {
+          id: req.userId,
+          name: user?.name ?? null,
+          firstname: user?.firstname ?? null,
+          lastname: user?.lastname ?? null,
+          email: user?.email ?? '',
+          image: user?.image ?? null,
+        },
+      };
+    })
+  );
+
+  joinRequests.sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime());
 
   const members = await Promise.all(
     storeMembers.map(async (m) => {

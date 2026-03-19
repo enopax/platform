@@ -121,7 +121,7 @@ User (root — no dependencies, everything depends on it)
 | 5 | Bulk type import migration (~28 components) | `refactor/store-type-imports` | #35 | ✅ Done |
 | 6 | User model | `feat/migrate-user` | #36 | ✅ Done |
 | 7 | Organisation + OrganisationMember | `feat/migrate-organisation` | #37 | ✅ Done |
-| 8 | OrganisationJoinRequest | `feat/migrate-join-request` | — | ⬜ |
+| 8 | OrganisationJoinRequest | `feat/migrate-join-request` | #38 | ✅ Done |
 | 9 | Project | `feat/migrate-project` | — | ⬜ |
 | 10 | Resource + ProjectResource | `feat/migrate-resource` | — | ⬜ |
 | 11 | UserFile | `feat/migrate-user-file` | — | ⬜ |
