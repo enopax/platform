@@ -364,6 +364,9 @@ describe('Store types', () => {
       expect(store).toBeDefined();
       expect(store.apiKeys).toBeDefined();
       expect(store.auditLogs).toBeDefined();
+      expect(store.storageQuotas).toBeDefined();
+      expect(store.storageMetrics).toBeDefined();
+      expect(store.storageActivity).toBeDefined();
     });
   });
 });

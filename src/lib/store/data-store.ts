@@ -1,15 +1,20 @@
 import type { IApiKeyRepository } from './repositories/api-key.repository';
 import type { IAuditLogRepository } from './repositories/audit-log.repository';
+import type { IUserStorageQuotaRepository, IUserStorageMetricsRepository, IUserStorageActivityRepository } from './repositories/user-storage.repository';
 import { createStore } from 'tinybase';
 import { createFilePersister, type FilePersister } from 'tinybase/persisters/persister-file';
 import { TinyBaseApiKeyRepository } from './tinybase/api-key.tinybase';
 import { TinyBaseAuditLogRepository } from './tinybase/audit-log.tinybase';
+import { TinyBaseUserStorageQuotaRepository, TinyBaseUserStorageMetricsRepository, TinyBaseUserStorageActivityRepository } from './tinybase/user-storage.tinybase';
 import path from 'path';
 import fs from 'fs';
 
 export interface DataStore {
   apiKeys: IApiKeyRepository;
   auditLogs: IAuditLogRepository;
+  storageQuotas: IUserStorageQuotaRepository;
+  storageMetrics: IUserStorageMetricsRepository;
+  storageActivity: IUserStorageActivityRepository;
   destroy(): Promise<void>;
 }
 
@@ -31,6 +36,9 @@ async function createDataStore(): Promise<DataStore> {
   return {
     apiKeys: new TinyBaseApiKeyRepository(tinyStore),
     auditLogs: new TinyBaseAuditLogRepository(tinyStore),
+    storageQuotas: new TinyBaseUserStorageQuotaRepository(tinyStore),
+    storageMetrics: new TinyBaseUserStorageMetricsRepository(tinyStore),
+    storageActivity: new TinyBaseUserStorageActivityRepository(tinyStore),
     async destroy() {
       await persister.destroy();
     },
