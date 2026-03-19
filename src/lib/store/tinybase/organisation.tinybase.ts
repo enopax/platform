@@ -126,7 +126,7 @@ export class TinyBaseOrganisationRepository implements IOrganisationRepository {
     return { ...org, memberCount: this.countMembers(org.id) };
   }
 
-  async update(id: string, data: Partial<CreateOrganisationData>): Promise<Organisation> {
+  async update(id: string, data: Partial<CreateOrganisationData> & { isActive?: boolean }): Promise<Organisation> {
     const row = this.store.getRow(ORG_TABLE, id);
     if (!row.name) throw new Error(`Organisation ${id} not found`);
 
@@ -136,6 +136,7 @@ export class TinyBaseOrganisationRepository implements IOrganisationRepository {
     if (data.phone !== undefined) this.store.setCell(ORG_TABLE, id, 'phone', data.phone ?? '');
     if (data.email !== undefined) this.store.setCell(ORG_TABLE, id, 'email', data.email ?? '');
     if (data.logo !== undefined) this.store.setCell(ORG_TABLE, id, 'logo', data.logo ?? '');
+    if (data.isActive !== undefined) this.store.setCell(ORG_TABLE, id, 'isActive', data.isActive ? 1 : 0);
     this.store.setCell(ORG_TABLE, id, 'updatedAt', new Date().toISOString());
 
     return rowToOrg(id, this.store.getRow(ORG_TABLE, id));

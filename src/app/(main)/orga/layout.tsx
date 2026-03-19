@@ -29,18 +29,20 @@ export default async function Layout({
         org.isActive && (org.ownerId === session.user.id || memberOrgIds.has(org.id))
       );
 
-      organisations = userOrgs
+      const orgDataPromises = userOrgs
         .sort((a, b) => a.name.localeCompare(b.name))
-        .map(org => {
+        .map(async (org) => {
           const memberCount = memberships.filter(m => m.organisationId === org.id).length ||
             (org.ownerId === session.user.id ? 1 : 0);
+          const projects = await store.projects.findByOrgId(org.id, { isActive: true });
           return {
             id: org.id,
             name: org.name,
             description: org.description,
-            _count: { projects: 0, members: memberCount },
+            _count: { projects: projects.length, members: memberCount },
           };
         });
+      organisations = await Promise.all(orgDataPromises);
     } catch (error) {
       console.error('Error fetching sidebar data:', error);
     }

@@ -17,17 +17,9 @@ All 15 models are stored in a single `data/store.json` file via TinyBase's defau
 
 **Fix**: Build a custom TinyBase persister that writes each row as a separate JSON file in a subdirectory per table.
 
-### 2. Organisation soft delete is broken
-**File**: `src/lib/services/organisation.ts:83-99`
-
-`deleteOrganisation()` does not actually set `isActive: false`. It calls `update()` with just the existing name — a no-op.
-
-```typescript
-// This does nothing useful:
-await store.organisations.update(organisationId, { name: organisation.name });
-```
-
-**Fix**: The `IOrganisationRepository.update()` needs to support updating `isActive`. Add it to the update interface and pass `{ isActive: false }`.
+### ~~2. Organisation soft delete is broken~~ ✅ Fixed
+~~`deleteOrganisation()` was a no-op.~~
+Fixed: `update()` now accepts `isActive` flag, `deleteOrganisation()` passes `{ isActive: false }`.
 
 ### 3. Dockerfile still references Prisma
 **File**: `Dockerfile.prod:19-59`, `docker-entrypoint.sh:7`
@@ -54,16 +46,9 @@ Every lookup (findByEmail, findByName, findByUserAndOrg, etc.) iterates all rows
 
 **Fix**: Implement JSONL index files for high-frequency lookups, or use TinyBase's built-in `createIndexes()` API.
 
-### 5. Project counts hardcoded to 0 in sidebar
-**File**: `src/app/(main)/orga/layout.tsx:41`
-
-```typescript
-_count: { projects: 0, members: memberCount },
-```
-
-Organisation sidebar always shows 0 projects because the count was previously done via Prisma `_count` include and wasn't replicated.
-
-**Fix**: Call `store.projects.findByOrgId(org.id)` and use `.length` for the count.
+### ~~5. Project counts hardcoded to 0 in sidebar~~ ✅ Fixed
+~~Organisation sidebar always showed 0 projects.~~
+Fixed: Sidebar now fetches project counts per org via `store.projects.findByOrgId()`.
 
 ### 6. No user registration flow in the platform
 **Current state**: Users can only be created via:
@@ -80,13 +65,6 @@ The old Credentials-based registration form (`/signup`) no longer works since au
 
 Middleware creates its own NextAuth instance with empty providers instead of sharing the auth.ts config. This is because the Edge runtime can't do OIDC discovery.
 
-```typescript
-const { auth } = NextAuth({
-  providers: [],
-  pages: { signIn: '/signin' },
-})
-```
-
 **Impact**: Middleware can check if a session JWT exists but can't validate the provider. Functionally works but architecturally fragile.
 
 **Fix**: Use NextAuth v5's recommended pattern for Edge-compatible middleware config.
@@ -95,12 +73,9 @@ const { auth } = NextAuth({
 
 ## Medium
 
-### 8. Dead code: auth.config.ts
-**File**: `src/lib/auth.config.ts`
-
-Empty config file with just `providers: []`. No longer imported by auth.ts or middleware.ts.
-
-**Fix**: Delete the file.
+### ~~8. Dead code: auth.config.ts~~ ✅ Fixed
+~~Empty config file no longer imported by anything.~~
+Fixed: Deleted.
 
 ### 9. Email confirmation endpoint not implemented
 **File**: `src/app/api/email/confirm/route.ts`
@@ -109,12 +84,9 @@ Returns 501 Not Implemented. Has a comment referencing "MongoDB models" — pred
 
 **Fix**: Implement or remove the endpoint.
 
-### 10. Team member references in AddMemberForm
-**File**: `src/components/form/AddMemberForm.tsx`
-
-Imports `addTeamMember` action which was removed during migration (Team model doesn't exist in schema).
-
-**Fix**: Remove the Team-related code from the form or repurpose for organisation members.
+### ~~10. Team member references in AddMemberForm~~ ✅ Fixed
+~~Imported `addTeamMember` action which doesn't exist.~~
+Fixed: Deleted dead `AddMemberForm.tsx`.
 
 ### 11. Lost test coverage
 **Previous state**: CLAUDE.md mentions "130+ tests". The old Prisma-mocking service tests (user, organisation, project) were deleted in Phase 13.
@@ -123,19 +95,9 @@ Imports `addTeamMember` action which was removed during migration (Team model do
 
 **Fix**: Add integration tests that test the full flow (auth → store → response).
 
-### 12. getUserOrganisations doesn't return member counts
-**File**: `src/lib/services/organisation.ts:55-67`
-
-Returns `memberCount: 0` for all organisations because the member count query was simplified during migration.
-
-```typescript
-return memberships.map(m => ({
-  ...m.organisation,
-  memberCount: 0, // was: organisation._count.members
-}));
-```
-
-**Fix**: Count members per org using `store.organisationMembers.findByOrgId()`.
+### ~~12. getUserOrganisations doesn't return member counts~~ ✅ Fixed
+~~Returned `memberCount: 0` for all organisations.~~
+Fixed: Now counts members per org via `store.organisationMembers.findByOrgId()`.
 
 ---
 
@@ -148,12 +110,9 @@ References "TinyBase v7.1.0 installed", "4% complete", migration plan docs that 
 
 **Fix**: Update CLAUDE.md to reflect current state (TinyBase v8.0.2, migration complete, Dex OIDC auth).
 
-### 14. Old signup/credentials pages still exist
-**Files**: `src/app/(auth)/signin/credentials/page.tsx`, `src/app/(auth)/signin/(email)/`, `src/app/(auth)/signup/`
-
-The old Credentials and email sign-in pages still exist but are non-functional since auth switched to Dex OIDC.
-
-**Fix**: Delete the old pages or redirect to the new `/signin` page.
+### ~~14. Old signup/credentials pages still exist~~ ✅ Fixed
+~~Non-functional pages from the Credentials auth era.~~
+Fixed: Deleted old signin/credentials, signin/email, and signup pages.
 
 ### 15. data/ directory needs .gitkeep or seed script
 **Current state**: `data/` is in `.gitignore`. A fresh clone has no data directory and no way to seed initial data.

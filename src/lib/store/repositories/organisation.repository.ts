@@ -29,7 +29,7 @@ export interface IOrganisationRepository {
   findByIdWithMemberCount(id: string): Promise<OrganisationWithMemberCount | null>;
   findByName(name: string): Promise<Organisation | null>;
   findByNameWithMemberCount(name: string): Promise<OrganisationWithMemberCount | null>;
-  update(id: string, data: Partial<CreateOrganisationData>): Promise<Organisation>;
+  update(id: string, data: Partial<CreateOrganisationData> & { isActive?: boolean }): Promise<Organisation>;
   search(query: string, limit?: number): Promise<Organisation[]>;
   findActiveByName(name: string, excludeId?: string): Promise<Organisation | null>;
 }

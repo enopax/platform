@@ -49,10 +49,12 @@ export class OrganisationService {
     try {
       const store = await getStoreAsync();
       const memberships = await store.organisationMembers.findByUserId(userId);
-      return memberships.map(m => ({
-        ...m.organisation,
-        memberCount: 0,
-      }));
+      const results: OrganisationInfo[] = [];
+      for (const m of memberships) {
+        const members = await store.organisationMembers.findByOrgId(m.organisationId);
+        results.push({ ...m.organisation, memberCount: members.length });
+      }
+      return results;
     } catch (error) {
       console.error('Failed to get user organisations:', error);
       throw error;
@@ -89,9 +91,7 @@ export class OrganisationService {
         throw new Error('Only the organisation owner can delete the organisation');
       }
 
-      await store.organisations.update(organisationId, { name: organisation.name });
-      // Soft delete via isActive — need to add to update interface
-      // For now, update the raw store
+      await store.organisations.update(organisationId, { isActive: false });
     } catch (error) {
       console.error('Failed to delete organisation:', error);
       throw error;
