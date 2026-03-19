@@ -1,0 +1,66 @@
+# Dex OIDC Configuration — Local Development
+# Start with: docker compose up -d
+
+issuer: http://localhost:5556/dex
+
+storage:
+  type: file
+  config:
+    dataDir: /data
+
+web:
+  http: 0.0.0.0:5556
+
+grpc:
+  addr: 0.0.0.0:5557
+
+oauth2:
+  skipApprovalScreen: true
+
+connectors:
+  - type: local-enhanced
+    id: local
+    name: Enopax Authentication
+    config:
+      baseURL: http://localhost:5556
+      dataDir: /data
+      passkey:
+        enabled: true
+        rpID: localhost
+        rpName: Enopax Dev
+        rpOrigins:
+          - http://localhost:5556
+          - http://localhost:3000
+      twoFactor:
+        required: false
+        methods:
+          - totp
+          - passkey
+        gracePeriod: 604800
+      magicLink:
+        enabled: false
+
+staticClients:
+  - id: enopax-platform
+    secret: dev-secret
+    name: "Enopax Platform (Dev)"
+    redirectURIs:
+      - "http://localhost:3000/api/auth/callback"
+      - "http://localhost:3000/auth/callback"
+
+frontend:
+  issuer: Enopax Dev
+  theme: light
+
+expiry:
+  signingKeys: "6h"
+  idTokens: "24h"
+  authRequests: "24h"
+  refreshTokens:
+    reuseInterval: "3s"
+    validIfNotUsedFor: "2160h"
+    absoluteLifetime: "3960h"
+
+logger:
+  level: "debug"
+  format: "text"
