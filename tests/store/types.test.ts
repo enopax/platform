@@ -334,11 +334,18 @@ describe('Store types', () => {
   });
 
   describe('DataStore', () => {
-    it('getStore throws when not initialised', () => {
-      // Reset store by importing fresh
+    it('getStore returns a store with apiKeys repository', () => {
       jest.resetModules();
+      jest.mock('@/lib/prisma', () => ({
+        prisma: {},
+      }));
+      jest.mock('@/lib/store/prisma/api-key.prisma', () => ({
+        PrismaApiKeyRepository: jest.fn(),
+      }));
       const { getStore } = require('@/lib/store/data-store');
-      expect(() => getStore()).toThrow('DataStore not initialised');
+      const store = getStore();
+      expect(store).toBeDefined();
+      expect(store.apiKeys).toBeDefined();
     });
   });
 });
