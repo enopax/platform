@@ -314,9 +314,6 @@ export default function SidebarNavigation({
             </Button>
           </Link>
         </div>
-        <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-2">
-          v{process.env.APP_VERSION}
-        </p>
       </div>
     </div>
   );
