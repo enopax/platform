@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import { getStoreAsync } from '@/lib/store';
-import { prisma } from '@/lib/prisma';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 
 export default async function ProjectLayout({
@@ -29,30 +28,32 @@ export default async function ProjectLayout({
     notFound();
   }
 
-  const allocatedResources = await prisma.projectResource.findMany({
-    where: { projectId: projectFound.id },
-    include: {
-      resource: {
-        include: {
-          owner: {
-            select: {
-              id: true,
-              name: true,
-              firstname: true,
-              lastname: true,
-              email: true,
-            },
-          },
+  const projectAllocations = await store.projectResources.findByProjectId(projectFound.id);
+
+  const allocatedResources = [];
+  for (const allocation of projectAllocations) {
+    const resource = await store.resources.findById(allocation.resourceId);
+    if (resource) {
+      const owner = await store.users.findById(resource.ownerId);
+      allocatedResources.push({
+        ...allocation,
+        resource: {
+          ...resource,
+          owner: owner ? {
+            id: owner.id,
+            name: owner.name,
+            firstname: owner.firstname,
+            lastname: owner.lastname,
+            email: owner.email,
+          } : null,
           organisation: {
-            select: {
-              id: true,
-              name: true,
-            },
+            id: organisation.id,
+            name: organisation.name,
           },
         },
-      },
-    },
-  });
+      });
+    }
+  }
 
   const filteredAllocatedResources = allocatedResources.filter(
     allocation => allocation.resource.isActive && allocation.resource.status === 'ACTIVE'

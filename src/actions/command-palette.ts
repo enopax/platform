@@ -1,7 +1,6 @@
 'use server';
 
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 import { getStoreAsync } from '@/lib/store';
 
 export interface CommandPaletteOrganisation {
@@ -94,43 +93,27 @@ export async function getProjectResources(projectId: string): Promise<CommandPal
     }
 
     // Get resources allocated to this project via the ProjectResource junction table
-    const projectResources = await prisma.projectResource.findMany({
-      where: { projectId },
-      include: {
-        project: {
-          select: {
-            name: true,
-            organisation: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-        resource: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            status: true,
-            organisationId: true,
-          },
-        },
-      },
-      orderBy: { allocatedAt: 'desc' },
-      take: 50, // Limit results for performance
-    });
+    const projectResources = await store.projectResources.findByProjectId(projectId);
+    const organisation = await store.organisations.findById(project.organisationId);
 
-    return projectResources.map(pr => ({
-      id: pr.resource.id,
-      name: pr.resource.name,
-      type: pr.resource.type,
-      status: pr.resource.status,
-      projectId,
-      projectName: pr.project.name,
-      organisationId: pr.resource.organisationId,
-      organisationName: pr.project.organisation.name,
-    }));
+    const results: CommandPaletteResource[] = [];
+    for (const pr of projectResources.slice(0, 50)) {
+      const resource = await store.resources.findById(pr.resourceId);
+      if (resource) {
+        results.push({
+          id: resource.id,
+          name: resource.name,
+          type: resource.type,
+          status: resource.status,
+          projectId,
+          projectName: project.name,
+          organisationId: resource.organisationId,
+          organisationName: organisation?.name || '',
+        });
+      }
+    }
+
+    return results;
   } catch (error) {
     console.error('Failed to fetch project resources:', error);
     return [];

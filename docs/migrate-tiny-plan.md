@@ -123,7 +123,7 @@ User (root — no dependencies, everything depends on it)
 | 7 | Organisation + OrganisationMember | `feat/migrate-organisation` | #37 | ✅ Done |
 | 8 | OrganisationJoinRequest | `feat/migrate-join-request` | #38 | ✅ Done |
 | 9 | Project | `feat/migrate-project` | #39 | ✅ Done |
-| 10 | Resource + ProjectResource | `feat/migrate-resource` | — | ⬜ |
+| 10 | Resource + ProjectResource | `feat/migrate-resource` | #40 | ✅ Done |
 | 11 | UserFile | `feat/migrate-user-file` | — | ⬜ |
 | 12 | Switch auth to Dex OIDC | `feat/dex-oidc-auth` | — | ⬜ |
 | 13 | Remove Prisma + PostgreSQL | `chore/remove-prisma` | — | ⬜ |
