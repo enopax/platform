@@ -110,25 +110,11 @@ tests/
 
 ---
 
-## Production Deployment
+## Deployment
 
-Server configuration managed via `enopax.com_setup/` repository (git-push workflow):
+The platform runs as a Docker container alongside a Dex OIDC container. See `Dockerfile.prod` for the production image and `docker-compose.yml` for the local dev setup.
 
-- **Platform**: Docker container (`ghcr.io/enopax/platform:latest`)
-- **Dex**: Docker container (`ghcr.io/enopax/dex:2.45.1_file_store`)
-- **Caddy**: reverse proxy (`enopax.com` → platform, `auth.enopax.com` → Dex)
-- **CI/CD**: GitHub Actions builds → GHCR → deploy via SSH
-
-### Environment Variables
-
-```
-DEX_ISSUER=https://auth.enopax.com/dex
-DEX_CLIENT_ID=enopax-platform
-DEX_CLIENT_SECRET=<secret>
-AUTH_SECRET=<secret>
-AUTH_URL=https://enopax.com
-DATA_DIR=/app/data
-```
+Required environment variables — see `.env.example` for the full list.
 
 ---
 
