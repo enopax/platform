@@ -1,9 +1,7 @@
 import NextAuth from "next-auth"
+import authConfig from "@/lib/auth.config"
 
-const { auth } = NextAuth({
-  providers: [],
-  pages: { signIn: '/signin' },
-})
+const { auth } = NextAuth(authConfig)
 
 export default auth
 

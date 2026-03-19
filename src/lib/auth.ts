@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import { getStoreAsync } from '@/lib/store';
+import authConfig from '@/lib/auth.config';
 
 export const {
   handlers,
@@ -7,7 +8,8 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  debug: true,
+  ...authConfig,
+  debug: process.env.NODE_ENV === 'development',
   session: { strategy: 'jwt' },
   providers: [
     {
@@ -29,6 +31,7 @@ export const {
     },
   ],
   callbacks: {
+    ...authConfig.callbacks,
     async signIn({ user }) {
       if (!user.email) return false;
 
@@ -67,8 +70,5 @@ export const {
       }
       return session;
     },
-  },
-  pages: {
-    signIn: '/signin',
   },
 });

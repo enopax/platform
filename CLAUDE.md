@@ -26,66 +26,51 @@ This file serves as the quick reference guide for AI assistants. For comprehensi
 
 ### Development Environment
 ```bash
-# Start PostgreSQL database
-npm run docker:dev
+# Option A: Dex via Docker
+npm run dex:up              # Start Dex OIDC container
+npm run dev                 # Start Next.js
 
-# Start Next.js development server (runs standalone)
-npm run dev
+# Option B: Dex via IDP scripts (no Docker needed)
+cd ../idp && ./scripts/dex.sh start
+cd ../platform && npm run dev
 
-# Stop database when done
-npm run docker:dev:stop
+# Add test users (via gRPC, no restart needed)
+../idp/scripts/add-user.sh <username> <email> <password>
 ```
 
-### Production Environment
+### Running Tests
 ```bash
-# Build and start production stack (PostgreSQL + Next.js)
-npm run docker:prod
-
-# Rebuild Next.js only (for updates)
-npm run docker:prod:rebuild
-
-# View application logs
-npm run docker:prod:logs
-
-# Stop production stack
-npm run docker:prod:stop
-```
-
-### Next.js Development
-```bash
-npm run dev         # Start development server
-npm run build       # Build for production
-npm run lint        # Run ESLint
-npm test            # Run all tests
+npm test                           # All tests
+npx jest --selectProjects store    # Store/repository tests only
+npx jest --selectProjects actions  # Action tests only
 ```
 
 ---
 
 ## 🏗️ Architecture Overview
 
-**System Type**: Next.js 15 web application with Docker infrastructure
+**System Type**: Next.js 15 web application with file-based storage
 
-**Infrastructure Setup**:
+**Data Storage**: TinyBase v8 with file persister (`data/store.json`)
+- All 15 models stored via `src/lib/store/` abstraction layer
+- Repository pattern: `getStoreAsync().users.findById(id)`
+- Types: `import { User, getStoreAsync } from '@/lib/store'`
 
-**Development**:
-- Docker runs: PostgreSQL only
-- Next.js runs standalone: `npm run dev` (port 3000)
-- Hot reloading enabled for fast development
-
-**Production**:
-- Docker runs: PostgreSQL + Next.js (containerised production build)
-- Automatic database schema synchronisation via Prisma
-- Git-pull deployment workflow with `./deploy.sh`
-- No migration files - schema defined in `prisma/schema.prisma`
+**Authentication**: Dex OIDC (custom fork with file storage)
+- NextAuth v5 with Dex as OIDC provider
+- Users auto-provisioned in TinyBase on first login
+- Dev: Dex on `localhost:5556`, Platform on `localhost:3000`
+- Prod: Dex on `auth.enopax.com`, Platform on `enopax.com`
 
 **Key Services**:
-- PostgreSQL (port 5432) - Application database
+- Dex OIDC (port 5556) - Identity provider
 - Next.js App (port 3000) - Web interface
+- No database process required
 
-**Database Management**:
-- Uses `prisma db push` for schema synchronisation (not migrations)
-- Schema changes deploy automatically on container restart
-- Perfect for rapid development and small teams
+**Production Deployment**:
+- Server config managed via `enopax.com_setup/` (git-push workflow)
+- Docker: Dex + Next.js containers, Caddy reverse proxy
+- GitHub Actions: build → GHCR → deploy
 
 > 📖 **For detailed architecture information, see [ARCHITECTURE.md](./docs/ARCHITECTURE.md)**
 
@@ -105,10 +90,11 @@ npm test            # Run all tests
 - **Dates**: Tremor DatePicker components over native date inputs
 - **State**: Union types for form states, minimal state complexity
 
-### Database
-- **ORM**: Prisma with PostgreSQL
-- **Auth**: NextAuth.js with Prisma adapter
-- **Queries**: Limit results, select only needed fields
+### Data Access
+- **Store**: TinyBase v8 via `src/lib/store/` abstraction layer
+- **Auth**: NextAuth.js v5 with Dex OIDC provider
+- **Pattern**: `const store = await getStoreAsync(); store.users.findById(id)`
+- **Types**: Import from `@/lib/store`, never from `@prisma/client`
 
 > 🎯 **For comprehensive UX guidelines, see [DESIGN.md](./docs/DESIGN.md)**
 
@@ -381,7 +367,6 @@ This file serves as the quick reference and starting point. For detailed informa
 - **ALWAYS** use British English spelling throughout all code and documentation
 - **NEVER** put client components in `/app`, unless they are `page.tsx` files
 - **NEVER** use dialog components unless they are for alerts or confirmations
-- If you have problems with database migrations, drop it or migrate forcefully
 - **IMPORTANT**: The GitHub repository is located in the `next-app` folder
 
 ---

@@ -57,14 +57,9 @@ The old Credentials-based registration form (`/signup`) no longer works since au
 
 **Fix**: Either add a registration page in Dex's UI, or add a platform page that calls the Dex gRPC API to create users.
 
-### 7. Middleware uses separate empty NextAuth instance
-**File**: `src/middleware.ts`
-
-Middleware creates its own NextAuth instance with empty providers instead of sharing the auth.ts config. This is because the Edge runtime can't do OIDC discovery.
-
-**Impact**: Middleware can check if a session JWT exists but can't validate the provider. Functionally works but architecturally fragile.
-
-**Fix**: Use NextAuth v5's recommended pattern for Edge-compatible middleware config.
+### ~~7. Middleware uses separate empty NextAuth instance~~ ✅ Fixed
+~~Middleware had its own empty NextAuth instance.~~
+Fixed: Follows Auth.js v5 recommended pattern — `auth.config.ts` has Edge-safe config (pages, `authorized` callback), shared by both middleware and `auth.ts`. OIDC provider only in `auth.ts` (Node runtime).
 
 ---
 
@@ -72,7 +67,7 @@ Middleware creates its own NextAuth instance with empty providers instead of sha
 
 ### ~~8. Dead code: auth.config.ts~~ ✅ Fixed
 ~~Empty config file no longer imported by anything.~~
-Fixed: Deleted.
+Fixed: Recreated properly as Edge-safe shared config (see #7).
 
 ### 9. Email confirmation endpoint not implemented
 **File**: `src/app/api/email/confirm/route.ts`
@@ -100,18 +95,14 @@ Fixed: Now counts members per org via `store.organisationMembers.findByOrgId()`.
 
 ## Low
 
-### 13. Stale CLAUDE.md migration references
-**File**: `CLAUDE.md` (both platform and Platform level)
-
-References "TinyBase v7.1.0 installed", "4% complete", migration plan docs that don't exist. All stale from before the migration actually happened.
-
-**Fix**: Update CLAUDE.md to reflect current state (TinyBase v8.0.2, migration complete, Dex OIDC auth).
+### ~~13. Stale CLAUDE.md migration references~~ ✅ Fixed
+~~References to Prisma, PostgreSQL, old dev commands.~~
+Fixed: Updated CLAUDE.md with TinyBase v8, Dex OIDC, correct dev commands.
 
 ### ~~14. Old signup/credentials pages still exist~~ ✅ Fixed
 ~~Non-functional pages from the Credentials auth era.~~
 Fixed: Deleted old signin/credentials, signin/email, and signup pages.
 
-### 15. data/ directory needs .gitkeep or seed script
-**Current state**: `data/` is in `.gitignore`. A fresh clone has no data directory and no way to seed initial data.
-
-**Fix**: Create a `scripts/seed.ts` that populates initial data, or add a `data/.gitkeep`.
+### ~~15. data/ directory needs .gitkeep or seed script~~ ✅ Fixed
+~~No way to seed initial data on fresh clone.~~
+Fixed: Added `scripts/seed.ts` and `npm run seed` command. Creates admin + user + org + project.
