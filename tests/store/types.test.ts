@@ -362,6 +362,7 @@ describe('Store types', () => {
       resetStore();
       const store = await getStoreAsync();
       expect(store).toBeDefined();
+      expect(store.users).toBeDefined();
       expect(store.apiKeys).toBeDefined();
       expect(store.auditLogs).toBeDefined();
       expect(store.storageQuotas).toBeDefined();

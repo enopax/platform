@@ -4,6 +4,7 @@ import Headline from '@/components/common/Headline';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import Link from 'next/link';
 import OrganisationForm from '@/components/form/OrganisationForm';
 import MemberList from '@/components/common/MemberList';
@@ -52,16 +53,7 @@ export default async function EditOrganisationPage({ params }: EditOrganisationP
         }
       },
     }),
-    prisma.user.findMany({
-      orderBy: { email: 'asc' },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        firstname: true,
-        lastname: true,
-      },
-    }),
+    getStoreAsync().then(store => store.users.findMany()),
   ]);
 
   if (!organisation) {
