@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getStoreAsync } from '@/lib/store';
 import { prisma } from '@/lib/prisma';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 
@@ -11,22 +12,17 @@ export default async function ProjectLayout({
 }>) {
   const { orgaName, projectName } = await params;
 
-  // Validate that parameters are provided
   if (!orgaName || !projectName) {
     notFound();
   }
 
-  // Fetch the organisation by name (minimal data, full is in OrganisationContext)
-  const organisation = await prisma.organisation.findUnique({
-    where: { name: orgaName },
-    select: { id: true, name: true },
-  });
+  const store = await getStoreAsync();
+  const organisation = await store.organisations.findByName(orgaName);
 
   if (!organisation) {
     notFound();
   }
 
-  // Fetch the full project with all related data
   const projectRaw = await prisma.project.findFirst({
     where: {
       name: projectName,

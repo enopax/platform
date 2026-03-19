@@ -1,4 +1,5 @@
 import { PrismaClient, OrganisationJoinRequestStatus, OrganisationRole } from '@prisma/client';
+import { getStoreAsync } from '@/lib/store';
 import { organisationService } from './organisation';
 import { userService } from './user';
 import { logOrganisationMembershipChange } from '@/lib/auditLog';
@@ -150,14 +151,12 @@ export class OrganisationJoinRequestService {
         },
       });
 
-      // If approved, add user to organisation as member
       if (action === 'approve') {
-        await prisma.organisationMember.create({
-          data: {
-            userId: joinRequest.userId,
-            organisationId: joinRequest.organisationId,
-            role: OrganisationRole.MEMBER,
-          },
+        const store = await getStoreAsync();
+        await store.organisationMembers.create({
+          userId: joinRequest.userId,
+          organisationId: joinRequest.organisationId,
+          role: OrganisationRole.MEMBER,
         });
 
         // Log the membership change
@@ -272,35 +271,19 @@ export class OrganisationJoinRequestService {
 
   async leaveOrganisation(userId: string, organisationId: string): Promise<void> {
     try {
-      // Check if user is a member
-      const membership = await prisma.organisationMember.findUnique({
-        where: {
-          userId_organisationId: {
-            userId,
-            organisationId,
-          },
-        },
-      });
+      const store = await getStoreAsync();
+      const membership = await store.organisationMembers.findByUserAndOrg(userId, organisationId);
 
       if (!membership) {
         throw new Error('User is not a member of this organisation');
       }
 
-      // Check if user is the owner
       const organisation = await organisationService.getOrganisationById(organisationId);
       if (organisation?.ownerId === userId) {
         throw new Error('Organisation owner cannot leave the organisation');
       }
 
-      // Remove membership
-      await prisma.organisationMember.delete({
-        where: {
-          userId_organisationId: {
-            userId,
-            organisationId,
-          },
-        },
-      });
+      await store.organisationMembers.delete(userId, organisationId);
 
       // Log the membership change
       await logOrganisationMembershipChange(
@@ -331,40 +314,23 @@ export class OrganisationJoinRequestService {
         throw new Error('Insufficient permissions to kick members');
       }
 
-      // Get member info
-      const membership = await prisma.organisationMember.findUnique({
-        where: {
-          userId_organisationId: {
-            userId,
-            organisationId,
-          },
-        },
-      });
+      const store = await getStoreAsync();
+      const membership = await store.organisationMembers.findByUserAndOrg(userId, organisationId);
 
       if (!membership) {
         throw new Error('User is not a member of this organisation');
       }
 
-      // Check if trying to kick the owner
       const organisation = await organisationService.getOrganisationById(organisationId);
       if (organisation?.ownerId === userId) {
         throw new Error('Cannot kick the organisation owner');
       }
 
-      // Managers cannot kick other managers or owners, only owners can kick managers
       if (membership.role === OrganisationRole.MANAGER && kickerRole !== OrganisationRole.OWNER) {
         throw new Error('Only organisation owners can kick managers');
       }
 
-      // Remove membership
-      await prisma.organisationMember.delete({
-        where: {
-          userId_organisationId: {
-            userId,
-            organisationId,
-          },
-        },
-      });
+      await store.organisationMembers.delete(userId, organisationId);
 
       // Log the membership change
       await logOrganisationMembershipChange(

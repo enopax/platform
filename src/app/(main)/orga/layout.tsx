@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import SidebarNavigation from '@/components/navigation/SidebarNavigation';
 import MobileNavigation from '@/components/navigation/MobileNavigation';
 
@@ -16,36 +16,31 @@ export default async function Layout({
   // The sidebar will handle organisation context detection client-side from pathname
   // We fetch all organisations with their projects for the sidebar
 
-  let organisations = [];
+  let organisations: { id: string; name: string; description: string | null; _count: { projects: number; members: number } }[] = [];
 
   if (session?.user?.id) {
     try {
-      // Fetch all user organisations with their projects
-      organisations = await prisma.organisation.findMany({
-        where: {
-          OR: [
-            { ownerId: session.user.id },
-            {
-              members: {
-                some: { userId: session.user.id }
-              }
-            }
-          ],
-          isActive: true
-        },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          _count: {
-            select: {
-              projects: true,
-              members: true
-            }
-          },
-        },
-        orderBy: { name: 'asc' }
-      });
+      const store = await getStoreAsync();
+      const memberships = await store.organisationMembers.findByUserId(session.user.id);
+      const memberOrgIds = new Set(memberships.map(m => m.organisationId));
+
+      const allOrgs = await store.organisations.search('', 1000);
+      const userOrgs = allOrgs.filter(org =>
+        org.isActive && (org.ownerId === session.user.id || memberOrgIds.has(org.id))
+      );
+
+      organisations = userOrgs
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(org => {
+          const memberCount = memberships.filter(m => m.organisationId === org.id).length ||
+            (org.ownerId === session.user.id ? 1 : 0);
+          return {
+            id: org.id,
+            name: org.name,
+            description: org.description,
+            _count: { projects: 0, members: memberCount },
+          };
+        });
     } catch (error) {
       console.error('Error fetching sidebar data:', error);
     }

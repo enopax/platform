@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { type ProjectStatus, type ProjectPriority } from '@/lib/store';
+import { getStoreAsync } from '@/lib/store';
 import { projectService } from '@/lib/services/project';
 import { userService } from '@/lib/services/user';
 import { prisma } from '@/lib/prisma';
@@ -188,11 +189,8 @@ export async function updateProject(
       }
     });
 
-    // Get organisation name for revalidation
-    const org = await prisma.organisation.findUnique({
-      where: { id: currentProject.organisationId },
-      select: { name: true }
-    });
+    const store = await getStoreAsync();
+    const org = await store.organisations.findById(currentProject.organisationId);
 
     revalidatePath('/admin/project');
     revalidatePath(`/admin/project/${projectId}`);
@@ -329,11 +327,8 @@ export async function createProject(
       },
     });
 
-    // Get organisation name for revalidation
-    const org = await prisma.organisation.findUnique({
-      where: { id: organisationId },
-      select: { name: true }
-    });
+    const store = await getStoreAsync();
+    const org = await store.organisations.findById(organisationId);
 
     revalidatePath('/admin/project');
     if (org) {

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { checkOrganisationPermissions } from '@/lib/permissions';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import OrganisationOverviewClient from '@/components/OrganisationOverviewClient';
 
 interface OrganisationOverviewPageProps {
@@ -17,10 +17,8 @@ export default async function OrganisationOverviewPage({ params }: OrganisationO
   }
 
   // Get organisation ID for permission check
-  const organisation = await prisma.organisation.findUnique({
-    where: { name: orgaName },
-    select: { id: true },
-  });
+  const store = await getStoreAsync();
+  const organisation = await store.organisations.findByName(orgaName);
   if (!organisation) notFound();
 
   // Check permissions using the permission helper

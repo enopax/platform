@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import { RolesManagementClient } from '@/components/RolesManagementClient';
 
 interface RolesPageProps {
@@ -15,28 +15,16 @@ export default async function RolesPage({ params }: RolesPageProps) {
     notFound();
   }
 
-  // Validate that orgaName is provided
   if (!orgaName) {
     notFound();
   }
 
-  // Get organisation by orgaName first
-  const orgLookup = await prisma.organisation.findUnique({
-    where: { name: orgaName },
-    select: { id: true }
-  });
+  const store = await getStoreAsync();
+  const orgLookup = await store.organisations.findByName(orgaName);
   if (!orgLookup) notFound();
   const organisationId = orgLookup.id;
 
-  // Check if user is a member of this organisation
-  const membership = await prisma.organisationMember.findUnique({
-    where: {
-      userId_organisationId: {
-        userId: session.user.id,
-        organisationId
-      }
-    }
-  });
+  const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
   const isAdmin = session.user.role === 'ADMIN';
   const isOwner = membership?.role === 'OWNER';
@@ -46,25 +34,35 @@ export default async function RolesPage({ params }: RolesPageProps) {
     notFound();
   }
 
-  // Fetch the organisation members
-  const members = await prisma.organisationMember.findMany({
-    where: { organisationId },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          firstname: true,
-          lastname: true,
-          email: true,
-          image: true,
-        }
-      }
-    },
-    orderBy: [
-      { role: 'asc' },
-      { joinedAt: 'asc' }
-    ]
+  const storeMembers = await store.organisationMembers.findByOrgId(organisationId);
+
+  const members = await Promise.all(
+    storeMembers.map(async (m) => {
+      const user = await store.users.findById(m.userId);
+      return {
+        id: m.id,
+        userId: m.userId,
+        organisationId: m.organisationId,
+        role: m.role,
+        joinedAt: m.joinedAt,
+        updatedAt: m.updatedAt,
+        user: {
+          id: m.userId,
+          name: user?.name ?? null,
+          firstname: user?.firstname ?? null,
+          lastname: user?.lastname ?? null,
+          email: user?.email ?? '',
+          image: user?.image ?? null,
+        },
+      };
+    })
+  );
+
+  const roleOrder = { OWNER: 0, MANAGER: 1, MEMBER: 2 };
+  members.sort((a, b) => {
+    const roleCompare = (roleOrder[a.role as keyof typeof roleOrder] ?? 3) - (roleOrder[b.role as keyof typeof roleOrder] ?? 3);
+    if (roleCompare !== 0) return roleCompare;
+    return a.joinedAt.getTime() - b.joinedAt.getTime();
   });
 
   if (!members) {
@@ -73,7 +71,7 @@ export default async function RolesPage({ params }: RolesPageProps) {
 
   return (
     <RolesManagementClient
-      members={members}
+      members={members as { id: string; role: 'OWNER' | 'MANAGER' | 'MEMBER'; joinedAt: Date; updatedAt: Date; user: { id: string; name: string | null; firstname: string | null; lastname: string | null; email: string; image: string | null } }[]}
     />
   );
 }

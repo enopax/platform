@@ -98,10 +98,7 @@ export async function createResource(
       };
     }
 
-    // Validate organisation exists
-    const organisation = await prisma.organisation.findUnique({
-      where: { name: organisationName }
-    });
+    const organisation = await store.organisations.findByName(organisationName);
 
     if (!organisation) {
       return {
@@ -110,13 +107,7 @@ export async function createResource(
       };
     }
 
-    // Check if user is part of the organisation
-    const userOrgMembership = await prisma.organisationMember.findFirst({
-      where: {
-        userId: ownerId,
-        organisationId: organisation.id
-      }
-    });
+    const userOrgMembership = await store.organisationMembers.findByUserAndOrg(ownerId, organisation.id);
 
     if (!userOrgMembership) {
       return {

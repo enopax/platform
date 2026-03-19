@@ -3,7 +3,7 @@ import Headline from '@/components/common/Headline';
 import { Button } from '@/components/common/Button';
 import Table from '@/components/GenericTable';
 import { columns } from '@/components/table/Organisation';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import Link from 'next/link';
 
 export default async function OrganisationAdminPage({
@@ -15,21 +15,27 @@ export default async function OrganisationAdminPage({
   const { page = '1' } = await searchParams;
   const pageNumber = Number(page);
 
-  const count = await prisma.organisation.count();
+  const store = await getStoreAsync();
+  const allOrgs = await store.organisations.search('', 10000);
 
-  const organisations = await prisma.organisation.findMany({
-    include: {
-      owner: true,
-      _count: {
-        select: {
-          members: true,
+  const count = allOrgs.length;
+
+  const sortedOrgs = allOrgs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const pagedOrgs = sortedOrgs.slice((pageNumber - 1) * size, pageNumber * size);
+
+  const organisations = await Promise.all(
+    pagedOrgs.map(async (org) => {
+      const owner = await store.users.findById(org.ownerId);
+      const members = await store.organisationMembers.findByOrgId(org.id);
+      return {
+        ...org,
+        owner: owner ?? null,
+        _count: {
+          members: members.length,
         },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-    skip: (pageNumber - 1) * size,
-    take: size,
-  });
+      };
+    })
+  );
 
   return (
     <main className="mt-4">

@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import Breadcrumbs from '@/components/common/Breadcrumbs';
@@ -15,18 +15,14 @@ interface CreateProjectPageProps {
 export default async function CreateProjectPage({ params }: CreateProjectPageProps) {
   const { orgaName } = await params;
 
-  // Validate that orgaName is provided
   if (!orgaName) {
     notFound();
   }
 
   const session = await auth();
+  const store = await getStoreAsync();
 
-  // Get organisation by name
-  const orgLookup = await prisma.organisation.findUnique({
-    where: { name: orgaName },
-    select: { id: true, name: true }
-  });
+  const orgLookup = await store.organisations.findByName(orgaName);
   if (!orgLookup) {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
@@ -44,16 +40,8 @@ export default async function CreateProjectPage({ params }: CreateProjectPagePro
   }
   const organisationId = orgLookup.id;
 
-  // Verify user has access to this organisation
   const isAdmin = session.user.role === 'ADMIN';
-  const membership = isAdmin ? true : await prisma.organisationMember.findUnique({
-    where: {
-      userId_organisationId: {
-        userId: session.user.id,
-        organisationId
-      }
-    }
-  });
+  const membership = isAdmin ? true : await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
   if (!membership) {
     return (
@@ -71,14 +59,7 @@ export default async function CreateProjectPage({ params }: CreateProjectPagePro
     );
   }
 
-  // Get organisation details
-  const organisation = await prisma.organisation.findUnique({
-    where: { id: organisationId },
-    select: {
-      id: true,
-      name: true
-    }
-  });
+  const organisation = orgLookup;
 
 
   return (

@@ -1,10 +1,12 @@
 import type { IUserRepository } from './repositories/user.repository';
+import type { IOrganisationRepository, IOrganisationMemberRepository } from './repositories/organisation.repository';
 import type { IApiKeyRepository } from './repositories/api-key.repository';
 import type { IAuditLogRepository } from './repositories/audit-log.repository';
 import type { IUserStorageQuotaRepository, IUserStorageMetricsRepository, IUserStorageActivityRepository } from './repositories/user-storage.repository';
 import { createStore } from 'tinybase';
 import { createFilePersister, type FilePersister } from 'tinybase/persisters/persister-file';
 import { TinyBaseUserRepository } from './tinybase/user.tinybase';
+import { TinyBaseOrganisationRepository, TinyBaseOrganisationMemberRepository } from './tinybase/organisation.tinybase';
 import { TinyBaseApiKeyRepository } from './tinybase/api-key.tinybase';
 import { TinyBaseAuditLogRepository } from './tinybase/audit-log.tinybase';
 import { TinyBaseUserStorageQuotaRepository, TinyBaseUserStorageMetricsRepository, TinyBaseUserStorageActivityRepository } from './tinybase/user-storage.tinybase';
@@ -13,6 +15,8 @@ import fs from 'fs';
 
 export interface DataStore {
   users: IUserRepository;
+  organisations: IOrganisationRepository;
+  organisationMembers: IOrganisationMemberRepository;
   apiKeys: IApiKeyRepository;
   auditLogs: IAuditLogRepository;
   storageQuotas: IUserStorageQuotaRepository;
@@ -38,6 +42,8 @@ async function createDataStore(): Promise<DataStore> {
 
   return {
     users: new TinyBaseUserRepository(tinyStore),
+    organisations: new TinyBaseOrganisationRepository(tinyStore),
+    organisationMembers: new TinyBaseOrganisationMemberRepository(tinyStore),
     apiKeys: new TinyBaseApiKeyRepository(tinyStore),
     auditLogs: new TinyBaseAuditLogRepository(tinyStore),
     storageQuotas: new TinyBaseUserStorageQuotaRepository(tinyStore),
