@@ -21,12 +21,9 @@ All 15 models are stored in a single `data/store.json` file via TinyBase's defau
 ~~`deleteOrganisation()` was a no-op.~~
 Fixed: `update()` now accepts `isActive` flag, `deleteOrganisation()` passes `{ isActive: false }`.
 
-### 3. Dockerfile still references Prisma
-**File**: `Dockerfile.prod:19-59`, `docker-entrypoint.sh:7`
-
-The production Dockerfile still runs `npx prisma generate`, installs OpenSSL for Prisma, and copies Prisma client files. The entrypoint runs `npx prisma db push` on every start.
-
-**Fix**: Rewrite Dockerfile to remove all Prisma steps. Add `data/` volume mount for TinyBase persistence. Remove `docker-entrypoint.sh` Prisma commands.
+### ~~3. Dockerfile still references Prisma~~ ✅ Fixed
+~~Dockerfile ran `prisma generate`, installed OpenSSL for Prisma, copied Prisma client files. Entrypoint ran `prisma db push`.~~
+Fixed: Removed all Prisma steps, deleted `docker-entrypoint.sh`, added `DATA_DIR=/app/data` env var and data directory creation. Uses simple `CMD ["node", "server.js"]`.
 
 ---
 
