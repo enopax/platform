@@ -114,9 +114,9 @@ User (root — no dependencies, everything depends on it)
 | Phase | Description | Branch | PR | Status |
 |-------|-------------|--------|-----|--------|
 | 0 | Data store abstraction layer + types | `feat/data-store-layer` | — | ✅ Done |
-| 1 | ApiKey — first Prisma repository | `feat/migrate-apikey` | — | ⬜ |
-| 2 | TinyBase for ApiKey — prove the pattern | `feat/tinybase-apikey` | — | ⬜ |
-| 3 | MembershipAuditLog (Prisma + TinyBase) | `feat/migrate-audit-log` | — | ⬜ |
+| 1 | ApiKey — first Prisma repository | `feat/migrate-apikey` | #31 | ✅ Done |
+| 2 | TinyBase for ApiKey — prove the pattern | `feat/tinybase-apikey` | #32 | ✅ Done |
+| 3 | MembershipAuditLog (TinyBase) | `feat/migrate-audit-log` | #33 | ✅ Done |
 | 4 | User storage models (Quota + Metrics + Activity) | `feat/migrate-user-storage` | — | ⬜ |
 | 5 | Bulk type import migration (~28 components) | `refactor/store-type-imports` | — | ⬜ |
 | 6 | User model | `feat/migrate-user` | — | ⬜ |

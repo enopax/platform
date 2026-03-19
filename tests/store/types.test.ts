@@ -363,6 +363,7 @@ describe('Store types', () => {
       const store = await getStoreAsync();
       expect(store).toBeDefined();
       expect(store.apiKeys).toBeDefined();
+      expect(store.auditLogs).toBeDefined();
     });
   });
 });
