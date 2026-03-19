@@ -23,14 +23,8 @@ export default async function ResourceLayout({
     notFound();
   }
 
-  const project = await prisma.project.findFirst({
-    where: {
-      name: projectName,
-      organisationId: organisation.id,
-      isActive: true,
-    },
-    select: { id: true },
-  });
+  const projectFound = await store.projects.findByNameAndOrg(projectName, organisation.id);
+  const project = projectFound?.isActive ? projectFound : null;
 
   if (!project) {
     notFound();

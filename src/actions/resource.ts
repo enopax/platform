@@ -118,9 +118,7 @@ export async function createResource(
 
     // Validate project if provided
     if (projectId && projectId.trim()) {
-      const projectExists = await prisma.project.findUnique({
-        where: { id: projectId }
-      });
+      const projectExists = await store.projects.findById(projectId);
 
       if (!projectExists) {
         return {
@@ -280,9 +278,8 @@ export async function updateResource(
 
     // Validate project if provided
     if (projectId && projectId.trim()) {
-      const projectExists = await prisma.project.findUnique({
-        where: { id: projectId }
-      });
+      const store = await getStoreAsync();
+      const projectExists = await store.projects.findById(projectId);
 
       if (!projectExists) {
         return {
@@ -416,9 +413,9 @@ export async function allocateResourceToProject(
     }
 
     // Check if project exists and belongs to same organisation
-    const project = await prisma.project.findUnique({
-      where: { id: projectId, isActive: true }
-    });
+    const store = await getStoreAsync();
+    const projectFound = await store.projects.findById(projectId);
+    const project = projectFound?.isActive ? projectFound : null;
 
     if (!project) {
       return { error: 'Project not found' };
