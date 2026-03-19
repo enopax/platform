@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getStore } from '@/lib/store';
 import crypto from 'crypto';
 import { hash } from 'bcrypt-ts';
 
@@ -77,9 +77,7 @@ export async function createApiKey(
     }
 
     // Check if user already has too many API keys (limit to 10)
-    const existingKeysCount = await prisma.apiKey.count({
-      where: { userId: session.user.id, isActive: true },
-    });
+    const existingKeysCount = await getStore().apiKeys.countByUserId(session.user.id, { isActive: true });
 
     if (existingKeysCount >= 10) {
       return {
@@ -103,16 +101,13 @@ export async function createApiKey(
     }
 
     // Create the API key in database
-    const createdApiKey = await prisma.apiKey.create({
-      data: {
-        userId: session.user.id,
-        name: name.trim(),
-        keyPreview,
-        hashedKey,
-        permissions: [permissions],
-        expiresAt,
-        isActive: true,
-      },
+    const createdApiKey = await getStore().apiKeys.create({
+      userId: session.user.id,
+      name: name.trim(),
+      keyPreview,
+      hashedKey,
+      permissions: [permissions],
+      expiresAt: expiresAt ?? undefined,
     });
 
     revalidatePath('/account/developer');

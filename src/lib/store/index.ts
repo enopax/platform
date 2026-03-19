@@ -24,8 +24,8 @@ export type {
   ApiKey,
 } from './types';
 
-export { getStore, initStore } from './data-store';
-export type { DataStoreRepositories } from './data-store';
+export { getStore, resetStore } from './data-store';
+export type { DataStore } from './data-store';
 
 export type {
   IUserRepository,

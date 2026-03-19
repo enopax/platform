@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getStore } from '@/lib/store';
 import { Button } from '@/components/common/Button';
 import Breadcrumbs from '@/components/common/Breadcrumbs';
 import { Divider } from '@/components/common/Divider';
@@ -29,22 +29,13 @@ export default async function DeveloperPage({
   }
 
   // Get user's API keys with pagination
-  const apiKeys = await prisma.apiKey.findMany({
-    where: {
-      userId: session.user.id,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
+  const apiKeys = await getStore().apiKeys.findByUserId(session.user.id, {
+    orderBy: 'createdAt',
     skip: (pageNumber - 1) * size,
     take: size,
   });
 
-  const totalApiKeys = await prisma.apiKey.count({
-    where: {
-      userId: session.user.id,
-    },
-  });
+  const totalApiKeys = await getStore().apiKeys.countByUserId(session.user.id);
 
   const activeKeys = apiKeys.filter(key => key.isActive && (!key.expiresAt || new Date() <= key.expiresAt)).length;
   const totalUsage = apiKeys.reduce((total, key) => total + key.usageCount, 0);

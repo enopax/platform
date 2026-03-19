@@ -1,38 +1,22 @@
-import type { IUserRepository } from './repositories/user.repository';
-import type { IOrganisationRepository, IOrganisationMemberRepository } from './repositories/organisation.repository';
-import type { IProjectRepository } from './repositories/project.repository';
 import type { IApiKeyRepository } from './repositories/api-key.repository';
-import type { IResourceRepository, IProjectResourceRepository } from './repositories/resource.repository';
-import type { IAuditLogRepository } from './repositories/audit-log.repository';
-import type { IJoinRequestRepository } from './repositories/join-request.repository';
-import type { IUserFileRepository } from './repositories/user-file.repository';
-import type { IUserStorageQuotaRepository, IUserStorageMetricsRepository, IUserStorageActivityRepository } from './repositories/user-storage.repository';
+import { prisma } from '@/lib/prisma';
+import { PrismaApiKeyRepository } from './prisma/api-key.prisma';
 
-export interface DataStoreRepositories {
-  users: IUserRepository;
-  organisations: IOrganisationRepository;
-  organisationMembers: IOrganisationMemberRepository;
-  projects: IProjectRepository;
+export interface DataStore {
   apiKeys: IApiKeyRepository;
-  resources: IResourceRepository;
-  projectResources: IProjectResourceRepository;
-  auditLogs: IAuditLogRepository;
-  joinRequests: IJoinRequestRepository;
-  userFiles: IUserFileRepository;
-  storageQuotas: IUserStorageQuotaRepository;
-  storageMetrics: IUserStorageMetricsRepository;
-  storageActivity: IUserStorageActivityRepository;
 }
 
-let _store: DataStoreRepositories | null = null;
+let _store: DataStore | null = null;
 
-export function initStore(repositories: DataStoreRepositories): void {
-  _store = repositories;
-}
-
-export function getStore(): DataStoreRepositories {
+export function getStore(): DataStore {
   if (!_store) {
-    throw new Error('DataStore not initialised. Call initStore() first.');
+    _store = {
+      apiKeys: new PrismaApiKeyRepository(prisma),
+    };
   }
   return _store;
+}
+
+export function resetStore(): void {
+  _store = null;
 }
