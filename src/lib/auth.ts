@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import { getStoreAsync } from '@/lib/store';
-import authConfig from '@/lib/auth.config';
 
 export const {
   handlers,
@@ -8,9 +7,8 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  debug: process.env.NODE_ENV === 'development',
+  debug: true,
   session: { strategy: 'jwt' },
-  ...authConfig,
   providers: [
     {
       id: 'dex',
@@ -31,10 +29,9 @@ export const {
     },
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user }) {
       if (!user.email) return false;
 
-      // Provision user in TinyBase on first OIDC login
       const store = await getStoreAsync();
       const existing = await store.users.findByEmail(user.email);
       if (!existing) {
@@ -48,7 +45,7 @@ export const {
 
       return true;
     },
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user }) {
       if (user?.email) {
         const store = await getStoreAsync();
         const dbUser = await store.users.findByEmail(user.email);
