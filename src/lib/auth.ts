@@ -57,6 +57,7 @@ export const {
           token.role = dbUser.role;
           token.name = dbUser.name || `${dbUser.firstname || ''} ${dbUser.lastname || ''}`.trim() || dbUser.email;
           token.image = dbUser.image;
+          token.emailVerified = dbUser.emailVerified ? true : false;
         }
       }
       return token;
@@ -67,6 +68,7 @@ export const {
         session.user.role = token.role as string;
         session.user.name = token.name as string;
         session.user.image = token.image || undefined;
+        session.user.emailVerified = token.emailVerified as boolean;
       }
       return session;
     },

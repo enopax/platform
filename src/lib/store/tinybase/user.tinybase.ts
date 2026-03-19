@@ -102,6 +102,7 @@ export class TinyBaseUserRepository implements IUserRepository {
     if (data.image !== undefined) this.store.setCell(TABLE, id, 'image', data.image ?? '');
     if (data.role !== undefined) this.store.setCell(TABLE, id, 'role', data.role);
     if (data.password !== undefined) this.store.setCell(TABLE, id, 'password', data.password);
+    if (data.emailVerified !== undefined) this.store.setCell(TABLE, id, 'emailVerified', data.emailVerified ? data.emailVerified.toISOString() : '');
     this.store.setCell(TABLE, id, 'updatedAt', new Date().toISOString());
 
     return rowToUser(id, this.store.getRow(TABLE, id));

@@ -1,7 +1,9 @@
 'use server'
 
 import { signIn } from '@/lib/auth';
-import { createDexUser } from '@/lib/dex/client';
+import { createDexUser, generateUserIdFromEmail } from '@/lib/dex/client';
+import { getStoreAsync } from '@/lib/store';
+import { createVerificationToken, sendVerificationEmail } from '@/lib/email-verification';
 
 export interface RegisterState {
   success?: boolean;
@@ -46,8 +48,25 @@ export async function register(
       return { error: 'Please fix the errors below', fieldErrors };
     }
 
+    // Create user in Dex
     await createDexUser(email, password, name);
 
+    // Pre-create TinyBase user so we have an ID for the verification token
+    const store = await getStoreAsync();
+    let user = await store.users.findByEmail(email);
+    if (!user) {
+      user = await store.users.create({
+        name,
+        email,
+        role: 'CUSTOMER',
+      });
+    }
+
+    // Send verification email
+    const token = await createVerificationToken(user.id, email);
+    await sendVerificationEmail(email, token);
+
+    // Sign in via OIDC
     await signIn('dex', { redirectTo: '/' });
 
     return { success: true };
@@ -67,5 +86,28 @@ export async function register(
 
     console.error('Registration error:', e);
     return { error: 'Registration failed. Please try again.' };
+  }
+}
+
+export async function resendVerificationEmail(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { auth } = await import('@/lib/auth');
+    const session = await auth();
+    if (!session?.user?.id || !session?.user?.email) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const store = await getStoreAsync();
+    const user = await store.users.findById(session.user.id);
+    if (!user) return { success: false, error: 'User not found' };
+    if (user.emailVerified) return { success: false, error: 'Email already verified' };
+
+    const token = await createVerificationToken(user.id, user.email);
+    await sendVerificationEmail(user.email, token);
+
+    return { success: true };
+  } catch (e) {
+    console.error('Resend verification error:', e);
+    return { success: false, error: 'Failed to send verification email' };
   }
 }

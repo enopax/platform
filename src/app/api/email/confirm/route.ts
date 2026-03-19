@@ -1,22 +1,32 @@
-import crypto from 'crypto';
-
-const url = process.env.AUTH_URL;
+import { verifyToken } from '@/lib/email-verification';
+import { getStoreAsync } from '@/lib/store';
+import { redirect } from 'next/navigation';
 
 export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const token = searchParams.get('token');
+  const { searchParams } = new URL(request.url);
+  const token = searchParams.get('token');
 
-    if (!token) {
-      return new Response('Missing confirmation token', { status: 400 });
-    }
-
-    // TODO: Replace with actual database queries when MongoDB models are implemented
-    // For now, return a not implemented message
-    return new Response('Email confirmation functionality is not implemented yet. Participant model needs to be set up.', { status: 501 });
-
-  } catch (error) {
-    console.error('Email confirmation error:', error);
-    return new Response('Server error', { status: 500 });
+  if (!token) {
+    return new Response('Missing verification token', { status: 400 });
   }
+
+  const result = await verifyToken(token);
+
+  if (!result) {
+    return new Response(
+      '<html><body style="font-family:sans-serif;text-align:center;padding:60px">' +
+      '<h2>Invalid or expired link</h2>' +
+      '<p>This verification link has expired or already been used.</p>' +
+      '<p><a href="/signin">Sign in</a> to request a new one.</p>' +
+      '</body></html>',
+      { status: 400, headers: { 'Content-Type': 'text/html' } }
+    );
+  }
+
+  const store = await getStoreAsync();
+  await store.users.update(result.userId, {
+    emailVerified: new Date(),
+  });
+
+  redirect('/signin?verified=true');
 }

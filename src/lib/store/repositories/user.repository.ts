@@ -18,6 +18,7 @@ export interface UpdateUserData {
   image?: string | null;
   role?: UserRole;
   password?: string;
+  emailVerified?: Date | null;
 }
 
 export interface UserSearchResult {
