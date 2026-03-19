@@ -126,7 +126,7 @@ User (root — no dependencies, everything depends on it)
 | 10 | Resource + ProjectResource | `feat/migrate-resource` | #40 | ✅ Done |
 | 11 | UserFile | `feat/migrate-user-file` | #41 | ✅ Done |
 | 12 | Switch auth to Dex OIDC | `feat/dex-oidc-auth` | #42 | ✅ Done |
-| 13 | Remove Prisma + PostgreSQL | `chore/remove-prisma` | — | ⬜ |
+| 13 | Remove Prisma + PostgreSQL | `chore/remove-prisma` | #43 | ✅ Done |
 
 ---
 
