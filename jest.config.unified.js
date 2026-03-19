@@ -24,8 +24,12 @@ module.exports = {
         '^@/(.*)$': '<rootDir>/src/$1',
       },
       transformIgnorePatterns: [
-        'node_modules/(?!(bcrypt-ts)/)',
+        'node_modules/(?!(bcrypt-ts|tinybase)/)',
       ],
+      transform: {
+        '^.+\\.ts$': 'ts-jest',
+        '^.+\\.js$': ['ts-jest', { useESM: false }],
+      },
       testMatch: [
         '<rootDir>/tests/actions/**/*.test.ts',
       ],
