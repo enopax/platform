@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { getStore } from '@/lib/store';
+import { getStoreAsync } from '@/lib/store';
 import crypto from 'crypto';
 import { hash } from 'bcrypt-ts';
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has too many API keys (limit to 10)
-    const existingKeysCount = await getStore().apiKeys.countByUserId(userId, { isActive: true });
+    const existingKeysCount = await (await getStoreAsync()).apiKeys.countByUserId(userId, { isActive: true });
 
     if (existingKeysCount >= 10) {
       return NextResponse.json({
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the API key in database
-    const createdApiKey = await getStore().apiKeys.create({
+    const createdApiKey = await (await getStoreAsync()).apiKeys.create({
       userId,
       name: name.trim(),
       keyPreview,

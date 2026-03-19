@@ -24,7 +24,7 @@ export type {
   ApiKey,
 } from './types';
 
-export { getStore, resetStore } from './data-store';
+export { getStore, getStoreAsync, setStore, resetStore } from './data-store';
 export type { DataStore } from './data-store';
 
 export type {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { getStore } from '@/lib/store';
+import { getStoreAsync } from '@/lib/store';
 import { redirect } from 'next/navigation';
 
 export async function POST(request: NextRequest) {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find the API key and verify ownership
-    const apiKey = await getStore().apiKeys.findById(apiKeyId);
+    const apiKey = await (await getStoreAsync()).apiKeys.findById(apiKeyId);
 
     if (!apiKey) {
       return NextResponse.json({ error: 'API key not found' }, { status: 404 });
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Delete the API key (hard delete for security)
-    await getStore().apiKeys.delete(apiKeyId);
+    await (await getStoreAsync()).apiKeys.delete(apiKeyId);
 
     // Redirect back to developer page
     redirect('/main/developer');
