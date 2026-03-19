@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
+import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 
 export default async function MainLayout({
   children,
@@ -12,5 +13,10 @@ export default async function MainLayout({
     redirect('/signin');
   }
 
-  return children;
+  return (
+    <>
+      {session.user && !session.user.emailVerified && <EmailVerificationBanner />}
+      {children}
+    </>
+  );
 }

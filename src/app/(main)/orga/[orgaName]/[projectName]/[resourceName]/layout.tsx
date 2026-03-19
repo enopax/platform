@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import { ResourceProvider } from '@/contexts/ResourceContext';
 
 export default async function ResourceLayout({
@@ -11,53 +11,36 @@ export default async function ResourceLayout({
 }>) {
   const { orgaName, projectName, resourceName } = await params;
 
-  // Validate that parameters are provided
   if (!orgaName || !projectName || !resourceName) {
     notFound();
   }
 
-  // Fetch the organisation by name
-  const organisation = await prisma.organisation.findUnique({
-    where: { name: orgaName },
-    select: { id: true },
-  });
+  const store = await getStoreAsync();
+  const organisation = await store.organisations.findByName(orgaName);
 
   if (!organisation) {
     notFound();
   }
 
-  // Fetch the project by name and organisation
-  const project = await prisma.project.findFirst({
-    where: {
-      name: projectName,
-      organisationId: organisation.id,
-      isActive: true,
-    },
-    select: { id: true },
-  });
+  const projectFound = await store.projects.findByNameAndOrg(projectName, organisation.id);
+  const project = projectFound?.isActive ? projectFound : null;
 
   if (!project) {
     notFound();
   }
 
   // Fetch the resource by name and organisation
-  const resource = await prisma.resource.findFirst({
-    where: {
-      name: resourceName,
-      organisationId: organisation.id,
-      isActive: true,
-    },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      type: true,
-      status: true,
-      endpoint: true,
-      organisationId: true,
-      ownerId: true,
-    },
-  });
+  const foundResource = await store.resources.findByNameAndOrg(resourceName, organisation.id);
+  const resource = foundResource?.isActive ? {
+    id: foundResource.id,
+    name: foundResource.name,
+    description: foundResource.description,
+    type: foundResource.type,
+    status: foundResource.status,
+    endpoint: foundResource.endpoint,
+    organisationId: foundResource.organisationId,
+    ownerId: foundResource.ownerId,
+  } : null;
 
   if (!resource) {
     notFound();

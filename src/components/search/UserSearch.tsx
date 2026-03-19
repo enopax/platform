@@ -1,6 +1,6 @@
 'use client'
 
-import type { User } from '@prisma/client';
+import type { User } from '@/lib/store';
 import GenericSearch, { type GenericSearchProps } from '@/components/GenericSearch';
 import { findUsers } from '@/actions/user';
 

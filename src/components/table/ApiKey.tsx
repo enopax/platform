@@ -4,7 +4,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
-import { type ApiKey } from '@prisma/client';
+import { type ApiKey } from '@/lib/store';
 import {
   RiKeyLine,
   RiDeleteBinLine,

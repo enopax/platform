@@ -4,7 +4,12 @@ import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { Button } from '@/components/common/Button';
 import { Tooltip } from '@/components/common/Tooltip';
-import { type Project, type User, type Organisation, type ProjectStatus, type ProjectPriority, type Team } from '@prisma/client';
+import { type Project, type User, type Organisation, type ProjectStatus, type ProjectPriority } from '@/lib/store';
+
+type Team = {
+  id: string;
+  name: string;
+};
 import Link from 'next/link';
 
 type ProjectWithDetails = Project & {

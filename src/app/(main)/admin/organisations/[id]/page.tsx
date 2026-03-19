@@ -3,7 +3,7 @@ import Container from '@/components/common/Container';
 import Headline from '@/components/common/Headline';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import Link from 'next/link';
 import OrganisationForm from '@/components/form/OrganisationForm';
 import MemberList from '@/components/common/MemberList';
@@ -16,53 +16,66 @@ interface EditOrganisationPageProps {
 export default async function EditOrganisationPage({ params }: EditOrganisationPageProps) {
   const { id } = await params;
 
-  // Validate that id is provided
   if (!id) {
     notFound();
   }
 
-  const [organisation, users] = await Promise.all([
-    prisma.organisation.findUnique({
-      where: { id },
-      include: {
-        owner: true,
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                firstname: true,
-                lastname: true,
-                email: true,
-                image: true
-              }
-            }
-          },
-          orderBy: [
-            { role: 'asc' },
-            { joinedAt: 'asc' }
-          ]
-        },
-        _count: {
-          select: {
-            members: true,
-            projects: true
-          }
-        }
-      },
-    }),
-    prisma.user.findMany({
-      orderBy: { email: 'asc' },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        firstname: true,
-        lastname: true,
-      },
-    }),
+  const store = await getStoreAsync();
+
+  const [orgData, storeMembers, users] = await Promise.all([
+    store.organisations.findById(id),
+    store.organisationMembers.findByOrgId(id),
+    store.users.findMany(),
   ]);
+
+  if (!orgData) {
+    notFound();
+  }
+
+  const owner = await store.users.findById(orgData.ownerId);
+
+  const members = await Promise.all(
+    storeMembers.map(async (m) => {
+      const user = await store.users.findById(m.userId);
+      return {
+        id: m.id,
+        userId: m.userId,
+        organisationId: m.organisationId,
+        role: m.role,
+        joinedAt: m.joinedAt,
+        updatedAt: m.updatedAt,
+        user: {
+          id: m.userId,
+          name: user?.name ?? null,
+          firstname: user?.firstname ?? null,
+          lastname: user?.lastname ?? null,
+          email: user?.email ?? '',
+          image: user?.image ?? null,
+        },
+      };
+    })
+  );
+
+  const roleOrder = { OWNER: 0, MANAGER: 1, MEMBER: 2 };
+  members.sort((a, b) => {
+    const roleCompare = (roleOrder[a.role as keyof typeof roleOrder] ?? 3) - (roleOrder[b.role as keyof typeof roleOrder] ?? 3);
+    if (roleCompare !== 0) return roleCompare;
+    return a.joinedAt.getTime() - b.joinedAt.getTime();
+  });
+
+  if (!owner) {
+    notFound();
+  }
+
+  const organisation = {
+    ...orgData,
+    owner,
+    members,
+    _count: {
+      members: members.length,
+      projects: 0,
+    },
+  };
 
   if (!organisation) {
     notFound();
@@ -98,8 +111,8 @@ export default async function EditOrganisationPage({ params }: EditOrganisationP
 
           {/* Members List */}
           <div>
-            <MemberList 
-              members={organisation.members || []}
+            <MemberList
+              members={(organisation.members || []) as { id: string; role: 'OWNER' | 'MANAGER' | 'MEMBER'; joinedAt: Date; user: { id: string; name: string | null; firstname: string | null; lastname: string | null; email: string; image: string | null } }[]}
               title="Members"
               compact={true}
               maxHeight="max-h-96"

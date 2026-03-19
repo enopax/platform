@@ -1,29 +1,29 @@
-import { NextAuthConfig } from "next-auth";
-import { prisma } from "@/lib/prisma";
+import type { NextAuthConfig } from "next-auth";
 
+/**
+ * Auth config shared between middleware (Edge runtime) and the full
+ * auth.ts (Node runtime). Must not contain OIDC providers or adapters
+ * that require Node APIs or network calls — Edge can't handle those.
+ *
+ * Middleware uses this to check JWT session existence and redirect
+ * unauthenticated users. The full provider config lives in auth.ts.
+ */
 export default {
-  providers: [
-    // providers are in auth.ts
-  ],
+  pages: {
+    signIn: '/signin',
+  },
   callbacks: {
-    jwt({ token, user }) {
-      if (user) {
-        token.role = user.role;
-        token.name = `${user.firstname} ${user.lastname}`;
-        token.sub = user.id;
-        token.image = user.image;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (token.sub) {
-        session.user.id = token.sub;
-        session.user.role =token.role as string;
-        session.user.name = token.name as string;
-        session.user.image = token.image || undefined;
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isAuthPage = nextUrl.pathname.startsWith('/signin') || nextUrl.pathname.startsWith('/register');
+
+      if (isAuthPage) {
+        if (isLoggedIn) return Response.redirect(new URL('/', nextUrl));
+        return true;
       }
 
-      return session;
+      return isLoggedIn;
     },
   },
+  providers: [],
 } satisfies NextAuthConfig;

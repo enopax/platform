@@ -7,7 +7,7 @@ import { Label } from '@/components/common/Label';
 import { Callout } from '@/components/common/Callout';
 import { Textarea } from '@/components/common/Textarea';
 import { Switch } from '@/components/common/Switch';
-import { type Organisation } from '@prisma/client';
+import { type Organisation } from '@/lib/store';
 import { RiCheckLine, RiErrorWarningLine } from '@remixicon/react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';

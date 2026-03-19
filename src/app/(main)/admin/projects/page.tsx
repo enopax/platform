@@ -3,7 +3,7 @@ import Headline from '@/components/common/Headline';
 import { Button } from '@/components/common/Button';
 import Table from '@/components/GenericTable';
 import { columns } from '@/components/table/Project';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import Link from 'next/link';
 
 export default async function ProjectAdminPage({
@@ -15,21 +15,14 @@ export default async function ProjectAdminPage({
   const { page = '1' } = await searchParams;
   const pageNumber = Number(page);
 
-  const count = await prisma.project.count();
+  const store = await getStoreAsync();
+  const allProjects = await store.projects.search('', 10000);
+  const count = allProjects.length;
 
-  const projectsRaw = await prisma.project.findMany({
-    include: {
-      team: {
-        include: {
-          owner: true,
-          organisation: true,
-        },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-    skip: (pageNumber - 1) * size,
-    take: size,
-  });
+  const sorted = allProjects.sort((a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+  const projectsRaw = sorted.slice((pageNumber - 1) * size, pageNumber * size);
 
   // Convert Decimal to string for client components
   const projects = projectsRaw.map(project => ({

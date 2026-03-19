@@ -3,8 +3,8 @@
 import { genSaltSync, hashSync } from 'bcrypt-ts';
 import { revalidatePath } from 'next/cache';
 import { auth, signIn } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { UserRole } from '@prisma/client';
+import { getStoreAsync } from '@/lib/store';
+import type { UserRole } from '@/lib/store';
 import { userService } from '@/lib/services/user';
 
 export async function sendCredentials(state: object | null, formData: FormData) {
@@ -45,11 +45,12 @@ export async function sendEmail(state: object | null, formData: FormData) {
   try {
     const email = formData.get('email') as string;
     if (email.length < 3) throw new Error('Your email address is too short!');
-    const exists = await prisma.user.findUnique({ where: { email: email } });
+    const store = await getStoreAsync();
+    const exists = await store.users.findByEmail(email);
     if (!exists) throw new Error('Your email address is not available!');
     await signIn('nodemailer', {
       email: email,
-    });    
+    });
 
     return {
       payload: {
@@ -85,15 +86,14 @@ export async function register(state: object | null, formData: FormData) {
     const hash = hashSync(password, salt);
     if (email.length < 3) throw new Error('Your email is too short!');
     if (password != password2) throw new Error('Passwords are not the same!');
-    const user = await prisma.user.create({
-      data: {
-        name: username,
-        firstname: firstname,
-        lastname: lastname,
-        email: email,
-        password: hash,
-        role: 'CUSTOMER',
-      }
+    const store = await getStoreAsync();
+    const user = await store.users.create({
+      name: username,
+      firstname: firstname,
+      lastname: lastname,
+      email: email,
+      password: hash,
+      role: 'CUSTOMER',
     });
 
     await signIn('credentials', {
@@ -137,15 +137,13 @@ export async function settings(state: object | null, formData: FormData) {
     if (email.length < 3) throw new Error('Your email is too short!');
     if (password != password2) throw new Error('Passwords are not the same!');
 
-    const user = await prisma.user.update({
-      where: { id: session?.user?.id },
-      data: {
-        name: username,
-        firstname: firstname,
-        lastname: lastname,
-        email: email,
-        ...(password.length > 0 && { password: hash })
-      }
+    const store = await getStoreAsync();
+    const user = await store.users.update(session?.user?.id, {
+      name: username,
+      firstname: firstname,
+      lastname: lastname,
+      email: email,
+      ...(password.length > 0 && { password: hash })
     });
 
     revalidatePath('/account/settings');
@@ -210,15 +208,13 @@ export async function updateUserAdmin(userId: string, _prevState: UpdateUserStat
       return { success: false, fieldErrors: { email: 'Email is required' } };
     }
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        firstname: firstname || null,
-        lastname: lastname || null,
-        name: name || null,
-        email,
-        role: role as UserRole,
-      },
+    const store = await getStoreAsync();
+    await store.users.update(userId, {
+      firstname: firstname || null,
+      lastname: lastname || null,
+      name: name || null,
+      email,
+      role: role as UserRole,
     });
 
     revalidatePath(`/admin/users/${userId}`);

@@ -3,7 +3,7 @@ import Container from '@/components/common/Container';
 import Headline from '@/components/common/Headline';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import Link from 'next/link';
 import ProjectForm from '@/components/form/ProjectForm';
 import { updateProject, type UpdateProjectState } from '@/actions/project';
@@ -15,26 +15,15 @@ interface EditProjectPageProps {
 export default async function EditProjectPage({ params }: EditProjectPageProps) {
   const { id } = await params;
 
-  const [projectRaw, organisations] = await Promise.all([
-    prisma.project.findUnique({
-      where: { id },
-      include: {
-        team: {
-          include: {
-            owner: true,
-            organisation: true,
-          },
-        },
-      },
-    }),
-    prisma.organisation.findMany({
-      orderBy: { name: 'asc' },
-      select: {
-        id: true,
-        name: true,
-      },
-    }),
+  const store = await getStoreAsync();
+  const [projectRaw, allOrgs] = await Promise.all([
+    store.projects.findById(id),
+    store.organisations.search('', 10000),
   ]);
+
+  const organisations = allOrgs
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(org => ({ id: org.id, name: org.name }));
 
   if (!projectRaw) {
     notFound();

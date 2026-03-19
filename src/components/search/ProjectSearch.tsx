@@ -1,6 +1,6 @@
 'use client'
 
-import type { Project, ProjectStatus, ProjectPriority } from '@prisma/client';
+import type { Project, ProjectStatus, ProjectPriority } from '@/lib/store';
 import GenericSearch, { type GenericSearchProps } from '@/components/GenericSearch';
 import { findProjects } from '@/actions/project';
 

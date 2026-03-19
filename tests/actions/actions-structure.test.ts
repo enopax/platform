@@ -9,16 +9,6 @@ jest.mock('bcrypt-ts', () => ({
 
 import { setAvatar, findUsers } from '@/actions/user'
 
-jest.mock('@/lib/prisma', () => ({
-  prisma: {
-    user: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-  },
-}));
-
 jest.mock('@/lib/auth', () => ({
   auth: jest.fn(() => Promise.resolve({
     user: {

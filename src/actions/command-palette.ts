@@ -1,7 +1,7 @@
 'use server';
 
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 
 export interface CommandPaletteOrganisation {
   id: string;
@@ -32,20 +32,13 @@ export async function getUserOrganisations(): Promise<CommandPaletteOrganisation
       return [];
     }
 
-    const memberships = await prisma.organisationMember.findMany({
-      where: { userId: session.user.id },
-      select: {
-        organisation: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: { joinedAt: 'desc' },
-    });
+    const store = await getStoreAsync();
+    const memberships = await store.organisationMembers.findByUserId(session.user.id);
 
-    return memberships.map(m => m.organisation);
+    return memberships.map(m => ({
+      id: m.organisation.id,
+      name: m.organisation.name,
+    }));
   } catch (error) {
     console.error('Failed to fetch user organisations:', error);
     return [];
@@ -59,30 +52,18 @@ export async function getOrganisationProjects(organisationId: string): Promise<C
       return [];
     }
 
-    // Verify user is a member of the organisation
-    const isMember = await prisma.organisationMember.findUnique({
-      where: {
-        userId_organisationId: {
-          userId: session.user.id,
-          organisationId,
-        },
-      },
-    });
+    const store = await getStoreAsync();
+    const isMember = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
     if (!isMember) {
       return [];
     }
 
-    const projects = await prisma.project.findMany({
-      where: { organisationId },
-      select: {
-        id: true,
-        name: true,
-        organisationId: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50, // Limit results for performance
-    });
+    const allProjects = await store.projects.findByOrgId(organisationId);
+    const projects = allProjects
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 50)
+      .map(p => ({ id: p.id, name: p.name, organisationId: p.organisationId }));
 
     return projects;
   } catch (error) {
@@ -99,67 +80,40 @@ export async function getProjectResources(projectId: string): Promise<CommandPal
     }
 
     // First, get the project to find its organisation
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      select: { organisationId: true },
-    });
+    const store = await getStoreAsync();
+    const project = await store.projects.findById(projectId);
 
     if (!project) {
       return [];
     }
-
-    // Verify user is a member of the organisation
-    const isMember = await prisma.organisationMember.findUnique({
-      where: {
-        userId_organisationId: {
-          userId: session.user.id,
-          organisationId: project.organisationId,
-        },
-      },
-    });
+    const isMember = await store.organisationMembers.findByUserAndOrg(session.user.id, project.organisationId);
 
     if (!isMember) {
       return [];
     }
 
     // Get resources allocated to this project via the ProjectResource junction table
-    const projectResources = await prisma.projectResource.findMany({
-      where: { projectId },
-      include: {
-        project: {
-          select: {
-            name: true,
-            organisation: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-        resource: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            status: true,
-            organisationId: true,
-          },
-        },
-      },
-      orderBy: { allocatedAt: 'desc' },
-      take: 50, // Limit results for performance
-    });
+    const projectResources = await store.projectResources.findByProjectId(projectId);
+    const organisation = await store.organisations.findById(project.organisationId);
 
-    return projectResources.map(pr => ({
-      id: pr.resource.id,
-      name: pr.resource.name,
-      type: pr.resource.type,
-      status: pr.resource.status,
-      projectId,
-      projectName: pr.project.name,
-      organisationId: pr.resource.organisationId,
-      organisationName: pr.project.organisation.name,
-    }));
+    const results: CommandPaletteResource[] = [];
+    for (const pr of projectResources.slice(0, 50)) {
+      const resource = await store.resources.findById(pr.resourceId);
+      if (resource) {
+        results.push({
+          id: resource.id,
+          name: resource.name,
+          type: resource.type,
+          status: resource.status,
+          projectId,
+          projectName: project.name,
+          organisationId: resource.organisationId,
+          organisationName: organisation?.name || '',
+        });
+      }
+    }
+
+    return results;
   } catch (error) {
     console.error('Failed to fetch project resources:', error);
     return [];

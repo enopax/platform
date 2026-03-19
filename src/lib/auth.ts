@@ -1,39 +1,6 @@
 import NextAuth from "next-auth";
-import Nodemailer from 'next-auth/providers/nodemailer';
-import Credentials from 'next-auth/providers/credentials';
-import { PrismaAdapter } from '@auth/prisma-adapter';
-import { compare } from 'bcrypt-ts';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import authConfig from '@/lib/auth.config';
-
-// Build providers array conditionally
-const providers = [];
-
-// Only add Nodemailer if EMAIL_SERVER is configured
-if (process.env.EMAIL_SERVER) {
-  providers.push(
-    Nodemailer({
-      server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIL_FROM,
-    })
-  );
-}
-
-// Always include Credentials provider
-providers.push(
-  Credentials({
-    authorize: async (credentials: Partial<Record<string, unknown>>) => {
-      const { email, password } = credentials as { email: string; password: string };
-      const user = await prisma.user.findUnique({
-        where: { email },
-      });
-      if (!user) return null;
-
-      const passwordsMatch = await compare(password, user.password);
-      return passwordsMatch ? user : null;
-    },
-  })
-);
 
 export const {
   handlers,
@@ -41,9 +8,69 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  debug: true,
-  adapter: PrismaAdapter(prisma),
-  session: { strategy: 'jwt' },
   ...authConfig,
-  providers,
+  debug: process.env.NODE_ENV === 'development',
+  session: { strategy: 'jwt' },
+  providers: [
+    {
+      id: 'dex',
+      name: 'Enopax',
+      type: 'oidc',
+      issuer: process.env.DEX_ISSUER,
+      clientId: process.env.DEX_CLIENT_ID,
+      clientSecret: process.env.DEX_CLIENT_SECRET,
+      authorization: { params: { scope: 'openid profile email' } },
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name || profile.preferred_username || profile.email,
+          email: profile.email,
+          image: profile.picture,
+        };
+      },
+    },
+  ],
+  callbacks: {
+    ...authConfig.callbacks,
+    async signIn({ user }) {
+      if (!user.email) return false;
+
+      const store = await getStoreAsync();
+      const existing = await store.users.findByEmail(user.email);
+      if (!existing) {
+        await store.users.create({
+          name: user.name || null,
+          email: user.email,
+          image: user.image || undefined,
+          role: 'CUSTOMER',
+        });
+      }
+
+      return true;
+    },
+    async jwt({ token, user }) {
+      if (user?.email) {
+        const store = await getStoreAsync();
+        const dbUser = await store.users.findByEmail(user.email);
+        if (dbUser) {
+          token.sub = dbUser.id;
+          token.role = dbUser.role;
+          token.name = dbUser.name || `${dbUser.firstname || ''} ${dbUser.lastname || ''}`.trim() || dbUser.email;
+          token.image = dbUser.image;
+          token.emailVerified = dbUser.emailVerified ? true : false;
+        }
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token.sub) {
+        session.user.id = token.sub;
+        session.user.role = token.role as string;
+        session.user.name = token.name as string;
+        session.user.image = token.image || undefined;
+        session.user.emailVerified = token.emailVerified as boolean;
+      }
+      return session;
+    },
+  },
 });

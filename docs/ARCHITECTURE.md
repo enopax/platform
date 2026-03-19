@@ -47,7 +47,7 @@ URLs use organisation and project names instead of IDs for better usability:
 **Implementation:**
 - Validation in `/src/lib/name-validation.ts`
 - Blocked names in `/src/lib/constants/blocked-names.json`
-- Database constraints enforce uniqueness
+- Store constraints enforce uniqueness
 - URL parameters parsed in route handlers
 
 ---
@@ -234,47 +234,26 @@ export async function updateProject(formData: FormData) {
 
 ---
 
-## Database Schema Architecture
+## Data Storage
 
-### Key Tables
+The platform uses **TinyBase v8** with file-per-record persistence. No database process required.
 
-**Organisations**
-- `id`: Unique identifier
-- `name`: URL-safe, globally unique identifier
-- `description`: Optional org description
-- `createdBy`: User who created the organisation
-- `createdAt`, `updatedAt`: Timestamps
+See [DATA-STORE.md](./DATA-STORE.md) for full documentation.
 
-**Projects**
-- `id`: Unique identifier
-- `name`: URL-safe, unique per organisation
-- `organisationId`: Foreign key to organisations
-- `description`: Optional project description
-- `createdBy`: User who created the project
+### Key Points
 
-**Resources**
-- `id`: Unique identifier
-- `name`: URL-safe, unique per project
-- `projectId`: Foreign key to projects
-- `type`: Resource type (IPFS_CLUSTER, POSTGRES, etc.)
-- `status`: PROVISIONING, ACTIVE, INACTIVE
-- `endpoint`: Generated endpoint URL
-- `credentials`: Encrypted JSONB credentials
-- `configuration`: Deployment configuration
-
-**User Roles**
-- `userId`: Foreign key to user
-- `organisationId`: Foreign key to organisation
-- `role`: MEMBER, MANAGER, ADMIN, or OWNER
-- `assignedAt`: When role was assigned
+- 15 models stored as JSON files in `data/<table>/<id>.json`
+- JSON index files for O(1) lookups (`data/<table>/_index/<field>.json`)
+- Repository pattern: `getStoreAsync().users.findByEmail(email)`
+- Types imported from `@/lib/store`, never from external packages
+- Atomic writes via temp-file + rename (crash-safe)
 
 ### Constraints
 
 - Organisation names must be unique globally
 - Project names must be unique per organisation
-- Resource names must be unique per project
 - Users can only have one role per organisation
-- Deletion cascades: deleting org deletes projects and resources
+- Soft delete via `isActive` flag (organisations, projects, resources)
 
 ---
 
@@ -296,7 +275,7 @@ User Action → Resource Creation → Mock Deployment Service
                                   (2-6 seconds)
                                         ↓
                               Mock Endpoint + Credentials
-                              Stored in PostgreSQL
+                              Stored in TinyBase
 ```
 
 **Features:**
@@ -489,7 +468,7 @@ User sees deployment complete
 - Firewall rules for external access only
 
 **Credential Management:**
-- Secrets stored encrypted in PostgreSQL `credentials` JSONB field
+- Secrets stored in resource credentials field (JSON)
 - Environment variables for deployment service access
 - SSH keys/API tokens never exposed to users
 - Automatic credential rotation (future)
@@ -546,10 +525,9 @@ User sees deployment complete
    - `credentials` field stores real credentials
    - `configuration` field stores deployment metadata
 
-4. **User Experience (Unchanged):**
-   - Same wizard flow
-   - Same deployment progress UI
-   - Real credentials instead of mock
+4. **Data Storage (No Changes Required):**
+   - TinyBase stores deployment status, endpoint, and credentials
+   - Same repository access pattern for all resource data
 
 ### Cost Management
 
@@ -568,11 +546,11 @@ User sees deployment complete
 ---
 
 **Architecture Status**: ✅ Production Ready (Mock Deployment) | 🚧 In Progress (Real Deployment)
-**Last Updated**: 2025-12-12
+**Last Updated**: 2026-03-19
 **Key Insights**:
-- Name-based routing provides human-readable URLs whilst maintaining unique constraints
+- TinyBase v8 file-per-record storage — no database process required
+- Dex OIDC for authentication — file-based identity provider
+- Name-based routing provides human-readable URLs
 - Context API eliminates prop drilling for deeply nested route hierarchies
-- Simplified permission model (role-based, all-members-access-all-projects) reduces complexity without sacrificing security
-- IPFS Cluster eliminates the need for external load balancing and provides intelligent content distribution
-- Resource deployment uses provider abstraction for seamless migration from mock to production infrastructure
-- Database constraints enforce URL name uniqueness at the schema level
+- Simplified permission model (role-based, all-members-access-all-projects)
+- Resource deployment uses provider abstraction for seamless migration from mock to production

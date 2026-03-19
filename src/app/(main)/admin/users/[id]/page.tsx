@@ -3,7 +3,7 @@ import Container from '@/components/common/Container';
 import Headline from '@/components/common/Headline';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import Link from 'next/link';
 import UpdateUserForm from '@/components/form/UpdateUserForm';
 
@@ -14,9 +14,8 @@ interface EditUserPageProps {
 export default async function EditUserPage({ params }: EditUserPageProps) {
   const { id } = await params;
 
-  const user = await prisma.user.findUnique({
-    where: { id },
-  });
+  const store = await getStoreAsync();
+  const user = await store.users.findById(id);
 
   if (!user) {
     notFound();

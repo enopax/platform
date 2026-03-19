@@ -24,8 +24,12 @@ module.exports = {
         '^@/(.*)$': '<rootDir>/src/$1',
       },
       transformIgnorePatterns: [
-        'node_modules/(?!(bcrypt-ts)/)',
+        'node_modules/(?!(bcrypt-ts|tinybase)/)',
       ],
+      transform: {
+        '^.+\\.ts$': 'ts-jest',
+        '^.+\\.js$': ['ts-jest', { useESM: false }],
+      },
       testMatch: [
         '<rootDir>/tests/actions/**/*.test.ts',
       ],
@@ -39,6 +43,13 @@ module.exports = {
       setupFilesAfterEnv: ['<rootDir>/tests/setup/services.js'],
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
+      },
+      transformIgnorePatterns: [
+        'node_modules/(?!(tinybase)/)',
+      ],
+      transform: {
+        '^.+\\.ts$': 'ts-jest',
+        '^.+\\.js$': ['ts-jest', { useESM: false }],
       },
       testMatch: [
         '<rootDir>/tests/services/**/*.test.ts',
@@ -56,6 +67,26 @@ module.exports = {
       },
       testMatch: [
         '<rootDir>/tests/api/**/*.test.ts',
+      ],
+    },
+
+    // Store tests (Node environment)
+    {
+      displayName: 'store',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+      },
+      transformIgnorePatterns: [
+        'node_modules/(?!(tinybase)/)',
+      ],
+      transform: {
+        '^.+\\.ts$': 'ts-jest',
+        '^.+\\.js$': ['ts-jest', { useESM: false }],
+      },
+      testMatch: [
+        '<rootDir>/tests/store/**/*.test.ts',
       ],
     },
 

@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { RiArrowLeftLine } from '@remixicon/react';
@@ -15,29 +15,16 @@ export default async function TestResourceApiPage({ params }: TestResourceApiPag
 
   const { orgName } = await params;
 
-  // Validate that orgName is provided
   if (!orgName) {
     notFound();
   }
 
-  const organisation = await prisma.organisation.findUnique({
-    where: { name: orgName },
-    select: {
-      id: true,
-      name: true,
-    }
-  });
+  const store = await getStoreAsync();
+  const organisation = await store.organisations.findByName(orgName);
 
   if (!organisation) notFound();
 
-  const membership = await prisma.organisationMember.findUnique({
-    where: {
-      userId_organisationId: {
-        userId: session.user.id,
-        organisationId: organisation.id
-      }
-    }
-  });
+  const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
 
   const isAdmin = session.user.role === 'ADMIN';
   const isOwner = membership?.role === 'OWNER';
@@ -54,14 +41,8 @@ export default async function TestResourceApiPage({ params }: TestResourceApiPag
     );
   }
 
-  const projects = await prisma.project.findMany({
-    where: { organisationId: organisation.id },
-    select: {
-      id: true,
-      name: true,
-    },
-    take: 10,
-  });
+  const allProjects = await store.projects.findByOrgId(organisation.id);
+  const projects = allProjects.slice(0, 10).map(p => ({ id: p.id, name: p.name }));
 
   return (
     <div className="space-y-6">

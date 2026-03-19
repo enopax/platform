@@ -16,9 +16,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
-
 # Build Next.js application
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
@@ -33,9 +30,6 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl
-
 # Remove tools that could be abused for downloading malware
 RUN rm -f /usr/bin/wget /usr/bin/curl 2>/dev/null; \
     rm -f /sbin/apk 2>/dev/null; \
@@ -46,21 +40,8 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Copy Prisma files
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-
-# Copy package files for Prisma reinstall
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/package-lock.json ./package-lock.json
-
-# Install only Prisma CLI in production
-RUN npm install prisma@6.15.0 --save-dev --omit=optional --legacy-peer-deps
-
-# Copy entrypoint script
-COPY docker-entrypoint.sh ./docker-entrypoint.sh
-RUN chmod +x ./docker-entrypoint.sh
+# Create data directory for TinyBase file storage
+RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
 # Set correct permissions
 RUN chown -R nextjs:nodejs /app
@@ -71,6 +52,6 @@ EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV DATA_DIR="/app/data"
 
-# Run migrations and start server
-ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["node", "server.js"]

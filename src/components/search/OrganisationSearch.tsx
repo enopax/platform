@@ -1,6 +1,6 @@
 'use client'
 
-import type { Organisation } from '@prisma/client';
+import type { Organisation } from '@/lib/store';
 import GenericSearch, { type GenericSearchProps } from '@/components/GenericSearch';
 import { findOrganisations } from '@/actions/organisation';
 

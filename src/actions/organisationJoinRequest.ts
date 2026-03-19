@@ -1,9 +1,8 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
-import { JoinRequestStatus } from '@prisma/client';
 import { logOrganisationMembershipChange } from '@/lib/auditLog';
 
 export interface CreateJoinRequestState {
@@ -27,27 +26,14 @@ export async function createJoinRequest(
       return { error: 'Authentication required' };
     }
 
-    // Check if organisation exists and is active
-    const organisation = await prisma.organisation.findUnique({
-      where: { 
-        id: organisationId,
-        isActive: true 
-      }
-    });
+    const store = await getStoreAsync();
+    const organisation = await store.organisations.findById(organisationId);
 
-    if (!organisation) {
+    if (!organisation || !organisation.isActive) {
       return { error: 'Organisation not found or inactive' };
     }
 
-    // Check if user is already a member
-    const existingMember = await prisma.organisationMember.findUnique({
-      where: {
-        userId_organisationId: {
-          userId: session.user.id,
-          organisationId
-        }
-      }
-    });
+    const existingMember = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
     if (existingMember) {
       return { error: 'You are already a member of this organisation' };
@@ -59,49 +45,34 @@ export async function createJoinRequest(
     }
 
     // Check if there's already a pending request
-    const existingRequest = await prisma.organisationJoinRequest.findUnique({
-      where: {
-        userId_organisationId: {
-          userId: session.user.id,
-          organisationId
-        }
-      }
-    });
-
-    console.log('Existing join request:', existingRequest);
+    const existingRequest = await store.joinRequests.findByUserAndOrg(session.user.id, organisationId);
 
     if (existingRequest) {
       if (existingRequest.status === 'PENDING') {
         return { error: 'You already have a pending request for this organisation' };
       } else if (existingRequest.status === 'REJECTED') {
         // Allow user to re-request if previously rejected
-        await prisma.organisationJoinRequest.update({
-          where: { id: existingRequest.id },
-          data: {
-            status: 'PENDING',
-            requestedAt: new Date(),
-            respondedAt: null,
-            respondedBy: null,
-          }
+        await store.joinRequests.update(existingRequest.id, {
+          status: 'PENDING',
+          respondedAt: undefined,
+          respondedBy: undefined,
         });
 
         revalidatePath('/orga');
         return { success: true };
       } else if (existingRequest.status === 'APPROVED') {
-        // If user had approved request but left, allow them to create new request
-        await prisma.organisationJoinRequest.delete({
-          where: { id: existingRequest.id }
+        // If user had approved request but left, update to rejected so we can create fresh
+        await store.joinRequests.update(existingRequest.id, {
+          status: 'REJECTED',
         });
         // Continue to create new request below
       }
     }
 
     // Create new join request
-    await prisma.organisationJoinRequest.create({
-      data: {
-        userId: session.user.id,
-        organisationId,
-      }
+    await store.joinRequests.create({
+      userId: session.user.id,
+      organisationId,
     });
 
     revalidatePath('/orga');
@@ -124,22 +95,10 @@ export async function respondToJoinRequest(
       return { error: 'Authentication required' };
     }
 
-    // Get the join request with organisation details
-    const joinRequest = await prisma.organisationJoinRequest.findUnique({
-      where: { id: requestId },
-      include: {
-        organisation: true,
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            firstname: true,
-            lastname: true,
-          }
-        }
-      }
-    });
+    const store = await getStoreAsync();
+
+    // Get the join request and organisation details
+    const joinRequest = await store.joinRequests.findById(requestId);
 
     if (!joinRequest) {
       return { error: 'Join request not found' };
@@ -149,32 +108,27 @@ export async function respondToJoinRequest(
       return { error: 'This request has already been processed' };
     }
 
+    const organisation = await store.organisations.findById(joinRequest.organisationId);
+
     // Check if current user is the organisation owner
-    if (joinRequest.organisation.ownerId !== session.user.id) {
+    if (!organisation || organisation.ownerId !== session.user.id) {
       return { error: 'You do not have permission to respond to this request' };
     }
 
     // Update the join request status
-    await prisma.organisationJoinRequest.update({
-      where: { id: requestId },
-      data: {
-        status,
-        respondedBy: session.user.id,
-        respondedAt: new Date(),
-      }
+    await store.joinRequests.update(requestId, {
+      status,
+      respondedBy: session.user.id,
+      respondedAt: new Date(),
     });
 
-    // If approved, add user as organisation member
     if (status === 'APPROVED') {
-      await prisma.organisationMember.create({
-        data: {
-          userId: joinRequest.userId,
-          organisationId: joinRequest.organisationId,
-          role: 'MEMBER',
-        }
+      await store.organisationMembers.create({
+        userId: joinRequest.userId,
+        organisationId: joinRequest.organisationId,
+        role: 'MEMBER',
       });
 
-      // Log the addition
       await logOrganisationMembershipChange(
         joinRequest.organisationId,
         joinRequest.userId,
@@ -206,15 +160,9 @@ export async function cancelJoinRequest(
       return { error: 'Authentication required' };
     }
 
-    // Find and delete the pending join request
-    const joinRequest = await prisma.organisationJoinRequest.findUnique({
-      where: {
-        userId_organisationId: {
-          userId: session.user.id,
-          organisationId
-        }
-      }
-    });
+    // Find the pending join request
+    const store = await getStoreAsync();
+    const joinRequest = await store.joinRequests.findByUserAndOrg(session.user.id, organisationId);
 
     if (!joinRequest) {
       return { error: 'Join request not found' };
@@ -224,8 +172,9 @@ export async function cancelJoinRequest(
       return { error: 'Cannot cancel a processed request' };
     }
 
-    await prisma.organisationJoinRequest.delete({
-      where: { id: joinRequest.id }
+    // Mark as rejected instead of deleting (no delete in store)
+    await store.joinRequests.update(joinRequest.id, {
+      status: 'REJECTED',
     });
 
     revalidatePath('/orga');
@@ -245,34 +194,33 @@ export async function getOrganisationJoinRequests(organisationId: string) {
       return { error: 'Authentication required' };
     }
 
-    // Check if user is the organisation owner
-    const organisation = await prisma.organisation.findUnique({
-      where: { id: organisationId }
-    });
+    const store = await getStoreAsync();
+    const organisation = await store.organisations.findById(organisationId);
 
     if (!organisation || organisation.ownerId !== session.user.id) {
       return { error: 'You do not have permission to view join requests' };
     }
 
-    const joinRequests = await prisma.organisationJoinRequest.findMany({
-      where: {
-        organisationId,
-        status: 'PENDING'
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            firstname: true,
-            lastname: true,
-            image: true,
-          }
-        }
-      },
-      orderBy: { requestedAt: 'desc' }
-    });
+    const rawRequests = await store.joinRequests.findByOrgId(organisationId, 'PENDING');
+
+    const joinRequests = await Promise.all(
+      rawRequests.map(async (req) => {
+        const user = await store.users.findById(req.userId);
+        return {
+          ...req,
+          user: {
+            id: req.userId,
+            email: user?.email ?? '',
+            name: user?.name ?? null,
+            firstname: user?.firstname ?? null,
+            lastname: user?.lastname ?? null,
+            image: user?.image ?? null,
+          },
+        };
+      })
+    );
+
+    joinRequests.sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime());
 
     return { joinRequests };
   } catch (error) {
@@ -288,14 +236,8 @@ export async function getUserJoinRequestStatus(organisationId: string) {
       return null;
     }
 
-    const joinRequest = await prisma.organisationJoinRequest.findUnique({
-      where: {
-        userId_organisationId: {
-          userId: session.user.id,
-          organisationId
-        }
-      }
-    });
+    const store = await getStoreAsync();
+    const joinRequest = await store.joinRequests.findLatestByUserAndOrg(session.user.id, organisationId);
 
     return joinRequest;
   } catch (error) {
@@ -311,96 +253,30 @@ export async function leaveOrganisation(organisationId: string) {
       return { error: 'Authentication required' };
     }
 
-    // Check if user is a member of the organisation
-    const membership = await prisma.organisationMember.findUnique({
-      where: {
-        userId_organisationId: {
-          userId: session.user.id,
-          organisationId
-        }
-      },
-      include: {
-        organisation: {
-          select: {
-            ownerId: true,
-            name: true
-          }
-        }
-      }
-    });
+    const store = await getStoreAsync();
+    const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
     if (!membership) {
       return { error: 'You are not a member of this organisation' };
     }
 
-    // Prevent owner from leaving their own organisation
-    if (membership.organisation.ownerId === session.user.id) {
+    const organisation = await store.organisations.findById(organisationId);
+
+    if (organisation?.ownerId === session.user.id) {
       return { error: 'Organisation owners cannot leave their organisation. Transfer ownership first.' };
     }
 
-    // Check if user is a team lead in any teams within this organisation
-    const teamLeaderships = await prisma.teamMember.findMany({
-      where: {
-        userId: session.user.id,
-        role: 'LEAD',
-        team: {
-          organisationId
-        }
-      },
-      include: {
-        team: {
-          select: {
-            name: true
-          }
-        }
-      }
-    });
+    await store.organisationMembers.delete(session.user.id, organisationId);
 
-    if (teamLeaderships.length > 0) {
-      const teamNames = teamLeaderships.map(tl => tl.team.name).join(', ');
-      return { 
-        error: `You are a team lead in: ${teamNames}. Please transfer leadership before leaving the organisation.` 
-      };
-    }
-
-    // Remove user from all teams in this organisation
-    await prisma.teamMember.deleteMany({
-      where: {
-        userId: session.user.id,
-        team: {
-          organisationId
-        }
-      }
-    });
-
-    // Remove organisation membership
-    await prisma.organisationMember.delete({
-      where: {
-        userId_organisationId: {
-          userId: session.user.id,
-          organisationId
-        }
-      }
-    });
-
-    // Log the removal
     await logOrganisationMembershipChange(
       organisationId,
       session.user.id,
-      session.user.id, // User left themselves
+      session.user.id,
       'REMOVED',
       membership.role,
       undefined,
       'User left the organisation'
     );
-
-    // Also remove any pending join requests
-    await prisma.organisationJoinRequest.deleteMany({
-      where: {
-        userId: session.user.id,
-        organisationId
-      }
-    });
 
     revalidatePath('/orga');
     return { success: true };
@@ -422,55 +298,26 @@ export async function kickMember(
       return { error: 'Authentication required' };
     }
 
-    // Check if current user has permission to kick (must be owner, manager, or admin)
     const isAdmin = session.user.role === 'ADMIN';
-    
+    const store = await getStoreAsync();
+
     if (!isAdmin) {
-      const membership = await prisma.organisationMember.findUnique({
-        where: {
-          userId_organisationId: {
-            userId: session.user.id,
-            organisationId
-          }
-        },
-        include: {
-          organisation: {
-            select: {
-              ownerId: true
-            }
-          }
-        }
-      });
+      const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
       if (!membership || (membership.role !== 'OWNER' && membership.role !== 'MANAGER')) {
         return { error: 'You do not have permission to remove members' };
       }
     }
 
-    // Check if target user is a member
-    const targetMembership = await prisma.organisationMember.findUnique({
-      where: {
-        userId_organisationId: {
-          userId: targetUserId,
-          organisationId
-        }
-      },
-      include: {
-        organisation: {
-          select: {
-            ownerId: true,
-            name: true
-          }
-        }
-      }
-    });
+    const targetMembership = await store.organisationMembers.findByUserAndOrg(targetUserId, organisationId);
 
     if (!targetMembership) {
       return { error: 'User is not a member of this organisation' };
     }
 
-    // Prevent kicking the organisation owner
-    if (targetMembership.organisation.ownerId === targetUserId) {
+    const targetOrg = await store.organisations.findById(organisationId);
+
+    if (targetOrg?.ownerId === targetUserId) {
       return { error: 'Cannot remove the organisation owner' };
     }
 
@@ -479,52 +326,8 @@ export async function kickMember(
       return { error: 'Use the leave organisation function instead' };
     }
 
-    // Check if target user is a team lead in any teams within this organisation
-    const teamLeaderships = await prisma.teamMember.findMany({
-      where: {
-        userId: targetUserId,
-        role: 'LEAD',
-        team: {
-          organisationId
-        }
-      },
-      include: {
-        team: {
-          select: {
-            name: true
-          }
-        }
-      }
-    });
+    await store.organisationMembers.delete(targetUserId, organisationId);
 
-    if (teamLeaderships.length > 0) {
-      const teamNames = teamLeaderships.map(tl => tl.team.name).join(', ');
-      return { 
-        error: `User is a team lead in: ${teamNames}. Please transfer leadership before removing.` 
-      };
-    }
-
-    // Remove user from all teams in this organisation
-    await prisma.teamMember.deleteMany({
-      where: {
-        userId: targetUserId,
-        team: {
-          organisationId
-        }
-      }
-    });
-
-    // Remove organisation membership
-    await prisma.organisationMember.delete({
-      where: {
-        userId_organisationId: {
-          userId: targetUserId,
-          organisationId
-        }
-      }
-    });
-
-    // Log the removal
     await logOrganisationMembershipChange(
       organisationId,
       targetUserId,
@@ -534,14 +337,6 @@ export async function kickMember(
       undefined,
       'Member was kicked from the organisation'
     );
-
-    // Also remove any pending join requests
-    await prisma.organisationJoinRequest.deleteMany({
-      where: {
-        userId: targetUserId,
-        organisationId
-      }
-    });
 
     revalidatePath('/orga');
     revalidatePath(`/orga/${organisationId}`);

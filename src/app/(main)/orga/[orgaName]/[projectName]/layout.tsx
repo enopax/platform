@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 
 export default async function ProjectLayout({
@@ -11,80 +11,60 @@ export default async function ProjectLayout({
 }>) {
   const { orgaName, projectName } = await params;
 
-  // Validate that parameters are provided
   if (!orgaName || !projectName) {
     notFound();
   }
 
-  // Fetch the organisation by name (minimal data, full is in OrganisationContext)
-  const organisation = await prisma.organisation.findUnique({
-    where: { name: orgaName },
-    select: { id: true, name: true },
-  });
+  const store = await getStoreAsync();
+  const organisation = await store.organisations.findByName(orgaName);
 
   if (!organisation) {
     notFound();
   }
 
-  // Fetch the full project with all related data
-  const projectRaw = await prisma.project.findFirst({
-    where: {
-      name: projectName,
-      organisationId: organisation.id,
-      isActive: true,
-    },
-    include: {
-      organisation: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      allocatedResources: {
-        include: {
-          resource: {
-            include: {
-              owner: {
-                select: {
-                  id: true,
-                  name: true,
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                },
-              },
-              organisation: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-        },
-      },
-      _count: {
-        select: {
-          allocatedResources: true,
-        },
-      },
-    },
-  });
+  const projectFound = await store.projects.findByNameAndOrg(projectName, organisation.id);
 
-  if (!projectRaw) {
+  if (!projectFound || !projectFound.isActive) {
     notFound();
   }
 
-  // Filter allocated resources to only active ones
-  const filteredAllocatedResources = projectRaw.allocatedResources.filter(
+  const projectAllocations = await store.projectResources.findByProjectId(projectFound.id);
+
+  const allocatedResources = [];
+  for (const allocation of projectAllocations) {
+    const resource = await store.resources.findById(allocation.resourceId);
+    if (resource) {
+      const owner = await store.users.findById(resource.ownerId);
+      allocatedResources.push({
+        ...allocation,
+        resource: {
+          ...resource,
+          owner: owner ? {
+            id: owner.id,
+            name: owner.name,
+            firstname: owner.firstname,
+            lastname: owner.lastname,
+            email: owner.email,
+          } : null,
+          organisation: {
+            id: organisation.id,
+            name: organisation.name,
+          },
+        },
+      });
+    }
+  }
+
+  const filteredAllocatedResources = allocatedResources.filter(
     allocation => allocation.resource.isActive && allocation.resource.status === 'ACTIVE'
   );
 
-  // Convert Decimal budget to string for client components
   const project = {
-    ...projectRaw,
-    budget: projectRaw.budget?.toString() || null,
+    ...projectFound,
+    budget: projectFound.budget?.toString() || null,
+    organisation: { id: organisation.id, name: organisation.name },
     allocatedResources: filteredAllocatedResources,
+    _count: { allocatedResources: allocatedResources.length },
   };
 
   return (

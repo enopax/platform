@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Organisation } from '@prisma/client';
+import { Organisation } from '@/lib/store';
 
 type OrganisationContextType = {
   selectedOrganisation: Organisation | null;

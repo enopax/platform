@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 
 export type OrganisationPermissions = {
   isMember: boolean;
@@ -13,10 +13,6 @@ export type ProjectPermissions = {
   canManage: boolean;
 };
 
-/**
- * Check organisation membership and permissions
- * This is a server-side utility to be called in layouts/pages
- */
 export async function checkOrganisationPermissions(
   userId: string,
   userRole: string,
@@ -24,20 +20,10 @@ export async function checkOrganisationPermissions(
 ): Promise<OrganisationPermissions> {
   const isAdmin = userRole === 'ADMIN';
 
-  // Check organisation membership
+  const store = await getStoreAsync();
   const membership = isAdmin
     ? null
-    : await prisma.organisationMember.findUnique({
-        where: {
-          userId_organisationId: {
-            userId,
-            organisationId,
-          },
-        },
-        select: {
-          role: true,
-        },
-      });
+    : await store.organisationMembers.findByUserAndOrg(userId, organisationId);
 
   const isMember = !!membership;
   const isOwner = membership?.role === 'OWNER';
@@ -53,10 +39,6 @@ export async function checkOrganisationPermissions(
   };
 }
 
-/**
- * Check project access permissions
- * All organisation members have access to all projects in their organisation
- */
 export async function checkProjectPermissions(
   userId: string,
   userRole: string,
@@ -65,25 +47,12 @@ export async function checkProjectPermissions(
 ): Promise<ProjectPermissions> {
   const isAdmin = userRole === 'ADMIN';
 
-  // Check organisation membership (required for project access)
+  const store = await getStoreAsync();
   const orgMembership = isAdmin
-    ? { role: 'OWNER' }
-    : await prisma.organisationMember.findUnique({
-        where: {
-          userId_organisationId: {
-            userId,
-            organisationId,
-          },
-        },
-        select: {
-          role: true,
-        },
-      });
+    ? { role: 'OWNER' as const }
+    : await store.organisationMembers.findByUserAndOrg(userId, organisationId);
 
   const isMember = !!orgMembership;
-
-  // All org members can access all projects in the organisation
-  // Management permissions are based on organisation role only
   const canManage =
     isAdmin ||
     orgMembership?.role === 'OWNER' ||
