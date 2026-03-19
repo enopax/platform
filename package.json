@@ -15,15 +15,9 @@
     "test:actions": "jest --config jest.config.unified.js --selectProjects actions",
     "test:services": "jest --config jest.config.unified.js --selectProjects services",
     "test:components": "jest --config jest.config.unified.js --selectProjects components",
-    "docker:dev:up": "docker compose up -d",
-    "docker:dev:down": "docker compose down",
-    "dex:up": "docker compose up -d dex",
-    "dex:down": "docker compose down dex",
-    "docker:prod": "docker compose -f docker-compose.prod.yml up -d --build",
-    "docker:prod:stop": "docker compose -f docker-compose.prod.yml down",
-    "docker:prod:rebuild": "docker compose -f docker-compose.prod.yml up -d --build --no-cache nextjs-app",
-    "docker:prod:logs": "docker compose -f docker-compose.prod.yml logs -f nextjs-app",
-    "docker:logs": "docker compose logs -f"
+    "dex:up": "docker compose up -d",
+    "dex:down": "docker compose down",
+    "dex:logs": "docker compose logs -f"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
