@@ -1,5 +1,4 @@
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import ProjectSettingsClient from './ProjectSettingsClient';
 

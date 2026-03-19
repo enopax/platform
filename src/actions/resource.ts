@@ -1,6 +1,5 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
 import { getStoreAsync } from '@/lib/store';
 import { revalidatePath } from 'next/cache';
 import { deployResource } from '@/lib/deployment-service';
@@ -159,13 +158,10 @@ export async function createResource(
       : [];
 
     // Check for duplicate resource name for the owner
-    const duplicateResource = await prisma.resource.findFirst({
-      where: {
-        name: name.trim(),
-        ownerId,
-        isActive: true,
-      }
-    });
+    const ownerResources = await store.resources.findByOwnerId(ownerId);
+    const duplicateResource = ownerResources.find(
+      r => r.name === name.trim() && r.isActive
+    );
 
     if (duplicateResource) {
       return {
@@ -180,36 +176,31 @@ export async function createResource(
     // Create the resource with PROVISIONING status if template is provided
     const initialStatus = templateId ? 'PROVISIONING' : (status || 'ACTIVE');
 
-    const resource = await prisma.resource.create({
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        type: type as any,
-        status: initialStatus as any,
-        endpoint: endpoint?.trim() || null,
-        quotaLimit,
-        ownerId,
-        organisationId,
-        isPublic,
-        tags,
-        configuration: templateId ? {
-          templateId,
-          deploymentStage: 'init',
-          deploymentProgress: 0,
-          deploymentMessage: 'Preparing deployment...'
-        } : null,
-      },
+    const resource = await store.resources.create({
+      name: name.trim(),
+      description: description?.trim() || null,
+      type: type as any,
+      status: initialStatus as any,
+      endpoint: endpoint?.trim() || null,
+      ownerId,
+      organisationId,
+      isPublic,
+      tags,
+      configuration: templateId ? {
+        templateId,
+        deploymentStage: 'init',
+        deploymentProgress: 0,
+        deploymentMessage: 'Preparing deployment...'
+      } : null,
     });
 
     // If a project was provided, link the resource to the project
     if (projectId && projectId.trim()) {
       try {
-        await prisma.projectResource.create({
-          data: {
-            projectId: projectId.trim(),
-            resourceId: resource.id,
-            allocatedBy: ownerId,
-          },
+        await store.projectResources.create({
+          projectId: projectId.trim(),
+          resourceId: resource.id,
+          allocatedBy: ownerId,
         });
         console.log(`✅ Resource ${resource.id} linked to project ${projectId}`);
       } catch (linkError) {
@@ -276,9 +267,10 @@ export async function updateResource(
       };
     }
 
+    const store = await getStoreAsync();
+
     // Validate project if provided
     if (projectId && projectId.trim()) {
-      const store = await getStoreAsync();
       const projectExists = await store.projects.findById(projectId);
 
       if (!projectExists) {
@@ -320,9 +312,7 @@ export async function updateResource(
       : [];
 
     // Get the current resource to check ownership
-    const currentResource = await prisma.resource.findUnique({
-      where: { id: resourceId },
-    });
+    const currentResource = await store.resources.findById(resourceId);
 
     if (!currentResource) {
       return {
@@ -331,14 +321,10 @@ export async function updateResource(
     }
 
     // Check for duplicate resource name for the owner (excluding current resource)
-    const duplicateResource = await prisma.resource.findFirst({
-      where: {
-        name: name.trim(),
-        ownerId: currentResource.ownerId,
-        isActive: true,
-        NOT: { id: resourceId }
-      }
-    });
+    const ownerResources = await store.resources.findByOwnerId(currentResource.ownerId);
+    const duplicateResource = ownerResources.find(
+      r => r.name === name.trim() && r.isActive && r.id !== resourceId
+    );
 
     if (duplicateResource) {
       return {
@@ -347,19 +333,15 @@ export async function updateResource(
       };
     }
 
-    await prisma.resource.update({
-      where: { id: resourceId },
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        type: type as any,
-        status: status as any,
-        endpoint: endpoint?.trim() || null,
-        quotaLimit,
-        projectId: projectId?.trim() || null,
-        isPublic,
-        tags,
-      },
+    await store.resources.update(resourceId, {
+      name: name.trim(),
+      description: description?.trim() || null,
+      type: type as any,
+      status: status as any,
+      endpoint: endpoint?.trim() || null,
+      quotaLimit,
+      isPublic,
+      tags,
     });
 
     revalidatePath('/main/resources');
@@ -376,12 +358,10 @@ export async function updateResource(
 
 export async function deleteResource(resourceId: string) {
   try {
-    await prisma.resource.update({
-      where: { id: resourceId },
-      data: {
-        isActive: false,
-        deletedAt: new Date(),
-      },
+    const store = await getStoreAsync();
+    await store.resources.update(resourceId, {
+      isActive: false,
+      deletedAt: new Date(),
     });
 
     revalidatePath('/main/resources');
@@ -403,17 +383,17 @@ export async function allocateResourceToProject(
 ) {
   try {
     // Check if resource exists
-    const resource = await prisma.resource.findUnique({
-      where: { id: resourceId, isActive: true },
-      include: { organisation: true }
-    });
+    const store = await getStoreAsync();
+    const resourceFound = await store.resources.findById(resourceId);
+    const resource = resourceFound?.isActive ? resourceFound : null;
 
     if (!resource) {
       return { error: 'Resource not found' };
     }
 
+    const organisation = await store.organisations.findById(resource.organisationId);
+
     // Check if project exists and belongs to same organisation
-    const store = await getStoreAsync();
     const projectFound = await store.projects.findById(projectId);
     const project = projectFound?.isActive ? projectFound : null;
 
@@ -426,31 +406,22 @@ export async function allocateResourceToProject(
     }
 
     // Check if allocation already exists
-    const existingAllocation = await prisma.projectResource.findUnique({
-      where: {
-        projectId_resourceId: {
-          projectId,
-          resourceId
-        }
-      }
-    });
+    const existingAllocation = await store.projectResources.findByProjectAndResource(projectId, resourceId);
 
     if (existingAllocation) {
       return { error: 'Resource is already allocated to this project' };
     }
 
     // Create allocation
-    await prisma.projectResource.create({
-      data: {
-        projectId,
-        resourceId,
-        allocatedBy,
-        quotaLimit
-      }
+    await store.projectResources.create({
+      projectId,
+      resourceId,
+      allocatedBy,
+      quotaLimit
     });
 
-    revalidatePath(`/orga/${resource.organisation.name}/resources/${resourceId}`);
-    revalidatePath(`/orga/${resource.organisation.name}/projects/${projectId}`);
+    revalidatePath(`/orga/${organisation?.name}/resources/${resourceId}`);
+    revalidatePath(`/orga/${organisation?.name}/projects/${projectId}`);
 
     return { success: true };
   } catch (error) {
@@ -465,35 +436,20 @@ export async function removeResourceFromProject(
   projectId: string
 ) {
   try {
-    const allocation = await prisma.projectResource.findUnique({
-      where: {
-        projectId_resourceId: {
-          projectId,
-          resourceId
-        }
-      },
-      include: {
-        resource: {
-          include: { organisation: true }
-        }
-      }
-    });
+    const store = await getStoreAsync();
+    const allocation = await store.projectResources.findByProjectAndResource(projectId, resourceId);
 
     if (!allocation) {
       return { error: 'Allocation not found' };
     }
 
-    await prisma.projectResource.delete({
-      where: {
-        projectId_resourceId: {
-          projectId,
-          resourceId
-        }
-      }
-    });
+    await store.projectResources.delete(projectId, resourceId);
 
-    revalidatePath(`/orga/${allocation.resource.organisation.name}/resources/${resourceId}`);
-    revalidatePath(`/orga/${allocation.resource.organisation.name}/projects/${projectId}`);
+    const resource = await store.resources.findById(resourceId);
+    const organisation = resource ? await store.organisations.findById(resource.organisationId) : null;
+
+    revalidatePath(`/orga/${organisation?.name}/resources/${resourceId}`);
+    revalidatePath(`/orga/${organisation?.name}/projects/${projectId}`);
 
     return { success: true };
   } catch (error) {
@@ -509,38 +465,22 @@ export async function updateResourceAllocationQuota(
   quotaLimit: bigint | null
 ) {
   try {
-    const allocation = await prisma.projectResource.findUnique({
-      where: {
-        projectId_resourceId: {
-          projectId,
-          resourceId
-        }
-      },
-      include: {
-        resource: {
-          include: { organisation: true }
-        }
-      }
-    });
+    const store = await getStoreAsync();
+    const allocation = await store.projectResources.findByProjectAndResource(projectId, resourceId);
 
     if (!allocation) {
       return { error: 'Allocation not found' };
     }
 
-    await prisma.projectResource.update({
-      where: {
-        projectId_resourceId: {
-          projectId,
-          resourceId
-        }
-      },
-      data: {
-        quotaLimit
-      }
+    await store.projectResources.update(projectId, resourceId, {
+      quotaLimit
     });
 
-    revalidatePath(`/orga/${allocation.resource.organisation.name}/resources/${resourceId}`);
-    revalidatePath(`/orga/${allocation.resource.organisation.name}/projects/${projectId}`);
+    const resource = await store.resources.findById(resourceId);
+    const organisation = resource ? await store.organisations.findById(resource.organisationId) : null;
+
+    revalidatePath(`/orga/${organisation?.name}/resources/${resourceId}`);
+    revalidatePath(`/orga/${organisation?.name}/projects/${projectId}`);
 
     return { success: true };
   } catch (error) {
@@ -556,30 +496,24 @@ export async function getAvailableResourcesForProject(organisationId: string, pr
     // 1. In the same organisation
     // 2. Not already allocated to this project
     // 3. Active
-    const resources = await prisma.resource.findMany({
-      where: {
-        organisationId,
-        isActive: true,
-        allocatedProjects: {
-          none: {
-            projectId
-          }
-        }
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        type: true,
-        status: true,
-        endpoint: true,
-        quotaLimit: true,
-        currentUsage: true
-      },
-      orderBy: {
-        name: 'asc'
-      }
-    });
+    const store = await getStoreAsync();
+    const orgResources = await store.resources.findByOrgId(organisationId);
+    const projectAllocations = await store.projectResources.findByProjectId(projectId);
+    const allocatedResourceIds = new Set(projectAllocations.map(a => a.resourceId));
+
+    const resources = orgResources
+      .filter(r => r.isActive && !allocatedResourceIds.has(r.id))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(r => ({
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        type: r.type,
+        status: r.status,
+        endpoint: r.endpoint,
+        quotaLimit: r.quotaLimit,
+        currentUsage: r.currentUsage
+      }));
 
     return resources;
   } catch (error) {
@@ -591,38 +525,25 @@ export async function getAvailableResourcesForProject(organisationId: string, pr
 // Search function for resources
 export async function findResources(query: string, organisationId: string) {
   try {
-    const resources = await prisma.resource.findMany({
-      where: {
-        organisationId,
-        isActive: true,
-        OR: [
-          {
-            name: {
-              contains: query,
-              mode: 'insensitive',
-            },
-          },
-          {
-            description: {
-              contains: query,
-              mode: 'insensitive',
-            },
-          },
-        ],
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        type: true,
-        status: true,
-        endpoint: true
-      },
-      orderBy: {
-        name: 'asc'
-      },
-      take: 10,
-    });
+    const store = await getStoreAsync();
+    const orgResources = await store.resources.findByOrgId(organisationId);
+    const lowerQuery = query.toLowerCase();
+
+    const resources = orgResources
+      .filter(r => r.isActive && (
+        r.name.toLowerCase().includes(lowerQuery) ||
+        (r.description && r.description.toLowerCase().includes(lowerQuery))
+      ))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, 10)
+      .map(r => ({
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        type: r.type,
+        status: r.status,
+        endpoint: r.endpoint
+      }));
 
     return resources;
   } catch (error) {

@@ -5,7 +5,6 @@ import { Geist } from 'next/font/google';
 import "./globals.css";
 
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 
 import UserBar from '@/components/layout/UserBar';
 import Footer from '@/components/layout/Footer';

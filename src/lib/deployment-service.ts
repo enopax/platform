@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { getStoreAsync } from '@/lib/store';
 import {
   getTemplateById,
   generateMockEndpoint,
@@ -42,20 +42,18 @@ export async function simulateDeployment(
   onProgress?: (progress: DeploymentProgress) => void
 ): Promise<DeploymentResult> {
   try {
+    const store = await getStoreAsync();
     const provisioningTime = template.deployment.provisioningTime;
     const stageTime = provisioningTime / deploymentStages.length;
 
     for (const stage of deploymentStages) {
       onProgress?.(stage);
 
-      await prisma.resource.update({
-        where: { id: resourceId },
-        data: {
-          configuration: {
-            deploymentStage: stage.stage,
-            deploymentProgress: stage.progress,
-            deploymentMessage: stage.message
-          }
+      await store.resources.update(resourceId, {
+        configuration: {
+          deploymentStage: stage.stage,
+          deploymentProgress: stage.progress,
+          deploymentMessage: stage.message
         }
       });
 
@@ -66,19 +64,16 @@ export async function simulateDeployment(
     const credentials = generateMockCredentials(template, resourceId);
     const configuration = generateDeploymentConfig(template, resourceId);
 
-    await prisma.resource.update({
-      where: { id: resourceId },
-      data: {
-        status: 'ACTIVE',
-        endpoint,
-        credentials,
-        configuration: {
-          ...configuration,
-          deploymentStage: 'complete',
-          deploymentProgress: 100,
-          deploymentMessage: 'Deployment complete!',
-          deployedAt: new Date().toISOString()
-        }
+    await store.resources.update(resourceId, {
+      status: 'ACTIVE',
+      endpoint,
+      credentials,
+      configuration: {
+        ...configuration,
+        deploymentStage: 'complete',
+        deploymentProgress: 100,
+        deploymentMessage: 'Deployment complete!',
+        deployedAt: new Date().toISOString()
       }
     });
 
@@ -91,16 +86,14 @@ export async function simulateDeployment(
   } catch (error) {
     console.error('Deployment simulation failed:', error);
 
-    await prisma.resource.update({
-      where: { id: resourceId },
-      data: {
-        status: 'INACTIVE',
-        configuration: {
-          deploymentStage: 'failed',
-          deploymentProgress: 0,
-          deploymentMessage: 'Deployment failed',
-          error: error instanceof Error ? error.message : 'Unknown error'
-        }
+    const store = await getStoreAsync();
+    await store.resources.update(resourceId, {
+      status: 'INACTIVE',
+      configuration: {
+        deploymentStage: 'failed',
+        deploymentProgress: 0,
+        deploymentMessage: 'Deployment failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
       }
     });
 
@@ -124,16 +117,8 @@ export async function deployResource(
     };
   }
 
-  const resource = await prisma.resource.findUnique({
-    where: { id: resourceId },
-    include: {
-      owner: true,
-      organisation: true,
-      allocatedProjects: {
-        include: { project: true }
-      }
-    }
-  });
+  const store = await getStoreAsync();
+  const resource = await store.resources.findById(resourceId);
 
   if (!resource) {
     return {
@@ -142,21 +127,29 @@ export async function deployResource(
     };
   }
 
-  await prisma.resource.update({
-    where: { id: resourceId },
-    data: {
-      status: 'PROVISIONING',
-      configuration: {
-        templateId,
-        deploymentStage: 'init',
-        deploymentProgress: 0,
-        deploymentMessage: 'Contacting Resource API...'
-      }
+  const owner = await store.users.findById(resource.ownerId);
+  const organisation = await store.organisations.findById(resource.organisationId);
+  const projectAllocations = await store.projectResources.findByResourceId(resourceId);
+
+  const enrichedResource = {
+    ...resource,
+    owner,
+    organisation,
+    allocatedProjects: projectAllocations,
+  };
+
+  await store.resources.update(resourceId, {
+    status: 'PROVISIONING',
+    configuration: {
+      templateId,
+      deploymentStage: 'init',
+      deploymentProgress: 0,
+      deploymentMessage: 'Contacting Resource API...'
     }
   });
 
   setImmediate(async () => {
-    await provisionResourceViaApi(resourceId, templateId, template, resource);
+    await provisionResourceViaApi(resourceId, templateId, template, enrichedResource);
   });
 
   return {
@@ -171,27 +164,30 @@ async function provisionResourceViaApi(
   resource: any
 ): Promise<void> {
   try {
+    const store = await getStoreAsync();
     const provider = getProviderForTemplate(templateId);
 
-    await prisma.resource.update({
-      where: { id: resourceId },
-      data: {
-        configuration: {
-          templateId,
-          deploymentStage: 'provision',
-          deploymentProgress: 50,
-          deploymentMessage: 'Provisioning resource via API...'
-        }
+    await store.resources.update(resourceId, {
+      configuration: {
+        templateId,
+        deploymentStage: 'provision',
+        deploymentProgress: 50,
+        deploymentMessage: 'Provisioning resource via API...'
       }
     });
 
-    const projectName = resource.allocatedProjects?.[0]?.project?.name || 'Default Project';
+    const firstAllocation = resource.allocatedProjects?.[0];
+    let projectName = 'Default Project';
+    if (firstAllocation) {
+      const project = await store.projects.findById(firstAllocation.projectId);
+      projectName = project?.name || 'Default Project';
+    }
 
     const provisionRequest: ProvisionRequest = {
       name: resource.name,
-      organisationName: resource.organisation.name,
+      organisationName: resource.organisation?.name || '',
       projectName: projectName,
-      userId: resource.owner.id,
+      userId: resource.owner?.id || '',
       sshKeys: [],
     };
 
@@ -201,53 +197,43 @@ async function provisionResourceViaApi(
       throw new Error(result.error || 'Provisioning failed');
     }
 
-    await prisma.resource.update({
-      where: { id: resourceId },
-      data: {
-        status: 'ACTIVE',
-        endpoint: result.access,
-        credentials: {
-          resourceApiId: result.id,
-          resourceApiStatus: result.status,
-        },
-        configuration: {
-          templateId,
-          resourceApiId: result.id,
-          provider,
-          deploymentStage: 'complete',
-          deploymentProgress: 100,
-          deploymentMessage: 'Deployment complete!',
-          deployedAt: new Date().toISOString()
-        }
+    await store.resources.update(resourceId, {
+      status: 'ACTIVE',
+      endpoint: result.access,
+      credentials: {
+        resourceApiId: result.id,
+        resourceApiStatus: result.status,
+      },
+      configuration: {
+        templateId,
+        resourceApiId: result.id,
+        provider,
+        deploymentStage: 'complete',
+        deploymentProgress: 100,
+        deploymentMessage: 'Deployment complete!',
+        deployedAt: new Date().toISOString()
       }
     });
   } catch (error) {
     console.error('Resource API provisioning failed:', error);
 
-    await prisma.resource.update({
-      where: { id: resourceId },
-      data: {
-        status: 'INACTIVE',
-        configuration: {
-          templateId,
-          deploymentStage: 'failed',
-          deploymentProgress: 0,
-          deploymentMessage: 'Provisioning failed',
-          error: error instanceof Error ? error.message : 'Unknown error'
-        }
+    const store = await getStoreAsync();
+    await store.resources.update(resourceId, {
+      status: 'INACTIVE',
+      configuration: {
+        templateId,
+        deploymentStage: 'failed',
+        deploymentProgress: 0,
+        deploymentMessage: 'Provisioning failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
       }
     });
   }
 }
 
 export async function getDeploymentStatus(resourceId: string): Promise<DeploymentProgress | null> {
-  const resource = await prisma.resource.findUnique({
-    where: { id: resourceId },
-    select: {
-      configuration: true,
-      status: true
-    }
-  });
+  const store = await getStoreAsync();
+  const resource = await store.resources.findById(resourceId);
 
   if (!resource) {
     return null;
