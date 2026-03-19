@@ -15,7 +15,7 @@ export default {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isAuthPage = nextUrl.pathname.startsWith('/signin') || nextUrl.pathname.startsWith('/signup');
+      const isAuthPage = nextUrl.pathname.startsWith('/signin') || nextUrl.pathname.startsWith('/register');
 
       if (isAuthPage) {
         if (isLoggedIn) return Response.redirect(new URL('/', nextUrl));

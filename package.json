@@ -26,6 +26,8 @@
     "docker:logs": "docker compose logs -f"
   },
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.0",
     "@internationalized/date": "^3.8.2",
     "@next/env": "^16.1.7",
     "@radix-ui/react-checkbox": "^1.1.3",

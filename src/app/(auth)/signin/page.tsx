@@ -2,6 +2,7 @@ import { signIn } from '@/lib/auth';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { RiShieldKeyholeLine } from '@remixicon/react';
+import Link from 'next/link';
 
 export default async function SignInPage() {
   return (
@@ -25,6 +26,12 @@ export default async function SignInPage() {
               Sign in with Enopax
             </Button>
           </form>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
+              Create one
+            </Link>
+          </p>
         </div>
       </Card>
     </main>
