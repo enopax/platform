@@ -4,7 +4,7 @@ import { genSaltSync, hashSync } from 'bcrypt-ts';
 import { revalidatePath } from 'next/cache';
 import { auth, signIn } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@/lib/store';
 import { userService } from '@/lib/services/user';
 
 export async function sendCredentials(state: object | null, formData: FormData) {

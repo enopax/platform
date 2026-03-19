@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/common/Checkbox';
 import { Slider } from '@/components/common/Slider';
 import ClientDate from '@/components/common/ClientDate';
 import { DatePicker } from '@/components/common/DatePicker';
-import { type Project, type User, type Organisation } from '@prisma/client';
+import { type Project, type User, type Organisation } from '@/lib/store';
 import { RiCheckLine, RiErrorWarningLine, RiDatabase2Line } from '@remixicon/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';

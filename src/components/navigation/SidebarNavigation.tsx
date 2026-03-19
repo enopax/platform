@@ -18,7 +18,7 @@ import {
   RiShieldLine
 } from '@remixicon/react';
 import { Button } from '@/components/common/Button';
-import { User } from '@prisma/client';
+import { User } from '@/lib/store';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { Badge } from '@/components/common/Badge';
 

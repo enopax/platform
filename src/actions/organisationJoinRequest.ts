@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
-import { JoinRequestStatus } from '@prisma/client';
+import { JoinRequestStatus } from '@/lib/store';
 import { logOrganisationMembershipChange } from '@/lib/auditLog';
 
 export interface CreateJoinRequestState {

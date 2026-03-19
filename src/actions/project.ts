@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { type ProjectStatus, type ProjectPriority } from '@prisma/client';
+import { type ProjectStatus, type ProjectPriority } from '@/lib/store';
 import { projectService } from '@/lib/services/project';
 import { userService } from '@/lib/services/user';
 import { prisma } from '@/lib/prisma';

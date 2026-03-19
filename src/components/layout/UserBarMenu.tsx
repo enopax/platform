@@ -1,4 +1,4 @@
-import { type User } from '@prisma/client';
+import { type User } from '@/lib/store';
 
 import Link from 'next/link';
 import { Button } from '@/components/common/Button';

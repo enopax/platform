@@ -5,7 +5,12 @@ import { format } from 'date-fns';
 import { Button } from '@/components/common/Button';
 import { Tooltip } from '@/components/common/Tooltip';
 import { Badge } from '@/components/common/Badge';
-import { type Resource, type User, type Team } from '@prisma/client';
+import { type Resource, type User } from '@/lib/store';
+
+type Team = {
+  id: string;
+  name: string;
+};
 import Link from 'next/link';
 import {
   RiServerLine,

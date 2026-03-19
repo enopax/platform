@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Select, SelectValue } from '@/components/common/Select';
 import { useOrganisation } from '@/components/context/OrganisationContext';
-import { Organisation } from '@prisma/client';
+import { Organisation } from '@/lib/store';
 import { RiBuildingLine, RiAddLine } from '@remixicon/react';
 import { Button } from '@/components/common/Button';
 import Link from 'next/link';

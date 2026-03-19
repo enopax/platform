@@ -23,7 +23,7 @@ import {
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import Avatar from '@/components/common/Avatar';
-import { User } from '@prisma/client';
+import { User } from '@/lib/store';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { handleSignOut } from '@/actions/auth';
 

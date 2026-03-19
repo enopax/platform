@@ -9,7 +9,7 @@ import { Textarea } from '@/components/common/Textarea';
 import { Switch } from '@/components/common/Switch';
 import ClientDate from '@/components/common/ClientDate';
 import UserSearch from '@/components/search/UserSearch';
-import { type Organisation, type User } from '@prisma/client';
+import { type Organisation, type User } from '@/lib/store';
 import { RiCheckLine, RiErrorWarningLine } from '@remixicon/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
