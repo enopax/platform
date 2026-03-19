@@ -3,6 +3,7 @@ import type { IOrganisationRepository, IOrganisationMemberRepository } from './r
 import type { IProjectRepository } from './repositories/project.repository';
 import type { IApiKeyRepository } from './repositories/api-key.repository';
 import type { IResourceRepository, IProjectResourceRepository } from './repositories/resource.repository';
+import type { IUserFileRepository } from './repositories/user-file.repository';
 import type { IAuditLogRepository } from './repositories/audit-log.repository';
 import type { IJoinRequestRepository } from './repositories/join-request.repository';
 import type { IUserStorageQuotaRepository, IUserStorageMetricsRepository, IUserStorageActivityRepository } from './repositories/user-storage.repository';
@@ -14,6 +15,7 @@ import { TinyBaseApiKeyRepository } from './tinybase/api-key.tinybase';
 import { TinyBaseAuditLogRepository } from './tinybase/audit-log.tinybase';
 import { TinyBaseProjectRepository } from './tinybase/project.tinybase';
 import { TinyBaseResourceRepository, TinyBaseProjectResourceRepository } from './tinybase/resource.tinybase';
+import { TinyBaseUserFileRepository } from './tinybase/user-file.tinybase';
 import { TinyBaseJoinRequestRepository } from './tinybase/join-request.tinybase';
 import { TinyBaseUserStorageQuotaRepository, TinyBaseUserStorageMetricsRepository, TinyBaseUserStorageActivityRepository } from './tinybase/user-storage.tinybase';
 import path from 'path';
@@ -26,6 +28,7 @@ export interface DataStore {
   projects: IProjectRepository;
   resources: IResourceRepository;
   projectResources: IProjectResourceRepository;
+  userFiles: IUserFileRepository;
   apiKeys: IApiKeyRepository;
   auditLogs: IAuditLogRepository;
   joinRequests: IJoinRequestRepository;
@@ -57,6 +60,7 @@ async function createDataStore(): Promise<DataStore> {
     projects: new TinyBaseProjectRepository(tinyStore),
     resources: new TinyBaseResourceRepository(tinyStore),
     projectResources: new TinyBaseProjectResourceRepository(tinyStore),
+    userFiles: new TinyBaseUserFileRepository(tinyStore),
     apiKeys: new TinyBaseApiKeyRepository(tinyStore),
     auditLogs: new TinyBaseAuditLogRepository(tinyStore),
     joinRequests: new TinyBaseJoinRequestRepository(tinyStore),
