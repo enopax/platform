@@ -51,7 +51,57 @@ export async function createVerificationToken(userId: string, email: string): Pr
   const tokenFile = path.join(tokensDir, `${token}.json`);
   fs.writeFileSync(tokenFile, JSON.stringify(tokenData, null, 2), { mode: 0o600 });
 
+  try {
+    await cleanupExpiredTokens();
+  } catch {
+    // Never let cleanup failures affect token creation
+  }
+
   return token;
+}
+
+export async function cleanupExpiredTokens(): Promise<void> {
+  const fs = await import('fs');
+  const path = await import('path');
+
+  const dataDir = process.env.DATA_DIR || path.join(process.cwd(), 'data');
+  const tokensDir = path.join(dataDir, 'verification-tokens');
+
+  if (!fs.existsSync(tokensDir)) return;
+
+  const now = new Date();
+  const entries = fs.readdirSync(tokensDir);
+
+  for (const entry of entries) {
+    if (!entry.endsWith('.json')) continue;
+
+    const filePath = path.join(tokensDir, entry);
+    let shouldDelete = false;
+
+    try {
+      const raw = fs.readFileSync(filePath, 'utf-8');
+      const data = JSON.parse(raw) as Partial<VerificationToken>;
+
+      if (typeof data.expiresAt !== 'string') {
+        shouldDelete = true;
+      } else {
+        const expiresAt = new Date(data.expiresAt);
+        if (Number.isNaN(expiresAt.getTime()) || expiresAt < now) {
+          shouldDelete = true;
+        }
+      }
+    } catch {
+      shouldDelete = true;
+    }
+
+    if (shouldDelete) {
+      try {
+        fs.unlinkSync(filePath);
+      } catch {
+        // Ignore: file may have been removed concurrently
+      }
+    }
+  }
 }
 
 export async function verifyToken(token: string): Promise<{ userId: string; email: string } | null> {
@@ -66,7 +116,13 @@ export async function verifyToken(token: string): Promise<{ userId: string; emai
   try {
     const data: VerificationToken = JSON.parse(fs.readFileSync(tokenFile, 'utf-8'));
 
-    if (new Date(data.expiresAt) < new Date()) {
+    if (typeof data.expiresAt !== 'string') {
+      fs.unlinkSync(tokenFile);
+      return null;
+    }
+
+    const expiresAt = new Date(data.expiresAt);
+    if (Number.isNaN(expiresAt.getTime()) || expiresAt < new Date()) {
       fs.unlinkSync(tokenFile);
       return null;
     }
