@@ -16,11 +16,11 @@ interface ProjectCardProps {
   project: {
     id: string;
     name: string;
-    description?: string;
+    description?: string | null;
     status: string;
     progress: number;
     createdAt: Date;
-    allocatedResources: Array<{
+    allocatedResources?: Array<{
       resource: {
         type: string;
         currentUsage?: number;
@@ -46,11 +46,13 @@ export default function ProjectCard({ project, organisationName }: ProjectCardPr
     return 'bg-green-500';
   };
 
-  const totalUsage = project.allocatedResources.reduce((sum, allocation) => {
+  const allocatedResources = project.allocatedResources ?? [];
+
+  const totalUsage = allocatedResources.reduce((sum, allocation) => {
     return sum + Number(allocation.resource.currentUsage || 0);
   }, 0);
 
-  const totalQuota = project.allocatedResources.reduce((sum, allocation) => {
+  const totalQuota = allocatedResources.reduce((sum, allocation) => {
     return sum + Number(allocation.resource.quotaLimit || 0);
   }, 0);
 
@@ -66,7 +68,7 @@ export default function ProjectCard({ project, organisationName }: ProjectCardPr
   };
 
   const typeMap: Record<string, number> = {};
-  project.allocatedResources.forEach(allocation => {
+  allocatedResources.forEach(allocation => {
     const type = allocation.resource.type;
     typeMap[type] = (typeMap[type] || 0) + 1;
   });
@@ -96,12 +98,12 @@ export default function ProjectCard({ project, organisationName }: ProjectCardPr
         )}
 
         {/* Resources Section */}
-        {project.allocatedResources.length > 0 && (
+        {allocatedResources.length > 0 && (
           <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2 mb-2">
               <RiServerLine className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                {project.allocatedResources.length} resource{project.allocatedResources.length !== 1 ? 's' : ''}
+                {allocatedResources.length} resource{allocatedResources.length !== 1 ? 's' : ''}
               </span>
             </div>
 
