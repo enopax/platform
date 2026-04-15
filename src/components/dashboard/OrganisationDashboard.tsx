@@ -212,18 +212,6 @@ export default function OrganisationDashboard({ user }: { user: any }) {
                   </span>
                 </Link>
 
-                <Link href="/main/teams" className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                      <RiTeamLine className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Teams</span>
-                  </div>
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">
-                    {organisationData?.counts.teams || 0}
-                  </span>
-                </Link>
-
                 <Link href="/main/resources" className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors group">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -296,16 +284,6 @@ export default function OrganisationDashboard({ user }: { user: any }) {
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Create Project</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Start a new project with resources</p>
-                </div>
-              </Link>
-
-              <Link href={`/main/teams/new?org=${selectedOrganisation.id}`} className="group">
-                <div className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-brand-400 dark:hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-brand-900/10 transition-all text-center">
-                  <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg w-fit mx-auto mb-4">
-                    <RiTeamLine className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Create Team</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Set up team collaboration</p>
                 </div>
               </Link>
 

@@ -66,7 +66,6 @@ export default function DeleteOrganisationButton({
 
 This will permanently remove:
 • The organisation
-• All teams within the organisation
 • All join requests
 • All associated data
 

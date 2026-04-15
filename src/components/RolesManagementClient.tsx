@@ -37,7 +37,7 @@ export function RolesManagementClient({
 
   const roleDescriptions = {
     OWNER: 'Full access to all organisation features and member management',
-    MANAGER: 'Can manage teams, projects, and members (with restrictions)',
+    MANAGER: 'Can manage projects and members (with restrictions)',
     MEMBER: 'Can view and work with assigned projects and resources',
   };
 

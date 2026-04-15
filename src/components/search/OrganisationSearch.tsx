@@ -15,7 +15,6 @@ interface SearchableOrganisation extends Organisation {
   };
   _count: {
     members: number;
-    teams: number;
     projects: number;
   };
 }
@@ -48,9 +47,8 @@ export default function OrganisationSearch({
   };
 
   const getBadgeText = (organisation: SearchableOrganisation): string => {
-    const { members, teams, projects } = organisation._count;
+    const { members, projects } = organisation._count;
     if (members > 1) return `${members} members`;
-    if (teams > 0) return `${teams} teams`;
     if (projects > 0) return `${projects} projects`;
     return 'Organisation';
   };

@@ -24,7 +24,7 @@ export default function LeaveOrganisationButton({
 
   const handleLeave = async () => {
     const confirmed = confirm(
-      `Are you sure you want to leave "${organisationName}"?\n\nThis will remove you from:\n- The organisation\n- All teams within the organisation\n\nThis action cannot be undone.`
+      `Are you sure you want to leave "${organisationName}"?\n\nThis will remove you from the organisation.\n\nThis action cannot be undone.`
     );
 
     if (!confirmed) return;

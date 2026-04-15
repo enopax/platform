@@ -98,7 +98,6 @@ async function seed() {
     isActive: 1,
     maxProjects: 50,
     maxMembers: 100,
-    maxTeams: 10,
     ownerId: adminId,
     createdAt: now,
     updatedAt: now,

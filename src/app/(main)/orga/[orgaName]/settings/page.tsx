@@ -154,22 +154,10 @@ export default async function OrganisationSettingsPage({ params }: OrganisationS
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div>
                     <h3 className="font-medium text-gray-900 dark:text-white">
-                      Team Management
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Configure team creation and management permissions
-                    </p>
-                  </div>
-                  <Badge variant="outline">Coming Soon</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div>
-                    <h3 className="font-medium text-gray-900 dark:text-white">
                       Resource Limits
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Set limits for resource usage across teams
+                      Set limits for resource usage across the organisation
                     </p>
                   </div>
                   <Badge variant="outline">Coming Soon</Badge>
@@ -202,12 +190,6 @@ export default async function OrganisationSettingsPage({ params }: OrganisationS
                 <Button variant="light" className="w-full justify-start text-sm px-3 py-2">
                   <RiUserLine className="mr-2 h-4 w-4" />
                   Manage Members
-                </Button>
-              </Link>
-              <Link href={`/orga/${orgaName}/teams`} className="block">
-                <Button variant="light" className="w-full justify-start text-sm px-3 py-2">
-                  <RiTeamLine className="mr-2 h-4 w-4" />
-                  Manage Teams
                 </Button>
               </Link>
             </div>
