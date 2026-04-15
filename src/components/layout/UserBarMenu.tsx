@@ -29,17 +29,20 @@ export default function UserBarMenu({
   );
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex items-center gap-2 p-1 pr-2" aria-label="Open menu">
-          <RiMenuLine className="h-5 w-5" />
-          <Avatar
-            name={user.name || user.email}
-            image={user.image}
-            size="small"
-          />
-        </Button>
-      </DropdownMenuTrigger>
+    <div className="flex items-center gap-2">
+      <Link href="/account/settings" aria-label="Profile settings" className="inline-flex">
+        <Avatar
+          name={user.name || user.email}
+          image={user.image}
+          size="small"
+        />
+      </Link>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="p-2" aria-label="Open menu">
+            <RiMenuLine className="h-5 w-5" />
+          </Button>
+        </DropdownMenuTrigger>
 
       <DropdownMenuContent>
         {/* ----- Account ----- */}
@@ -127,6 +130,7 @@ export default function UserBarMenu({
           </button>
         </form>
       </DropdownMenuContent>
-    </DropdownMenu>
+      </DropdownMenu>
+    </div>
   );
 }
