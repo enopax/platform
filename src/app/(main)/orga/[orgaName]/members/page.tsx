@@ -39,9 +39,10 @@ export default async function MembersManagementPage({ params }: MembersManagemen
     notFound();
   }
 
-  const [storeMembers, rawJoinRequests] = await Promise.all([
+  const [storeMembers, rawJoinRequests, pendingInvitations] = await Promise.all([
     store.organisationMembers.findByOrgId(organisationId),
     store.joinRequests.findByOrgId(organisationId, 'PENDING'),
+    store.invitations.findByOrgId(organisationId, 'PENDING'),
   ]);
 
   const joinRequests = await Promise.all(
@@ -92,10 +93,23 @@ export default async function MembersManagementPage({ params }: MembersManagemen
     return a.joinedAt.getTime() - b.joinedAt.getTime();
   });
 
+  const now = new Date();
+  const invitations = pendingInvitations
+    .filter((inv) => inv.expiresAt > now)
+    .map((inv) => ({
+      id: inv.id,
+      email: inv.email,
+      role: inv.role,
+      expiresAt: inv.expiresAt,
+      createdAt: inv.createdAt,
+    }));
+
   return (
     <MembersManagementClient
       members={members}
       joinRequests={joinRequests}
+      invitations={invitations}
+      organisationName={orgaName}
       isOwner={isOwner}
       isManager={isManager}
       isAdmin={isAdmin}
