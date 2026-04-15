@@ -5,5 +5,6 @@ export type { IApiKeyRepository, CreateApiKeyData } from './api-key.repository';
 export type { IResourceRepository, IProjectResourceRepository, CreateResourceData, UpdateResourceData } from './resource.repository';
 export type { IAuditLogRepository, CreateAuditLogData } from './audit-log.repository';
 export type { IJoinRequestRepository, CreateJoinRequestData } from './join-request.repository';
+export type { IInvitationRepository, CreateInvitationData, UpdateInvitationData } from './invitation.repository';
 export type { IUserFileRepository, CreateUserFileData } from './user-file.repository';
 export type { IUserStorageQuotaRepository, IUserStorageMetricsRepository, IUserStorageActivityRepository, CreateStorageQuotaData, CreateStorageMetricsData, CreateStorageActivityData } from './user-storage.repository';
