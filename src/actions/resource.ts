@@ -222,8 +222,12 @@ export async function createResource(
 
     revalidatePath('/main/resources');
     if (projectId) {
-      revalidatePath(`/orga/${organisationId}/projects/${projectId.trim()}`);
-      console.log(`🔄 Revalidated project path for org ${organisationId}, project ${projectId.trim()}`);
+      const trimmedProjectId = projectId.trim();
+      const project = await store.projects.findById(trimmedProjectId);
+      if (organisation?.name && project?.name) {
+        revalidatePath(`/orga/${organisation.name}/${project.name}`);
+        console.log(`🔄 Revalidated project path for org ${organisation.name}, project ${project.name}`);
+      }
     }
 
     return { success: true };
@@ -345,7 +349,23 @@ export async function updateResource(
     });
 
     revalidatePath('/main/resources');
-    revalidatePath(`/main/resources/${resourceId}`);
+
+    const organisation = await store.organisations.findById(currentResource.organisationId);
+    if (organisation?.name) {
+      const resourceName = name.trim();
+      const allocations = await store.projectResources.findByResourceId(resourceId);
+      if (allocations.length === 0) {
+        revalidatePath(`/orga/${organisation.name}`);
+      } else {
+        for (const allocation of allocations) {
+          const project = await store.projects.findById(allocation.projectId);
+          if (project?.name) {
+            revalidatePath(`/orga/${organisation.name}/${project.name}`);
+            revalidatePath(`/orga/${organisation.name}/${project.name}/${resourceName}`);
+          }
+        }
+      }
+    }
 
     return { success: true };
   } catch (error) {
@@ -359,12 +379,29 @@ export async function updateResource(
 export async function deleteResource(resourceId: string) {
   try {
     const store = await getStoreAsync();
+    const resource = await store.resources.findById(resourceId);
+
     await store.resources.update(resourceId, {
       isActive: false,
       deletedAt: new Date(),
     });
 
     revalidatePath('/main/resources');
+
+    if (resource) {
+      const organisation = await store.organisations.findById(resource.organisationId);
+      if (organisation?.name) {
+        revalidatePath(`/orga/${organisation.name}`);
+        const allocations = await store.projectResources.findByResourceId(resourceId);
+        for (const allocation of allocations) {
+          const project = await store.projects.findById(allocation.projectId);
+          if (project?.name) {
+            revalidatePath(`/orga/${organisation.name}/${project.name}`);
+          }
+        }
+      }
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Failed to delete resource:', error);
@@ -420,8 +457,10 @@ export async function allocateResourceToProject(
       quotaLimit
     });
 
-    revalidatePath(`/orga/${organisation?.name}/resources/${resourceId}`);
-    revalidatePath(`/orga/${organisation?.name}/projects/${projectId}`);
+    if (organisation?.name && project.name) {
+      revalidatePath(`/orga/${organisation.name}/${project.name}/${resource.name}`);
+      revalidatePath(`/orga/${organisation.name}/${project.name}`);
+    }
 
     return { success: true };
   } catch (error) {
@@ -447,9 +486,12 @@ export async function removeResourceFromProject(
 
     const resource = await store.resources.findById(resourceId);
     const organisation = resource ? await store.organisations.findById(resource.organisationId) : null;
+    const project = await store.projects.findById(projectId);
 
-    revalidatePath(`/orga/${organisation?.name}/resources/${resourceId}`);
-    revalidatePath(`/orga/${organisation?.name}/projects/${projectId}`);
+    if (organisation?.name && project?.name && resource?.name) {
+      revalidatePath(`/orga/${organisation.name}/${project.name}/${resource.name}`);
+      revalidatePath(`/orga/${organisation.name}/${project.name}`);
+    }
 
     return { success: true };
   } catch (error) {
@@ -478,9 +520,12 @@ export async function updateResourceAllocationQuota(
 
     const resource = await store.resources.findById(resourceId);
     const organisation = resource ? await store.organisations.findById(resource.organisationId) : null;
+    const project = await store.projects.findById(projectId);
 
-    revalidatePath(`/orga/${organisation?.name}/resources/${resourceId}`);
-    revalidatePath(`/orga/${organisation?.name}/projects/${projectId}`);
+    if (organisation?.name && project?.name && resource?.name) {
+      revalidatePath(`/orga/${organisation.name}/${project.name}/${resource.name}`);
+      revalidatePath(`/orga/${organisation.name}/${project.name}`);
+    }
 
     return { success: true };
   } catch (error) {

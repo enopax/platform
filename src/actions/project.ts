@@ -184,12 +184,18 @@ export async function updateProject(
     });
 
     const org = await store.organisations.findById(currentProject.organisationId);
+    const updatedProject = await store.projects.findById(projectId);
 
     revalidatePath('/admin/project');
     revalidatePath(`/admin/project/${projectId}`);
-    if (org) {
+    if (org?.name) {
       revalidatePath(`/orga/${org.name}`);
-      revalidatePath(`/orga/${org.name}/${projectId}`);
+      if (updatedProject?.name) {
+        revalidatePath(`/orga/${org.name}/${updatedProject.name}`);
+      }
+      if (currentProject.name && currentProject.name !== updatedProject?.name) {
+        revalidatePath(`/orga/${org.name}/${currentProject.name}`);
+      }
     }
 
     return { success: true };
