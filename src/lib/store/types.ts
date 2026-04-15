@@ -56,7 +56,6 @@ export interface Organisation {
   isActive: boolean;
   maxProjects: number | null;
   maxMembers: number | null;
-  maxTeams: number | null;
   ownerId: string;
   createdAt: Date;
   updatedAt: Date;

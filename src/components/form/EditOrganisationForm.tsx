@@ -8,12 +8,11 @@ import { Card } from '@/components/common/Card';
 import { Label } from '@/components/common/Label';
 import { Callout } from '@/components/common/Callout';
 import { Badge } from '@/components/common/Badge';
-import { 
+import {
   RiBuildingLine,
   RiCheckboxCircleFill,
   RiErrorWarningFill,
   RiUserLine,
-  RiTeamLine,
   RiProjectorLine
 } from '@remixicon/react';
 import { updateOrganisation } from '@/actions/organisation';
@@ -25,7 +24,6 @@ type OrganisationWithDetails = Organisation & {
   owner: User;
   _count: {
     members: number;
-    teams: number;
     projects: number;
   };
 };
@@ -74,7 +72,7 @@ export default function EditOrganisationForm({ organisation, userId, isAdmin }: 
         </div>
 
         {/* Organisation Stats */}
-        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           <div className="text-center">
             <div className="flex items-center justify-center mb-1">
               <RiUserLine className="h-4 w-4 text-gray-500 mr-1" />
@@ -86,12 +84,12 @@ export default function EditOrganisationForm({ organisation, userId, isAdmin }: 
           </div>
           <div className="text-center">
             <div className="flex items-center justify-center mb-1">
-              <RiTeamLine className="h-4 w-4 text-gray-500 mr-1" />
+              <RiProjectorLine className="h-4 w-4 text-gray-500 mr-1" />
               <span className="font-semibold text-gray-900 dark:text-white">
-                {organisation._count.teams}
+                {organisation._count.projects}
               </span>
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">Teams</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">Projects</p>
           </div>
         </div>
       </Card>

@@ -10,3 +10,4 @@ logs/
 coverage/
 tsconfig.tsbuildinfo
 public/uploads/
+.claude/

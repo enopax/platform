@@ -94,10 +94,10 @@ export default function PermissionsToggle({
 
   const getTooltipText = (level: PermissionLevel) => {
     switch (level) {
-      case 'r': return 'Read only - can view team resources';
-      case 'rw': return 'Read/Write - can view and modify team resources';
-      case 'rwx': return 'Read/Write/Execute - can view, modify, and use team resources';
-      case 'lead': return 'Lead - full permissions including team management';
+      case 'r': return 'Read only - can view resources';
+      case 'rw': return 'Read/Write - can view and modify resources';
+      case 'rwx': return 'Read/Write/Execute - can view, modify, and use resources';
+      case 'lead': return 'Lead - full permissions including management';
       default: return 'No permissions';
     }
   };

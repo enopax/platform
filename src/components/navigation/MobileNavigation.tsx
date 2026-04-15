@@ -392,13 +392,6 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
                     </Button>
                   </Link>
 
-                  <Link href="/admin/teams" onClick={handleLinkClick}>
-                    <Button variant="ghost" size="sm" className="w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <RiTeamLine className="mr-2 h-4 w-4" />
-                      Teams
-                    </Button>
-                  </Link>
-
                   <Link href="/admin/projects" onClick={handleLinkClick}>
                     <Button variant="ghost" size="sm" className="w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <RiProjectorLine className="mr-2 h-4 w-4" />

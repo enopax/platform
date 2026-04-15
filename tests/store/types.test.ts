@@ -122,7 +122,6 @@ describe('Store types', () => {
         isActive: true,
         maxProjects: 50,
         maxMembers: 100,
-        maxTeams: 10,
         ownerId: 'user-id',
         createdAt: new Date(),
         updatedAt: new Date(),

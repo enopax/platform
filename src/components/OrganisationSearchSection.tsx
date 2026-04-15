@@ -10,7 +10,6 @@ import {
   RiSearchLine,
   RiBuildingLine,
   RiUserLine,
-  RiTeamLine,
   RiProjectorLine,
   RiExternalLinkLine,
   RiUserAddLine,
@@ -35,7 +34,6 @@ type SearchableOrganisation = {
   };
   _count: {
     members: number;
-    teams: number;
     projects: number;
   };
   createdAt: Date;
@@ -194,9 +192,9 @@ export default function OrganisationSearchSection() {
                     <span className="ml-1">members</span>
                   </div>
                   <div className="flex items-center">
-                    <RiTeamLine className="h-3 w-3 mr-1" />
-                    <span className="font-medium">{searchResult._count.teams}</span>
-                    <span className="ml-1">teams</span>
+                    <RiProjectorLine className="h-3 w-3 mr-1" />
+                    <span className="font-medium">{searchResult._count.projects}</span>
+                    <span className="ml-1">projects</span>
                   </div>
                 </div>
 

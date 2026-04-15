@@ -94,11 +94,6 @@ export default function UserBarMenu({
                   Organisations
                 </DropdownMenuItem>
               </Link>
-              <Link href="/admin/teams">
-                <DropdownMenuItem>
-                  Teams
-                </DropdownMenuItem>
-              </Link>
               <Link href="/admin/projects">
                 <DropdownMenuItem>
                   Projects
