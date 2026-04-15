@@ -6,6 +6,7 @@ import type { IResourceRepository, IProjectResourceRepository } from './reposito
 import type { IUserFileRepository } from './repositories/user-file.repository';
 import type { IAuditLogRepository } from './repositories/audit-log.repository';
 import type { IJoinRequestRepository } from './repositories/join-request.repository';
+import type { IInvitationRepository } from './repositories/invitation.repository';
 import type { IUserStorageQuotaRepository, IUserStorageMetricsRepository, IUserStorageActivityRepository } from './repositories/user-storage.repository';
 import { createStore } from 'tinybase';
 import { FileRecordPersister } from './tinybase/file-record-persister';
@@ -17,6 +18,7 @@ import { TinyBaseProjectRepository } from './tinybase/project.tinybase';
 import { TinyBaseResourceRepository, TinyBaseProjectResourceRepository } from './tinybase/resource.tinybase';
 import { TinyBaseUserFileRepository } from './tinybase/user-file.tinybase';
 import { TinyBaseJoinRequestRepository } from './tinybase/join-request.tinybase';
+import { TinyBaseInvitationRepository } from './tinybase/invitation.tinybase';
 import { TinyBaseUserStorageQuotaRepository, TinyBaseUserStorageMetricsRepository, TinyBaseUserStorageActivityRepository } from './tinybase/user-storage.tinybase';
 import path from 'path';
 
@@ -31,6 +33,7 @@ export interface DataStore {
   apiKeys: IApiKeyRepository;
   auditLogs: IAuditLogRepository;
   joinRequests: IJoinRequestRepository;
+  invitations: IInvitationRepository;
   storageQuotas: IUserStorageQuotaRepository;
   storageMetrics: IUserStorageMetricsRepository;
   storageActivity: IUserStorageActivityRepository;
@@ -49,6 +52,7 @@ const TABLE_CONFIG = [
   { tableName: 'api-keys', indexes: [{ name: 'userId', cellId: 'userId' }, { name: 'hashedKey', cellId: 'hashedKey' }] },
   { tableName: 'audit-logs' },
   { tableName: 'join-requests', indexes: [{ name: 'organisationId', cellId: 'organisationId' }] },
+  { tableName: 'organisation-invitations', indexes: [{ name: 'organisationId', cellId: 'organisationId' }, { name: 'token', cellId: 'token' }] },
   { tableName: 'user-files', indexes: [{ name: 'userId', cellId: 'userId' }, { name: 'projectId', cellId: 'projectId' }] },
   { tableName: 'storage-quotas', indexes: [{ name: 'userId', cellId: 'userId' }] },
   { tableName: 'storage-metrics' },
@@ -76,6 +80,7 @@ async function createDataStore(): Promise<DataStore> {
     apiKeys: new TinyBaseApiKeyRepository(tinyStore, persister),
     auditLogs: new TinyBaseAuditLogRepository(tinyStore),
     joinRequests: new TinyBaseJoinRequestRepository(tinyStore, persister),
+    invitations: new TinyBaseInvitationRepository(tinyStore, persister),
     storageQuotas: new TinyBaseUserStorageQuotaRepository(tinyStore),
     storageMetrics: new TinyBaseUserStorageMetricsRepository(tinyStore),
     storageActivity: new TinyBaseUserStorageActivityRepository(tinyStore),

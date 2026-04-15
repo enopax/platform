@@ -91,6 +91,23 @@ export interface Project {
   updatedAt: Date;
 }
 
+export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
+
+export interface OrganisationInvitation {
+  id: string;
+  token: string;
+  email: string;
+  organisationId: string;
+  role: OrganisationRole;
+  invitedBy: string;
+  status: InvitationStatus;
+  expiresAt: Date;
+  acceptedAt: Date | null;
+  acceptedByUserId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface OrganisationJoinRequest {
   id: string;
   userId: string;

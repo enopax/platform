@@ -5,6 +5,7 @@ import { TinyBaseProjectRepository } from '@/lib/store/tinybase/project.tinybase
 import { TinyBaseApiKeyRepository } from '@/lib/store/tinybase/api-key.tinybase';
 import { TinyBaseAuditLogRepository } from '@/lib/store/tinybase/audit-log.tinybase';
 import { TinyBaseJoinRequestRepository } from '@/lib/store/tinybase/join-request.tinybase';
+import { TinyBaseInvitationRepository } from '@/lib/store/tinybase/invitation.tinybase';
 import { TinyBaseResourceRepository, TinyBaseProjectResourceRepository } from '@/lib/store/tinybase/resource.tinybase';
 import { TinyBaseUserFileRepository } from '@/lib/store/tinybase/user-file.tinybase';
 import { TinyBaseUserStorageQuotaRepository, TinyBaseUserStorageMetricsRepository, TinyBaseUserStorageActivityRepository } from '@/lib/store/tinybase/user-storage.tinybase';
@@ -22,6 +23,7 @@ export function createTestStore(): DataStore {
     apiKeys: new TinyBaseApiKeyRepository(store),
     auditLogs: new TinyBaseAuditLogRepository(store),
     joinRequests: new TinyBaseJoinRequestRepository(store),
+    invitations: new TinyBaseInvitationRepository(store),
     userFiles: new TinyBaseUserFileRepository(store),
     storageQuotas: new TinyBaseUserStorageQuotaRepository(store),
     storageMetrics: new TinyBaseUserStorageMetricsRepository(store),
