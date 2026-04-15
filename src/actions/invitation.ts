@@ -69,6 +69,58 @@ export async function inviteMember(
   }
 }
 
+export async function acceptInvitation(token: string): Promise<{ success: boolean; error?: string; organisationName?: string }> {
+  const session = await auth();
+  if (!session?.user?.id || !session?.user?.email) {
+    return { success: false, error: 'You must be signed in to accept an invitation.' };
+  }
+
+  const store = await getStoreAsync();
+  const invitation = await store.invitations.findByToken(token);
+  if (!invitation) return { success: false, error: 'Invitation not found.' };
+
+  if (invitation.status !== 'PENDING') {
+    return { success: false, error: `This invitation has already been ${invitation.status.toLowerCase()}.` };
+  }
+  if (invitation.expiresAt < new Date()) {
+    await store.invitations.update(invitation.id, { status: 'EXPIRED' });
+    return { success: false, error: 'This invitation has expired. Ask the admin to send a new one.' };
+  }
+
+  const sessionEmail = session.user.email.toLowerCase();
+  if (invitation.email.toLowerCase() !== sessionEmail) {
+    return { success: false, error: `This invitation is for ${invitation.email}, not ${sessionEmail}.` };
+  }
+
+  const existingMember = await store.organisationMembers.findByUserAndOrg(session.user.id, invitation.organisationId);
+  if (existingMember) {
+    await store.invitations.update(invitation.id, {
+      status: 'ACCEPTED',
+      acceptedAt: new Date(),
+      acceptedByUserId: session.user.id,
+    });
+    const organisation = await store.organisations.findById(invitation.organisationId);
+    return { success: true, organisationName: organisation?.name };
+  }
+
+  await store.organisationMembers.create({
+    userId: session.user.id,
+    organisationId: invitation.organisationId,
+    role: invitation.role,
+  });
+
+  await store.invitations.update(invitation.id, {
+    status: 'ACCEPTED',
+    acceptedAt: new Date(),
+    acceptedByUserId: session.user.id,
+  });
+
+  const organisation = await store.organisations.findById(invitation.organisationId);
+  if (organisation) revalidatePath(`/orga/${organisation.name}/members`);
+
+  return { success: true, organisationName: organisation?.name };
+}
+
 export async function revokeInvitation(invitationId: string): Promise<{ success: boolean; error?: string }> {
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: 'Not authenticated' };

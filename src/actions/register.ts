@@ -66,8 +66,11 @@ export async function register(
     const token = await createVerificationToken(user.id, email);
     await sendVerificationEmail(email, token);
 
+    const inviteToken = (formData.get('inviteToken') as string)?.trim();
+    const redirectTo = inviteToken ? `/accept-invite?token=${inviteToken}` : '/';
+
     // Sign in via OIDC
-    await signIn('dex', { redirectTo: '/' });
+    await signIn('dex', { redirectTo });
 
     return { success: true };
   } catch (e: unknown) {
