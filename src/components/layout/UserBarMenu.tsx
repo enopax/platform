@@ -3,6 +3,7 @@ import { type User } from '@/lib/store';
 import Link from 'next/link';
 import { Button } from '@/components/common/Button';
 import Avatar from '@/components/common/Avatar';
+import { RiMenuLine } from '@remixicon/react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,7 +31,8 @@ export default function UserBarMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="p-1">
+        <Button variant="ghost" className="flex items-center gap-2 p-1 pr-2" aria-label="Open menu">
+          <RiMenuLine className="h-5 w-5" />
           <Avatar
             name={user.name || user.email}
             image={user.image}

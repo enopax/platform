@@ -22,8 +22,24 @@ export default async function OrganisationLayout({
     notFound();
   }
 
+  const projects = await store.projects.findByOrgId(organisation.id, { isActive: true });
+  const members = await store.organisationMembers.findByOrgId(organisation.id);
+
   return (
-    <OrganisationProvider organisation={organisation}>
+    <OrganisationProvider
+      organisation={{
+        id: organisation.id,
+        name: organisation.name,
+        description: organisation.description,
+        ownerId: organisation.ownerId,
+        isActive: organisation.isActive,
+        projects,
+        _count: {
+          members: members.length,
+          projects: projects.length,
+        },
+      }}
+    >
       {children}
     </OrganisationProvider>
   );

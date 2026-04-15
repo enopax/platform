@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
+import type { Project } from '@/lib/store';
 
 export interface OrganisationContextType {
   id: string;
@@ -8,6 +9,11 @@ export interface OrganisationContextType {
   description: string | null;
   ownerId: string;
   isActive: boolean;
+  projects: Project[];
+  _count: {
+    members: number;
+    projects: number;
+  };
 }
 
 const OrganisationContext = createContext<OrganisationContextType | undefined>(
