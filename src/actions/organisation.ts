@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
+import { getStoreAsync } from '@/lib/store';
 import { organisationService } from '@/lib/services/organisation';
 import { userService } from '@/lib/services/user';
 import { validateNameFormat } from '@/lib/name-validation';
@@ -122,7 +123,7 @@ export async function updateOrganisation(
     revalidatePath('/admin/organisation');
     revalidatePath(`/admin/organisation/${organisationId}`);
     revalidatePath('/orga');
-    revalidatePath(`/orga/${organisationId}`);
+    revalidatePath(`/orga/${name.trim()}`);
 
     return { success: true };
   } catch (error) {
@@ -252,6 +253,10 @@ export async function deleteOrganisation(
 
     console.log('User attempting deletion:', session.user.id, session.user.email);
 
+    // Look up org name before deletion so we can revalidate the name-based route
+    const store = await getStoreAsync();
+    const organisation = await store.organisations.findById(organisationId);
+
     // Use service to delete organisation (soft delete)
     console.log('Calling organisationService.deleteOrganisation...');
     await organisationService.deleteOrganisation(organisationId, session.user.id);
@@ -259,7 +264,9 @@ export async function deleteOrganisation(
     console.log('Organisation deleted successfully, revalidating paths...');
     revalidatePath('/admin/organisations');
     revalidatePath('/orga');
-    revalidatePath(`/orga/${organisationId}`);
+    if (organisation?.name) {
+      revalidatePath(`/orga/${organisation.name}`);
+    }
 
     console.log('Paths revalidated, returning success');
     return { success: true };
