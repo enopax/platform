@@ -110,22 +110,12 @@ export class FileRecordPersister {
   private loadIndexes(table: TableConfig): void {
     if (!table.indexes) return;
 
+    // Always rebuild from loaded rows. Trusting a stale on-disk index is how
+    // previous deploys ended up with users visible in /data/users/ but missing
+    // from /_index/email.json — making findByEmail return null and breaking
+    // sign-in and verification flows. Rebuild is O(N) over already-loaded rows.
     for (const idx of table.indexes) {
-      const indexFile = path.join(this.dataDir, table.tableName, '_index', `${idx.name}.json`);
-      const index = this.getIndex(table.tableName, idx.name);
-
-      if (fs.existsSync(indexFile)) {
-        try {
-          const data: Record<string, string | string[]> = JSON.parse(fs.readFileSync(indexFile, 'utf-8'));
-          for (const [key, value] of Object.entries(data)) {
-            index.set(key, Array.isArray(value) ? value : [value]);
-          }
-        } catch {
-          this.rebuildIndex(table, idx);
-        }
-      } else {
-        this.rebuildIndex(table, idx);
-      }
+      this.rebuildIndex(table, idx);
     }
   }
 
