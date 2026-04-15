@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
   },
   output: 'standalone',
   outputFileTracingRoot: path.join(__dirname),
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '8mb',
+    },
+  },
 };
 
 export default nextConfig;
