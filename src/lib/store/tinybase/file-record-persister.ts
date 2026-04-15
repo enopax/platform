@@ -1,7 +1,6 @@
 import type { Store } from 'tinybase';
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
 
 export interface IndexDefinition {
   name: string;
@@ -87,7 +86,7 @@ export class FileRecordPersister {
   }
 
   private atomicWrite(filePath: string, content: string): void {
-    const tmpFile = path.join(os.tmpdir(), `tinybase-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const tmpFile = `${filePath}.tmp-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     fs.writeFileSync(tmpFile, content, { mode: 0o600 });
     fs.renameSync(tmpFile, filePath);
   }
