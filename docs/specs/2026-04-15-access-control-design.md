@@ -57,8 +57,14 @@ OrganisationMember
   joinedAt, updatedAt
 
 Team
-  id, organisationId, name, description, purpose (optional tag: Dev|Ops|FE|Marketing|...)
+  id, organisationId, name, description
   createdAt, updatedAt
+  — Fully user-defined. No hardcoded purpose enum. Name and description
+    are free text (e.g. "Backend", "Ops", "Sprint 42 contractors", or
+    whatever makes sense for the org).
+  — On org creation, a default team "All Members" is seeded as a normal
+    Team row — not a system-level special case. Admins can rename,
+    repurpose, or delete it like any other team.
 
 TeamMember
   id, teamId, userId
@@ -222,7 +228,7 @@ Prod data today:
 
 **Phase 1 go-live requires no data migration** for existing projects: the tiered auto-admin rule (D3) means Felix (OWNER) keeps full access without any new records; Andi needs to be added to a team to see projects (or just use the current fallback while we're single-user-org).
 
-A one-time seed is advisable: create a default team named "All Members" per org, auto-add all current org MEMBERs to it, grant it `DEVELOPER` on all existing projects. Keeps existing member behaviour the same until admins set up proper teams.
+A one-time seed is advisable: the "All Members" default team (seeded on org creation as a normal team — see §3) should be created for the existing Enopax org, all current org members auto-added, and granted `DEVELOPER` on all existing projects. Keeps existing member behaviour the same until admins set up proper teams.
 
 ---
 
