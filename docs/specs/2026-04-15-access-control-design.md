@@ -58,13 +58,17 @@ OrganisationMember
 
 Team
   id, organisationId, name, description
+  defaultProjectRole: ProjectRole (see §4)
   createdAt, updatedAt
   — Fully user-defined. No hardcoded purpose enum. Name and description
     are free text (e.g. "Backend", "Ops", "Sprint 42 contractors", or
     whatever makes sense for the org).
-  — On org creation, a default team "All Members" is seeded as a normal
-    Team row — not a system-level special case. Admins can rename,
-    repurpose, or delete it like any other team.
+  — defaultProjectRole captures the team's natural character (Backend →
+    DEVELOPER, Ops → DEPLOYER). Used as pre-fill when assigning the team
+    to a project — admin can override per project.
+  — On org creation, a default team "All Members" (defaultRole: DEVELOPER)
+    is seeded as a normal Team row — not a system-level special case.
+    Admins can rename, repurpose, or delete it like any other team.
 
 TeamMember
   id, teamId, userId
@@ -77,11 +81,17 @@ ProjectAccess
   id, projectId, teamId
   role: ProjectRole (see §4)
   grantedAt, grantedBy
+  — role is always stored explicitly. When assigning a team to a project,
+    the UI pre-fills with team.defaultProjectRole but the admin can change
+    it. No "use default" indirection — the stored value IS the role.
 
-(Phase 2 only)
+(Phase 2)
 ProjectRoleDefinition
   id, organisationId, name, description, permissions (bitmask or JSON)
   isBuiltIn: boolean  — built-ins aren't user-editable
+  — In Phase 2, Team.defaultProjectRole and ProjectAccess.role become
+    references to ProjectRoleDefinition instead of a fixed enum.
+    Same architecture, just flexible values.
 ```
 
 ### Relationships
@@ -232,14 +242,14 @@ A one-time seed is advisable: the "All Members" default team (seeded on org crea
 
 ---
 
-## 8. Open Questions
+## 8. Resolved Questions
 
-- **Team visibility:** should all Org members see the list of all teams (even teams they're not in) for discoverability, or only teams they belong to + teams that grant them project access? Recommend **all visible** for transparency; team membership stays gated.
-- **Can a team have zero members?** Yes — empty teams are allowed as templates. No access is granted by empty teams.
-- **Can an Org MEMBER be removed while they're in teams?** Yes, but this should cascade: removing their OrganisationMember removes all their TeamMember rows. Warn the admin in the UI before confirming.
-- **Audit log:** for Phase 1, log: team created, team member added/removed, project access granted/revoked. Use the existing `audit-logs` table.
-- **Naming collision:** the current `OrganisationMember` stays. The new `TeamMember` is a distinct concept. Consider whether to rename for clarity — probably not, since both terms match industry convention (GitHub uses the same terms).
-- **Project "owner":** do we need a concept of "project owner" separate from the creator and from org OWNERs? Recommend **no** — the creator is recorded in an audit log, ownership of a project is collective via team access + tiered auto-admin.
+- **Q1 — Team visibility:** Depends on Org Role. Viewing the team list (names, descriptions) is a **permission** attached to Org Roles. OWNER/ADMIN/MANAGER see all teams. MEMBER sees only teams they belong to. This is enforced via the permission model, not a hardcoded rule — so custom org roles (if ever added) can grant or withhold team visibility.
+- **Q2 — Can a team have zero members?** Yes. Empty teams serve as templates or placeholders. They grant no access until members are added.
+- **Q3 — Can an Org MEMBER be removed while they're in teams?** Yes — removing the OrganisationMember cascades: all their TeamMember rows are deleted, which removes all their project access via those teams. The UI warns the admin before confirming, listing which teams and projects the user will lose access to.
+- **Q4 — Audit log:** Yes. For Phase 1, log: team created/updated/deleted, team member added/removed, project access granted/changed/revoked. Use the existing `audit-logs` table.
+- **Q5 — Naming collision (OrganisationMember vs TeamMember):** Keep both names. They match industry convention and are distinct concepts.
+- **Q6 — Project "owner":** No dedicated project-owner concept. Projects are administered by Org OWNER/ADMIN (tiered auto-admin, D3) and by teams with the `ADMIN` ProjectRole. The `ADMIN` ProjectRole gives a team project-level control (settings, team access management) without requiring Org-level admin privileges — so a project lead can manage their project without being an Org ADMIN.
 
 ---
 
