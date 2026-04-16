@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-15
 **Status:** Draft, pending review
-**Author:** Felix Böhm + collaboration with Claude
+**Author:** Felix Böhm
 
 ---
 
