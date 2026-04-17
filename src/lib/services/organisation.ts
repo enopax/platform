@@ -18,6 +18,13 @@ export class OrganisationService {
         role: 'OWNER',
       });
 
+      await store.teams.create({
+        organisationId: organisation.id,
+        name: 'All Members',
+        description: 'Default team — all organisation members',
+        defaultProjectRole: 'DEVELOPER',
+      });
+
       return { ...organisation, memberCount: 1 };
     } catch (error) {
       console.error('Failed to create organisation:', error);
