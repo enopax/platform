@@ -15,7 +15,7 @@ interface DeleteTeamButtonProps {
 
 export default function DeleteTeamButton({ teamId, teamName, organisationName }: DeleteTeamButtonProps) {
   const { isLoading, error, executeAction } = useConfirmAction({
-    redirectTo: `/orga/${organisationName}/teams`,
+    redirectTo: `/${organisationName}/teams`,
   });
 
   const handleDelete = async () => {

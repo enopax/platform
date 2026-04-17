@@ -10,17 +10,17 @@ export default function OrganisationSecondaryNav({ orgName }: { orgName: string 
   const tabs = [
     {
       name: 'Projects',
-      href: `/orga/${orgName}/projects`,
+      href: `/${orgName}/projects`,
       icon: RiProjectorLine,
     },
     {
       name: 'Members',
-      href: `/orga/${orgName}/members`,
+      href: `/${orgName}/members`,
       icon: RiUserLine,
     },
     {
       name: 'Roles',
-      href: `/orga/${orgName}/roles`,
+      href: `/${orgName}/roles`,
       icon: RiShieldLine,
     },
   ];

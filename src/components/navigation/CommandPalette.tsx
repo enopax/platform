@@ -243,7 +243,7 @@ export default function CommandPalette() {
           setQuery('');
         } else if (selected.type === 'resource') {
           // Navigate to resource
-          router.push(`/orga/${selected.organisationName}/${selected.projectName}/${selected.name}`);
+          router.push(`/${selected.organisationName}/${selected.projectName}/${selected.name}`);
           close();
         }
       }
@@ -398,7 +398,7 @@ export default function CommandPalette() {
                           setCurrentLevel('resources');
                           setQuery('');
                         } else if (item.type === 'resource') {
-                          router.push(`/orga/${item.organisationName}/${item.projectName}/${item.name}`);
+                          router.push(`/${item.organisationName}/${item.projectName}/${item.name}`);
                           close();
                         }
                       }}

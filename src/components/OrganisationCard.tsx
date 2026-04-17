@@ -45,7 +45,7 @@ export function OrganisationCard({
 }: OrganisationCardProps) {
   return (
     <Card className="p-6 hover:shadow-lg transition-all group cursor-pointer flex flex-col h-full">
-      <Link href={`/orga/${name}`} className="flex flex-col h-full">
+      <Link href={`/${name}`} className="flex flex-col h-full">
         {/* Content */}
         <div className="flex-1">
           {/* Header */}

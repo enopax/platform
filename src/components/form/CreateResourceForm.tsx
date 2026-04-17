@@ -86,13 +86,11 @@ export default function CreateResourceForm({ currentUserId, projectId, projectNa
       setTimeout(() => {
         if (projectId && projectName && resourceName) {
           // Redirect to resource page if created from project context
-          router.push(`/orga/${organisationName}/${projectName}/${resourceName}`);
+          router.push(`/${organisationName}/${projectName}/${resourceName}`);
         } else if (projectId && projectName) {
-          // Redirect to project page if no resource name
-          router.push(`/orga/${organisationName}/${projectName}`);
+          router.push(`/${organisationName}/${projectName}`);
         } else {
-          // Redirect to organisation page if no project context
-          router.push(`/orga/${organisationName}`);
+          router.push(`/${organisationName}`);
         }
         router.refresh();
       }, 1500);

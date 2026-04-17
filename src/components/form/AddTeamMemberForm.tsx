@@ -38,7 +38,7 @@ export default function AddTeamMemberForm({
   useEffect(() => {
     if (state?.success) {
       const timer = setTimeout(() => {
-        router.push(`/orga/${organisationName}/teams/${teamName}`);
+        router.push(`/${organisationName}/teams/${teamName}`);
       }, 800);
       return () => clearTimeout(timer);
     }
@@ -91,7 +91,7 @@ export default function AddTeamMemberForm({
             <Button
               type="button"
               variant="light"
-              onClick={() => router.push(`/orga/${organisationName}/teams/${teamName}`)}
+              onClick={() => router.push(`/${organisationName}/teams/${teamName}`)}
               disabled={pending}
             >
               Cancel

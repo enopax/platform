@@ -62,6 +62,11 @@ export async function register(
       });
     }
 
+    try {
+      const userSlug = user.slug || email.split('@')[0].toLowerCase().replace(/[^a-z0-9-]/g, '-');
+      await store.namespaces.register({ slug: userSlug, entityType: 'USER', entityId: user.id });
+    } catch {}
+
     // Send verification email
     const token = await createVerificationToken(user.id, email);
     await sendVerificationEmail(email, token);

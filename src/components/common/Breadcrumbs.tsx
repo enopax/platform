@@ -25,7 +25,7 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
 
   return (
     <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-      <Link href="/orga" className="hover:text-gray-900 dark:hover:text-gray-100">
+      <Link href="/" className="hover:text-gray-900 dark:hover:text-gray-100">
         Home
       </Link>
       {breadcrumbItems.map((item, index) => (
@@ -65,33 +65,34 @@ function generateBreadcrumbsFromPath(pathname: string): BreadcrumbItem[] {
     return breadcrumbs;
   }
 
-  // Pattern: /orga/orgaName/projectName/resourceName
-  if (segments[0] !== 'orga' || !segments[1]) {
+  const KNOWN_PREFIXES = new Set(['account', 'admin', 'api', 'orga', '_next', 'assets']);
+
+  // Legacy pattern: /orga/orgaName/...
+  if (segments[0] === 'orga' && segments[1]) {
+    const orgaName = segments[1];
+    breadcrumbs.push({ label: orgaName, href: `/${orgaName}` });
+    if (segments[2]) {
+      const projectName = segments[2];
+      breadcrumbs.push({ label: projectName, href: `/${orgaName}/${projectName}` });
+      if (segments[3]) {
+        breadcrumbs.push({ label: segments[3] });
+      }
+    }
     return breadcrumbs;
   }
 
-  const orgaName = segments[1];
-
-  breadcrumbs.push({
-    label: orgaName,
-    href: `/orga/${orgaName}`
-  });
-
-  // Pattern: /orga/orgaName/projectName/...
-  if (segments[2]) {
-    const projectName = segments[2];
-    breadcrumbs.push({
-      label: projectName,
-      href: `/orga/${orgaName}/${projectName}`
-    });
-
-    // Pattern: /orga/orgaName/projectName/resourceName
-    if (segments[3]) {
-      const resourceName = segments[3];
-      breadcrumbs.push({
-        label: resourceName
-      });
+  // Flat namespace pattern: /orgSlug/projectName/...
+  if (segments[0] && !KNOWN_PREFIXES.has(segments[0])) {
+    const orgaName = segments[0];
+    breadcrumbs.push({ label: orgaName, href: `/${orgaName}` });
+    if (segments[1]) {
+      const projectName = segments[1];
+      breadcrumbs.push({ label: projectName, href: `/${orgaName}/${projectName}` });
+      if (segments[2]) {
+        breadcrumbs.push({ label: segments[2] });
+      }
     }
+    return breadcrumbs;
   }
 
   return breadcrumbs;

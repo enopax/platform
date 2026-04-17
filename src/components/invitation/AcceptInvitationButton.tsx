@@ -23,7 +23,7 @@ export default function AcceptInvitationButton({ token, organisationName }: Acce
         setError(result.error || 'Failed to accept invitation.');
         return;
       }
-      router.push(`/orga/${result.organisationName || organisationName}`);
+      router.push(`/${result.organisationName || organisationName}`);
       router.refresh();
     });
   };
