@@ -7,7 +7,7 @@ import { Card } from '@/components/common/Card';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { Callout } from '@/components/common/Callout';
-import { RiAddLine, RiTeamLine, RiInformationLine } from '@remixicon/react';
+import { RiAddLine, RiTeamLine, RiInformationLine, RiShareLine } from '@remixicon/react';
 import RevokeAccessButton from '@/components/team/RevokeAccessButton';
 import ChangeAccessRoleForm from '@/components/team/ChangeAccessRoleForm';
 
@@ -70,14 +70,22 @@ export default async function ProjectAccessPage({ params }: ProjectAccessPagePro
             Manage which teams can access {projectName}
           </p>
         </div>
-        {availableTeams.length > 0 && (
-          <Link href={`/${slug}/${projectName}/access/add`}>
-            <Button>
-              <RiAddLine className="w-4 h-4 mr-1" />
-              Add Team
+        <div className="flex items-center gap-3">
+          <Link href={`/${slug}/${projectName}/share`}>
+            <Button variant="light">
+              <RiShareLine className="w-4 h-4 mr-1" />
+              Share with external
             </Button>
           </Link>
-        )}
+          {availableTeams.length > 0 && (
+            <Link href={`/${slug}/${projectName}/access/add`}>
+              <Button>
+                <RiAddLine className="w-4 h-4 mr-1" />
+                Add Team
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       <Callout variant="default" title="Inherited access" icon={RiInformationLine} className="mb-6">
