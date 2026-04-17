@@ -67,7 +67,7 @@ const TABLE_CONFIG = [
   { tableName: 'storage-quotas', indexes: [{ name: 'userId', cellId: 'userId' }] },
   { tableName: 'storage-metrics' },
   { tableName: 'storage-activity' },
-  { tableName: 'namespaces', indexes: [{ name: 'slug', cellId: 'slug' }] },
+  { tableName: 'namespaces', indexes: [{ name: 'slug', cellId: 'slug' }, { name: 'entityId', cellId: 'entityId' }] },
   { tableName: 'teams', indexes: [{ name: 'organisationId', cellId: 'organisationId' }] },
   { tableName: 'team-members', indexes: [{ name: 'teamId', cellId: 'teamId' }, { name: 'userId', cellId: 'userId' }] },
   { tableName: 'project-access', indexes: [{ name: 'projectId', cellId: 'projectId' }, { name: 'teamId', cellId: 'teamId' }] },
