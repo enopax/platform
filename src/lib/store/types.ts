@@ -2,6 +2,14 @@ export type UserRole = 'GUEST' | 'CUSTOMER' | 'ADMIN';
 
 export type OrganisationRole = 'MEMBER' | 'MANAGER' | 'ADMIN' | 'OWNER';
 
+export type ProjectRole = 'VIEWER' | 'DEVELOPER' | 'DEPLOYER' | 'ADMIN';
+
+export type Visibility = 'PUBLIC' | 'INTERNAL' | 'PRIVATE';
+
+export type NamespaceEntityType = 'USER' | 'ORGANISATION';
+
+export type ProjectOwnerType = 'USER' | 'ORGANISATION';
+
 export type ProjectStatus = 'PLANNING' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED';
 
 export type ProjectPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
@@ -20,6 +28,7 @@ export type StorageTier = 'FREE_500MB' | 'BASIC_5GB' | 'PRO_50GB' | 'ENTERPRISE_
 
 export interface User {
   id: string;
+  slug: string;
   firstname: string | null;
   lastname: string | null;
   name: string | null;
@@ -36,6 +45,7 @@ export interface User {
 export interface Organisation {
   id: string;
   name: string;
+  slug: string;
   description: string | null;
   website: string | null;
   streetAddress: string | null;
@@ -54,6 +64,8 @@ export interface Organisation {
   subscriptionTier: string | null;
   subscriptionEnds: Date | null;
   isActive: boolean;
+  visibility: Visibility;
+  defaultProjectVisibility: Visibility;
   maxProjects: number | null;
   maxMembers: number | null;
   ownerId: string;
@@ -70,9 +82,28 @@ export interface OrganisationMember {
   updatedAt: Date;
 }
 
+export interface Team {
+  id: string;
+  organisationId: string;
+  name: string;
+  description: string | null;
+  defaultProjectRole: ProjectRole;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TeamMember {
+  id: string;
+  teamId: string;
+  userId: string;
+  addedAt: Date;
+  addedBy: string;
+}
+
 export interface Project {
   id: string;
   name: string;
+  slug: string;
   description: string | null;
   development: boolean;
   status: ProjectStatus;
@@ -86,9 +117,29 @@ export interface Project {
   repositoryUrl: string | null;
   documentationUrl: string | null;
   organisationId: string;
+  ownerType: ProjectOwnerType;
+  ownerId: string;
   isActive: boolean;
+  visibility: Visibility;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface ProjectAccess {
+  id: string;
+  projectId: string;
+  teamId: string;
+  role: ProjectRole;
+  grantedAt: Date;
+  grantedBy: string;
+}
+
+export interface Namespace {
+  id: string;
+  slug: string;
+  entityType: NamespaceEntityType;
+  entityId: string;
+  createdAt: Date;
 }
 
 export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';

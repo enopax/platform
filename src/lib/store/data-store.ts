@@ -8,6 +8,9 @@ import type { IAuditLogRepository } from './repositories/audit-log.repository';
 import type { IJoinRequestRepository } from './repositories/join-request.repository';
 import type { IInvitationRepository } from './repositories/invitation.repository';
 import type { IUserStorageQuotaRepository, IUserStorageMetricsRepository, IUserStorageActivityRepository } from './repositories/user-storage.repository';
+import type { ITeamRepository, ITeamMemberRepository } from './repositories/team.repository';
+import type { IProjectAccessRepository } from './repositories/project-access.repository';
+import type { INamespaceRepository } from './repositories/namespace.repository';
 import { createStore } from 'tinybase';
 import { FileRecordPersister } from './tinybase/file-record-persister';
 import { TinyBaseUserRepository } from './tinybase/user.tinybase';
@@ -20,6 +23,9 @@ import { TinyBaseUserFileRepository } from './tinybase/user-file.tinybase';
 import { TinyBaseJoinRequestRepository } from './tinybase/join-request.tinybase';
 import { TinyBaseInvitationRepository } from './tinybase/invitation.tinybase';
 import { TinyBaseUserStorageQuotaRepository, TinyBaseUserStorageMetricsRepository, TinyBaseUserStorageActivityRepository } from './tinybase/user-storage.tinybase';
+import { TinyBaseTeamRepository, TinyBaseTeamMemberRepository } from './tinybase/team.tinybase';
+import { TinyBaseProjectAccessRepository } from './tinybase/project-access.tinybase';
+import { TinyBaseNamespaceRepository } from './tinybase/namespace.tinybase';
 import path from 'path';
 
 export interface DataStore {
@@ -37,6 +43,10 @@ export interface DataStore {
   storageQuotas: IUserStorageQuotaRepository;
   storageMetrics: IUserStorageMetricsRepository;
   storageActivity: IUserStorageActivityRepository;
+  namespaces: INamespaceRepository;
+  teams: ITeamRepository;
+  teamMembers: ITeamMemberRepository;
+  projectAccess: IProjectAccessRepository;
   destroy(): Promise<void>;
 }
 
@@ -57,6 +67,10 @@ const TABLE_CONFIG = [
   { tableName: 'storage-quotas', indexes: [{ name: 'userId', cellId: 'userId' }] },
   { tableName: 'storage-metrics' },
   { tableName: 'storage-activity' },
+  { tableName: 'namespaces', indexes: [{ name: 'slug', cellId: 'slug' }, { name: 'entityId', cellId: 'entityId' }] },
+  { tableName: 'teams', indexes: [{ name: 'organisationId', cellId: 'organisationId' }] },
+  { tableName: 'team-members', indexes: [{ name: 'teamId', cellId: 'teamId' }, { name: 'userId', cellId: 'userId' }] },
+  { tableName: 'project-access', indexes: [{ name: 'projectId', cellId: 'projectId' }, { name: 'teamId', cellId: 'teamId' }] },
 ];
 
 let _store: DataStore | null = null;
@@ -84,6 +98,10 @@ async function createDataStore(): Promise<DataStore> {
     storageQuotas: new TinyBaseUserStorageQuotaRepository(tinyStore),
     storageMetrics: new TinyBaseUserStorageMetricsRepository(tinyStore),
     storageActivity: new TinyBaseUserStorageActivityRepository(tinyStore),
+    namespaces: new TinyBaseNamespaceRepository(tinyStore, persister),
+    teams: new TinyBaseTeamRepository(tinyStore, persister),
+    teamMembers: new TinyBaseTeamMemberRepository(tinyStore, persister),
+    projectAccess: new TinyBaseProjectAccessRepository(tinyStore, persister),
     async destroy() {
       await persister.destroy();
     },

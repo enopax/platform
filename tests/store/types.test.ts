@@ -90,6 +90,7 @@ describe('Store types', () => {
         password: 'hashed',
         role: 'CUSTOMER',
         storageTier: 'FREE_500MB',
+        slug: 'john',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -123,6 +124,9 @@ describe('Store types', () => {
         maxProjects: 50,
         maxMembers: 100,
         ownerId: 'user-id',
+        slug: 'test-org',
+        visibility: 'PUBLIC',
+        defaultProjectVisibility: 'PRIVATE',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -147,6 +151,10 @@ describe('Store types', () => {
         repositoryUrl: null,
         documentationUrl: null,
         organisationId: 'org-id',
+        slug: 'my-project',
+        ownerType: 'ORGANISATION',
+        ownerId: 'org-id',
+        visibility: 'PRIVATE',
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),

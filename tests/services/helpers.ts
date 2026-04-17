@@ -9,6 +9,9 @@ import { TinyBaseInvitationRepository } from '@/lib/store/tinybase/invitation.ti
 import { TinyBaseResourceRepository, TinyBaseProjectResourceRepository } from '@/lib/store/tinybase/resource.tinybase';
 import { TinyBaseUserFileRepository } from '@/lib/store/tinybase/user-file.tinybase';
 import { TinyBaseUserStorageQuotaRepository, TinyBaseUserStorageMetricsRepository, TinyBaseUserStorageActivityRepository } from '@/lib/store/tinybase/user-storage.tinybase';
+import { TinyBaseTeamRepository, TinyBaseTeamMemberRepository } from '@/lib/store/tinybase/team.tinybase';
+import { TinyBaseProjectAccessRepository } from '@/lib/store/tinybase/project-access.tinybase';
+import { TinyBaseNamespaceRepository } from '@/lib/store/tinybase/namespace.tinybase';
 import type { DataStore } from '@/lib/store/data-store';
 
 export function createTestStore(): DataStore {
@@ -28,6 +31,10 @@ export function createTestStore(): DataStore {
     storageQuotas: new TinyBaseUserStorageQuotaRepository(store),
     storageMetrics: new TinyBaseUserStorageMetricsRepository(store),
     storageActivity: new TinyBaseUserStorageActivityRepository(store),
+    namespaces: new TinyBaseNamespaceRepository(store),
+    teams: new TinyBaseTeamRepository(store),
+    teamMembers: new TinyBaseTeamMemberRepository(store),
+    projectAccess: new TinyBaseProjectAccessRepository(store),
     async destroy() {},
   };
 }
