@@ -10,6 +10,7 @@ import type { IInvitationRepository } from './repositories/invitation.repository
 import type { IUserStorageQuotaRepository, IUserStorageMetricsRepository, IUserStorageActivityRepository } from './repositories/user-storage.repository';
 import type { ITeamRepository, ITeamMemberRepository } from './repositories/team.repository';
 import type { IProjectAccessRepository } from './repositories/project-access.repository';
+import type { IProjectShareRepository } from './repositories/project-share.repository';
 import type { INamespaceRepository } from './repositories/namespace.repository';
 import { createStore } from 'tinybase';
 import { FileRecordPersister } from './tinybase/file-record-persister';
@@ -25,6 +26,7 @@ import { TinyBaseInvitationRepository } from './tinybase/invitation.tinybase';
 import { TinyBaseUserStorageQuotaRepository, TinyBaseUserStorageMetricsRepository, TinyBaseUserStorageActivityRepository } from './tinybase/user-storage.tinybase';
 import { TinyBaseTeamRepository, TinyBaseTeamMemberRepository } from './tinybase/team.tinybase';
 import { TinyBaseProjectAccessRepository } from './tinybase/project-access.tinybase';
+import { TinyBaseProjectShareRepository } from './tinybase/project-share.tinybase';
 import { TinyBaseNamespaceRepository } from './tinybase/namespace.tinybase';
 import path from 'path';
 
@@ -47,6 +49,7 @@ export interface DataStore {
   teams: ITeamRepository;
   teamMembers: ITeamMemberRepository;
   projectAccess: IProjectAccessRepository;
+  projectShares: IProjectShareRepository;
   destroy(): Promise<void>;
 }
 
@@ -71,6 +74,7 @@ const TABLE_CONFIG = [
   { tableName: 'teams', indexes: [{ name: 'organisationId', cellId: 'organisationId' }] },
   { tableName: 'team-members', indexes: [{ name: 'teamId', cellId: 'teamId' }, { name: 'userId', cellId: 'userId' }] },
   { tableName: 'project-access', indexes: [{ name: 'projectId', cellId: 'projectId' }, { name: 'teamId', cellId: 'teamId' }] },
+  { tableName: 'project-shares', indexes: [{ name: 'projectId', cellId: 'projectId' }, { name: 'sharedWithId', cellId: 'sharedWithId' }] },
 ];
 
 let _store: DataStore | null = null;
@@ -102,6 +106,7 @@ async function createDataStore(): Promise<DataStore> {
     teams: new TinyBaseTeamRepository(tinyStore, persister),
     teamMembers: new TinyBaseTeamMemberRepository(tinyStore, persister),
     projectAccess: new TinyBaseProjectAccessRepository(tinyStore, persister),
+    projectShares: new TinyBaseProjectShareRepository(tinyStore, persister),
     async destroy() {
       await persister.destroy();
     },

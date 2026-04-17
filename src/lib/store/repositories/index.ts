@@ -10,4 +10,5 @@ export type { IUserFileRepository, CreateUserFileData } from './user-file.reposi
 export type { IUserStorageQuotaRepository, IUserStorageMetricsRepository, IUserStorageActivityRepository, CreateStorageQuotaData, CreateStorageMetricsData, CreateStorageActivityData } from './user-storage.repository';
 export type { ITeamRepository, ITeamMemberRepository, CreateTeamData, UpdateTeamData, AddTeamMemberData } from './team.repository';
 export type { IProjectAccessRepository, GrantProjectAccessData } from './project-access.repository';
+export type { IProjectShareRepository, CreateProjectShareData } from './project-share.repository';
 export type { INamespaceRepository, RegisterNamespaceData } from './namespace.repository';

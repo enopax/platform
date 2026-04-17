@@ -20,6 +20,8 @@ export type {
   TeamMember,
   Project,
   ProjectAccess,
+  SharePermission,
+  ProjectShare,
   Namespace,
   OrganisationJoinRequest,
   OrganisationInvitation,
@@ -79,6 +81,8 @@ export type {
   AddTeamMemberData,
   IProjectAccessRepository,
   GrantProjectAccessData,
+  IProjectShareRepository,
+  CreateProjectShareData,
   INamespaceRepository,
   RegisterNamespaceData,
 } from './repositories';
