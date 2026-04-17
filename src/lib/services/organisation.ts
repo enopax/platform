@@ -25,6 +25,11 @@ export class OrganisationService {
         defaultProjectRole: 'DEVELOPER',
       });
 
+      try {
+        const orgSlug = organisation.slug || organisation.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+        await store.namespaces.register({ slug: orgSlug, entityType: 'ORGANISATION', entityId: organisation.id });
+      } catch {}
+
       return { ...organisation, memberCount: 1 };
     } catch (error) {
       console.error('Failed to create organisation:', error);
