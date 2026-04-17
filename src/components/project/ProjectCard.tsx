@@ -75,7 +75,7 @@ export default function ProjectCard({ project, organisationName }: ProjectCardPr
 
   return (
     <Link
-      href={`/orga/${organisationName}/${project.name}`}
+      href={`/${organisationName}/${project.name}`}
       className="block"
     >
       <Card className="p-6 hover:shadow-lg transition-shadow h-full">

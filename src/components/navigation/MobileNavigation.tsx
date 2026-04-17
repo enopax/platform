@@ -57,11 +57,15 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
   const pathname = usePathname();
   const { open } = useCommandPalette();
 
-  // Get organisation name from pathname
   const getOrganisationName = () => {
     const pathSegments = pathname.split('/');
     if (pathSegments[1] === 'orga' && pathSegments[2]) {
       return pathSegments[2];
+    }
+    if (pathSegments[1] && pathSegments[1] !== 'account' && pathSegments[1] !== 'admin' && pathSegments[1] !== 'api') {
+      const candidate = pathSegments[1];
+      const match = initialOrganisations.find(org => org.name === candidate);
+      if (match) return candidate;
     }
     return null;
   };
@@ -78,9 +82,6 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
   const projects = organisation?.projects || [];
 
   const isActivePath = (href: string) => {
-    if (href === '/orga') {
-      return pathname === '/orga' && organisationId;
-    }
     return pathname.startsWith(href);
   };
 
@@ -162,7 +163,7 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
                         return (
                           <Link
                             key={org.id}
-                            href={`/orga/${org.name}`}
+                            href={`/${org.name}`}
                             onClick={handleLinkClick}
                             className={`
                               block p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-l-4
@@ -254,26 +255,26 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
                       {
                         name: 'Projects',
                         icon: RiProjectorLine,
-                        href: `/orga/${organisationName}`,
-                        active: pathname === `/orga/${organisationName}`
+                        href: `/${organisationName}`,
+                        active: pathname === `/${organisationName}`
                       },
                       {
                         name: 'Members',
                         icon: RiUserLine,
-                        href: `/orga/${organisationName}/members`,
-                        active: pathname.startsWith(`/orga/${organisationName}/members`)
+                        href: `/${organisationName}/members`,
+                        active: pathname.startsWith(`/${organisationName}/members`)
                       },
                       {
                         name: 'Roles',
                         icon: RiShieldLine,
-                        href: `/orga/${organisationName}/roles`,
-                        active: pathname.startsWith(`/orga/${organisationName}/roles`)
+                        href: `/${organisationName}/roles`,
+                        active: pathname.startsWith(`/${organisationName}/roles`)
                       },
                       {
                         name: 'Settings',
                         icon: RiSettings3Line,
-                        href: `/orga/${organisationName}/settings`,
-                        active: pathname.startsWith(`/orga/${organisationName}/settings`)
+                        href: `/${organisationName}/settings`,
+                        active: pathname.startsWith(`/${organisationName}/settings`)
                       },
                     ].map((item) => (
                       <Link

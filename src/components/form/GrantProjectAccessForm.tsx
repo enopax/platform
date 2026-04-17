@@ -38,7 +38,7 @@ export default function GrantProjectAccessForm({
   useEffect(() => {
     if (state?.success) {
       const timer = setTimeout(() => {
-        router.push(`/orga/${organisationName}/${projectName}/access`);
+        router.push(`/${organisationName}/${projectName}/access`);
       }, 800);
       return () => clearTimeout(timer);
     }
@@ -109,7 +109,7 @@ export default function GrantProjectAccessForm({
             <Button
               type="button"
               variant="light"
-              onClick={() => router.push(`/orga/${organisationName}/${projectName}/access`)}
+              onClick={() => router.push(`/${organisationName}/${projectName}/access`)}
               disabled={pending}
             >
               Cancel

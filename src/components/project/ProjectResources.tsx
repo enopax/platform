@@ -134,7 +134,7 @@ export default function ProjectResources({ resources, projectId, orgName, projec
         return (
           <Link
             key={allocation.id}
-            href={`/orga/${orgName}/${projectName}/${resource.name}`}
+            href={`/${orgName}/${projectName}/${resource.name}`}
             className="block group"
           >
             <Card className="p-6 hover:shadow-md transition-shadow">

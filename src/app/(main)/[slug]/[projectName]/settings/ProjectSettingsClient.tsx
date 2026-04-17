@@ -56,8 +56,8 @@ export default function ProjectSettingsClient({ currentUserId }: ProjectSettings
       <div className="mb-6">
         <Breadcrumbs
           items={[
-            { label: organisation.name, href: `/orga/${organisation.name}` },
-            { label: project.name, href: `/orga/${organisation.name}/${project.name}` },
+            { label: organisation.name, href: `/${organisation.name}` },
+            { label: project.name, href: `/${organisation.name}/${project.name}` },
             { label: 'Settings' }
           ]}
         />
@@ -100,7 +100,7 @@ export default function ProjectSettingsClient({ currentUserId }: ProjectSettings
                 project={project}
                 successMessage="Project updated successfully!"
                 currentUserId={currentUserId}
-                redirectUrl={`/orga/${orgName}/${project.name}`}
+                redirectUrl={`/${orgName}/${project.name}`}
               />
             </div>
           </Card>
@@ -162,13 +162,13 @@ export default function ProjectSettingsClient({ currentUserId }: ProjectSettings
           <Card className="p-6">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
             <div className="space-y-2">
-              <Link href={`/orga/${orgName}/${project.name}`} className="block">
+              <Link href={`/${orgName}/${project.name}`} className="block">
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <RiProjectorLine className="mr-2 h-4 w-4" />
                   View Project Details
                 </Button>
               </Link>
-              <Link href={`/orga/${orgName}/${project.name}/add-resource`} className="block">
+              <Link href={`/${orgName}/${project.name}/add-resource`} className="block">
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <RiProjectorLine className="mr-2 h-4 w-4" />
                   Add Resource

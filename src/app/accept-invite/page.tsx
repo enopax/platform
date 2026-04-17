@@ -33,7 +33,7 @@ export default async function AcceptInvitePage({ searchParams }: AcceptInvitePag
         title="Already accepted"
         message={`This invitation has already been used.${organisation ? ` Go to ${organisation.name}.` : ''}`}
         actionLabel={organisation ? `Open ${organisation.name}` : undefined}
-        actionHref={organisation ? `/orga/${organisation.name}` : undefined}
+        actionHref={organisation ? `/${organisation.name}` : undefined}
       />
     );
   }

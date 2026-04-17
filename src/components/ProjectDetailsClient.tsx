@@ -130,13 +130,13 @@ export default function ProjectDetailsClient() {
               </Badge>
             </div>
             <div className="flex gap-2 mt-2">
-              <Link href={`/orga/${orgName}/${project.name}/settings`}>
+              <Link href={`/${orgName}/${project.name}/settings`}>
                 <Button variant="outline" size="sm">
                   <RiSettings3Line className="mr-2 h-4 w-4" />
                   Settings
                 </Button>
               </Link>
-              <Link href={`/orga/${orgName}/${project.name}/new`}>
+              <Link href={`/${orgName}/${project.name}/new`}>
                 <Button size="sm">
                   <RiAddLine className="mr-2 h-4 w-4" />
                   Add Resource

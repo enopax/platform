@@ -27,7 +27,7 @@ export default function NewOrganisationForm({ userId }: NewOrganisationFormProps
   // Redirect to newly created organisation page on success
   useEffect(() => {
     if (state?.success && state?.organisationName) {
-      router.push(`/orga/${encodeURIComponent(state.organisationName)}`);
+      router.push(`/${encodeURIComponent(state.organisationName)}`);
     }
   }, [state?.success, state?.organisationName, router]);
 

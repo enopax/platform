@@ -16,7 +16,7 @@ export default {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
 
-      const publicPaths = ['/', '/signin', '/register', '/api/auth', '/api/email'];
+      const publicPaths = ['/', '/signin', '/register', '/accept-invite', '/api/auth', '/api/email'];
       const isPublic = publicPaths.some(p =>
         nextUrl.pathname === p || nextUrl.pathname.startsWith(p + '/')
       );
