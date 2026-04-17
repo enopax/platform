@@ -72,4 +72,13 @@ export type {
   CreateStorageQuotaData,
   CreateStorageMetricsData,
   CreateStorageActivityData,
+  ITeamRepository,
+  ITeamMemberRepository,
+  CreateTeamData,
+  UpdateTeamData,
+  AddTeamMemberData,
+  IProjectAccessRepository,
+  GrantProjectAccessData,
+  INamespaceRepository,
+  RegisterNamespaceData,
 } from './repositories';

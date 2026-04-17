@@ -8,3 +8,6 @@ export type { IJoinRequestRepository, CreateJoinRequestData } from './join-reque
 export type { IInvitationRepository, CreateInvitationData, UpdateInvitationData } from './invitation.repository';
 export type { IUserFileRepository, CreateUserFileData } from './user-file.repository';
 export type { IUserStorageQuotaRepository, IUserStorageMetricsRepository, IUserStorageActivityRepository, CreateStorageQuotaData, CreateStorageMetricsData, CreateStorageActivityData } from './user-storage.repository';
+export type { ITeamRepository, ITeamMemberRepository, CreateTeamData, UpdateTeamData, AddTeamMemberData } from './team.repository';
+export type { IProjectAccessRepository, GrantProjectAccessData } from './project-access.repository';
+export type { INamespaceRepository, RegisterNamespaceData } from './namespace.repository';
