@@ -45,7 +45,7 @@ export class TinyBaseUserRepository implements IUserRepository {
       password: data.password ?? '',
       role: data.role ?? 'CUSTOMER',
       storageTier: 'FREE_500MB',
-      slug: data.email ? data.email.split('@')[0].toLowerCase().replace(/[^a-z0-9-]/g, '-') : '',
+      slug: data.slug || (data.email ? data.email.split('@')[0].toLowerCase().replace(/[^a-z0-9-]/g, '-') : ''),
       createdAt: now,
       updatedAt: now,
     });

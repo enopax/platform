@@ -32,6 +32,22 @@ jest.mock('@/lib/auth', () => ({
   signOut: jest.fn(),
 }));
 
+const baseUser = {
+  id: 'user-123',
+  name: 'John Doe' as string | null,
+  email: 'john@example.com',
+  image: null as string | null,
+  role: 'CUSTOMER' as const,
+  firstname: null as string | null,
+  lastname: null as string | null,
+  password: 'hashed',
+  slug: 'john-doe',
+  storageTier: 'FREE_500MB' as const,
+  emailVerified: null as Date | null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
 describe('UserBarMenu Component', () => {
   it('should render Sign In button when user is not provided', () => {
     render(<UserBarMenu />);
@@ -41,158 +57,54 @@ describe('UserBarMenu Component', () => {
   });
 
   it('should render dropdown menu when user is provided', () => {
-    const user = {
-      id: 'user-123',
-      name: 'John Doe',
-      email: 'john@example.com',
-      image: null,
-      role: 'CUSTOMER' as const,
-      firstname: null,
-      lastname: null,
-      password: 'hashed',
-      storageTier: 'FREE' as const,
-      createdAt: new Date(),
-    };
-
-    render(<UserBarMenu user={user} />);
+    render(<UserBarMenu user={baseUser} />);
 
     expect(screen.getByTestId('dropdown-menu')).toBeInTheDocument();
   });
 
   it('should render user avatar in dropdown trigger', () => {
-    const user = {
-      id: 'user-123',
-      name: 'John Doe',
-      email: 'john@example.com',
-      image: 'avatar.png',
-      role: 'CUSTOMER' as const,
-      firstname: null,
-      lastname: null,
-      password: 'hashed',
-      storageTier: 'FREE' as const,
-      createdAt: new Date(),
-    };
-
-    render(<UserBarMenu user={user} />);
+    render(<UserBarMenu user={{ ...baseUser, image: 'avatar.png' }} />);
 
     expect(screen.getByTestId('avatar')).toBeInTheDocument();
   });
 
   it('should include Organisations link in main menu', () => {
-    const user = {
-      id: 'user-123',
-      name: 'John Doe',
-      email: 'john@example.com',
-      image: null,
-      role: 'CUSTOMER' as const,
-      firstname: null,
-      lastname: null,
-      password: 'hashed',
-      storageTier: 'FREE' as const,
-      createdAt: new Date(),
-    };
-
-    render(<UserBarMenu user={user} />);
+    render(<UserBarMenu user={baseUser} />);
 
     const orgLink = screen.getByText('Organisations');
     expect(orgLink).toBeInTheDocument();
   });
 
   it('should include Developer link in account menu', () => {
-    const user = {
-      id: 'user-123',
-      name: 'John Doe',
-      email: 'john@example.com',
-      image: null,
-      role: 'CUSTOMER' as const,
-      firstname: null,
-      lastname: null,
-      password: 'hashed',
-      storageTier: 'FREE' as const,
-      createdAt: new Date(),
-    };
-
-    render(<UserBarMenu user={user} />);
+    render(<UserBarMenu user={baseUser} />);
 
     const developerLink = screen.getByText('Developer');
     expect(developerLink).toBeInTheDocument();
   });
 
   it('should include Settings link in account menu', () => {
-    const user = {
-      id: 'user-123',
-      name: 'John Doe',
-      email: 'john@example.com',
-      image: null,
-      role: 'CUSTOMER' as const,
-      firstname: null,
-      lastname: null,
-      password: 'hashed',
-      storageTier: 'FREE' as const,
-      createdAt: new Date(),
-    };
-
-    render(<UserBarMenu user={user} />);
+    render(<UserBarMenu user={baseUser} />);
 
     const settingsLink = screen.getByText('Settings');
     expect(settingsLink).toBeInTheDocument();
   });
 
   it('should show admin menu only for admin users', () => {
-    const adminUser = {
-      id: 'user-123',
-      name: 'Admin User',
-      email: 'admin@example.com',
-      image: null,
-      role: 'ADMIN' as const,
-      firstname: null,
-      lastname: null,
-      password: 'hashed',
-      storageTier: 'FREE' as const,
-      createdAt: new Date(),
-    };
-
-    render(<UserBarMenu user={adminUser} />);
+    render(<UserBarMenu user={{ ...baseUser, role: 'ADMIN', name: 'Admin User', email: 'admin@example.com' }} />);
 
     const adminLabel = screen.getByText('Admin');
     expect(adminLabel).toBeInTheDocument();
   });
 
   it('should not show admin menu for non-admin users', () => {
-    const customerUser = {
-      id: 'user-123',
-      name: 'John Doe',
-      email: 'john@example.com',
-      image: null,
-      role: 'CUSTOMER' as const,
-      firstname: null,
-      lastname: null,
-      password: 'hashed',
-      storageTier: 'FREE' as const,
-      createdAt: new Date(),
-    };
-
-    render(<UserBarMenu user={customerUser} />);
+    render(<UserBarMenu user={baseUser} />);
 
     const adminLabels = screen.queryAllByText('Admin');
     expect(adminLabels.length).toBe(0);
   });
 
   it('should render correct links with href attributes', () => {
-    const user = {
-      id: 'user-123',
-      name: 'John Doe',
-      email: 'john@example.com',
-      image: null,
-      role: 'CUSTOMER' as const,
-      firstname: null,
-      lastname: null,
-      password: 'hashed',
-      storageTier: 'FREE' as const,
-      createdAt: new Date(),
-    };
-
-    render(<UserBarMenu user={user} />);
+    render(<UserBarMenu user={baseUser} />);
 
     expect(screen.getByText('Organisations').closest('a')).toHaveAttribute('href', '/orga');
     expect(screen.getByText('Developer').closest('a')).toHaveAttribute('href', '/account/developer');
@@ -200,40 +112,28 @@ describe('UserBarMenu Component', () => {
   });
 
   it('should use user name or email for avatar', () => {
-    const userWithName = {
-      id: 'user-123',
-      name: 'John Doe',
-      email: 'john@example.com',
-      image: null,
-      role: 'CUSTOMER' as const,
-      firstname: null,
-      lastname: null,
-      password: 'hashed',
-      storageTier: 'FREE' as const,
-      createdAt: new Date(),
-    };
-
-    render(<UserBarMenu user={userWithName} />);
+    render(<UserBarMenu user={baseUser} />);
 
     expect(screen.getByTestId('avatar')).toHaveAttribute('data-name', 'John Doe');
   });
 
   it('should use email when name is not available', () => {
-    const userWithoutName = {
-      id: 'user-123',
-      name: null,
-      email: 'john@example.com',
-      image: null,
-      role: 'CUSTOMER' as const,
-      firstname: null,
-      lastname: null,
-      password: 'hashed',
-      storageTier: 'FREE' as const,
-      createdAt: new Date(),
-    };
-
-    render(<UserBarMenu user={userWithoutName} />);
+    render(<UserBarMenu user={{ ...baseUser, name: null }} />);
 
     expect(screen.getByTestId('avatar')).toHaveAttribute('data-name', 'john@example.com');
+  });
+
+  it('should link avatar to user profile when slug is set', () => {
+    render(<UserBarMenu user={baseUser} />);
+
+    const avatarLink = screen.getByTestId('avatar').closest('a');
+    expect(avatarLink).toHaveAttribute('href', '/john-doe');
+  });
+
+  it('should link avatar to account settings when slug is empty', () => {
+    render(<UserBarMenu user={{ ...baseUser, slug: '' }} />);
+
+    const avatarLink = screen.getByTestId('avatar').closest('a');
+    expect(avatarLink).toHaveAttribute('href', '/account/settings');
   });
 });

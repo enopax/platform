@@ -4,11 +4,13 @@ import { signIn } from '@/lib/auth';
 import { createDexUser, generateUserIdFromEmail } from '@/lib/dex/client';
 import { getStoreAsync } from '@/lib/store';
 import { createVerificationToken, sendVerificationEmail } from '@/lib/email-verification';
+import { isBlockedName } from '@/lib/name-validation';
 
 export interface RegisterState {
   success?: boolean;
   error?: string;
   fieldErrors?: {
+    username?: string;
     name?: string;
     email?: string;
     password?: string;
@@ -21,15 +23,20 @@ export async function register(
   formData: FormData
 ): Promise<RegisterState> {
   try {
-    const name = (formData.get('name') as string)?.trim();
+    const username = (formData.get('username') as string)?.trim().toLowerCase();
+    const name = (formData.get('name') as string)?.trim() || null;
     const email = (formData.get('email') as string)?.trim().toLowerCase();
     const password = formData.get('password') as string;
     const password2 = formData.get('password2') as string;
 
     const fieldErrors: RegisterState['fieldErrors'] = {};
 
-    if (!name || name.length < 2) {
-      fieldErrors.name = 'Name must be at least 2 characters';
+    if (!username || username.length < 2 || username.length > 39) {
+      fieldErrors.username = 'Username must be between 2 and 39 characters';
+    } else if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(username) && !/^[a-z0-9]$/.test(username)) {
+      fieldErrors.username = 'Username can only contain lowercase letters, numbers, and hyphens, and cannot start or end with a hyphen';
+    } else if (isBlockedName(username)) {
+      fieldErrors.username = 'This username is reserved and cannot be used';
     }
 
     if (!email || !email.includes('@')) {
@@ -48,24 +55,28 @@ export async function register(
       return { error: 'Please fix the errors below', fieldErrors };
     }
 
+    const store = await getStoreAsync();
+
+    const namespaceAvailable = await store.namespaces.isAvailable(username);
+    if (!namespaceAvailable) {
+      return { error: 'Please fix the errors below', fieldErrors: { username: 'Username is taken' } };
+    }
+
     // Create user in Dex
-    await createDexUser(email, password, name);
+    await createDexUser(email, password, name || username);
 
     // Pre-create TinyBase user so we have an ID for the verification token
-    const store = await getStoreAsync();
     let user = await store.users.findByEmail(email);
     if (!user) {
       user = await store.users.create({
         name,
         email,
+        slug: username,
         role: 'CUSTOMER',
       });
     }
 
-    try {
-      const userSlug = user.slug || email.split('@')[0].toLowerCase().replace(/[^a-z0-9-]/g, '-');
-      await store.namespaces.register({ slug: userSlug, entityType: 'USER', entityId: user.id });
-    } catch {}
+    await store.namespaces.register({ slug: username, entityType: 'USER', entityId: user.id });
 
     // Send verification email
     const token = await createVerificationToken(user.id, email);

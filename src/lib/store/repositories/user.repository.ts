@@ -1,13 +1,14 @@
 import type { User, UserRole } from '../types';
 
 export interface CreateUserData {
-  name?: string;
+  name?: string | null;
   firstname?: string;
   lastname?: string;
   email: string;
   image?: string;
   role?: UserRole;
   password?: string;
+  slug?: string;
 }
 
 export interface UpdateUserData {

@@ -30,7 +30,7 @@ export default function UserBarMenu({
 
   return (
     <div className="flex items-center gap-2">
-      <Link href="/account/settings" aria-label="Profile settings" className="inline-flex">
+      <Link href={user.slug ? `/${user.slug}` : '/account/settings'} aria-label="My profile" className="inline-flex">
         <Avatar
           name={user.name || user.email}
           image={user.image}
