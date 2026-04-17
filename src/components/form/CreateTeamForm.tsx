@@ -33,7 +33,7 @@ export default function CreateTeamForm({ organisationId, organisationName }: Cre
   useEffect(() => {
     if (state?.success && state?.teamName) {
       const timer = setTimeout(() => {
-        router.push(`/orga/${organisationName}/teams/${state.teamName}`);
+        router.push(`/${organisationName}/teams/${state.teamName}`);
       }, 800);
       return () => clearTimeout(timer);
     }
@@ -108,7 +108,7 @@ export default function CreateTeamForm({ organisationId, organisationName }: Cre
           <Button
             type="button"
             variant="light"
-            onClick={() => router.push(`/orga/${organisationName}/teams`)}
+            onClick={() => router.push(`/${organisationName}/teams`)}
             disabled={pending}
           >
             Cancel

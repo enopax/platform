@@ -101,7 +101,7 @@ export function MembersManagementClient({
         <div className="flex items-center justify-between mb-6">
           <Headline>Members & Requests</Headline>
           {canManage && (
-            <Link href={`/orga/${organisationName}/members/invite`}>
+            <Link href={`/${organisationName}/members/invite`}>
               <Button>
                 <RiUserAddLine className="mr-2 h-4 w-4" />
                 Invite Member

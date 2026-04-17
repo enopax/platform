@@ -33,7 +33,7 @@ export default function InviteMemberForm({ organisationId, organisationName }: I
   useEffect(() => {
     if (state?.success) {
       const timer = setTimeout(() => {
-        router.push(`/orga/${organisationName}/members`);
+        router.push(`/${organisationName}/members`);
       }, 1200);
       return () => clearTimeout(timer);
     }
@@ -100,7 +100,7 @@ export default function InviteMemberForm({ organisationId, organisationName }: I
           <Button
             type="button"
             variant="light"
-            onClick={() => router.push(`/orga/${organisationName}/members`)}
+            onClick={() => router.push(`/${organisationName}/members`)}
             disabled={pending}
           >
             Cancel

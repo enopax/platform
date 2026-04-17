@@ -49,20 +49,20 @@ export default function OrganisationOverviewClient({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Link href={`/orga/${organisation.name}/members`}>
+            <Link href={`/${organisation.name}/members`}>
               <Button variant="light" className="text-sm px-3 py-2">
                 <RiUserLine className="mr-2 h-4 w-4" />
                 Members
               </Button>
             </Link>
-            <Link href={`/orga/${organisation.name}/teams`}>
+            <Link href={`/${organisation.name}/teams`}>
               <Button variant="light" className="text-sm px-3 py-2">
                 <RiTeamLine className="mr-2 h-4 w-4" />
                 Teams
               </Button>
             </Link>
             {canManage && (
-              <Link href={`/orga/${organisation.name}/settings`}>
+              <Link href={`/${organisation.name}/settings`}>
                 <Button variant="light" className="text-sm px-3 py-2">
                   <RiSettings3Line className="mr-2 h-4 w-4" />
                   Settings
@@ -80,7 +80,7 @@ export default function OrganisationOverviewClient({
               Projects
             </h2>
             {canManage && (
-              <Link href={`/orga/${organisation.name}/new`}>
+              <Link href={`/${organisation.name}/new`}>
                 <Button>
                   <RiAddLine className="mr-2 h-4 w-4" />
                   New Project
@@ -104,7 +104,7 @@ export default function OrganisationOverviewClient({
               <RiProjectorLine className="mx-auto h-16 w-16 text-gray-400 mb-4" />
               <p className="text-gray-500 dark:text-gray-400 mb-6 text-lg">No projects yet</p>
               {canManage && (
-                <Link href={`/orga/${organisation.name}/new`}>
+                <Link href={`/${organisation.name}/new`}>
                   <Button>
                     <RiAddLine className="mr-2 h-4 w-4" />
                     Create First Project
