@@ -230,7 +230,7 @@ Project(any) 0..N ProjectShare (cross-entity sharing)
 ### How it works
 
 1. Host owner shares Project X with Org B (or User C): creates a `ProjectShare` row.
-2. Recipient sees Project X in their "Shared with you" section.
+2. Recipient sees Project X in their own namespace with an "Owner: HostOrg" badge.
 3. `ProjectShare.permission` controls what the recipient can do:
 
 | Permission | What recipient can do |
@@ -347,19 +347,19 @@ On a project's access page, surface **why** each user has access:
 ### Sidebar navigation
 
 ```
-felixboehm                 ← personal namespace (user profile link)
-  └── experiment           ← personal projects
-  └── test-api
+felixboehm                 ← personal namespace
+  └── experiment            (Owner: felixboehm)
+  └── acme-project          (Owner: Acme Corp)   ← shared, owner visible
 
 Enopax                     ← organisation
-  └── platform             ← org projects (filtered by team access)
-  └── resource-api
-
-Shared with you            ← projects shared from other entities
-  └── acme/their-project
+  └── platform              (Owner: Enopax)
+  └── resource-api          (Owner: Enopax)
 ```
 
-Clean separation: personal projects, org projects, shared projects. No "my org" confusion.
+No "Shared with you" section. Shared projects appear directly in the
+recipient's namespace with the owner organisation/user shown as a badge.
+The same project appears in both the host and recipient namespaces —
+like a symlink, not a copy. The owner badge makes provenance clear.
 
 ### Key flows
 
