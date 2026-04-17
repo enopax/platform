@@ -22,6 +22,7 @@ function rowToUser(id: string, row: Record<string, any>): User {
     password: row.password as string,
     role: row.role as UserRole,
     storageTier: (row.storageTier as StorageTier) || 'FREE_500MB',
+    slug: (row.slug as string) || '',
     createdAt: new Date(row.createdAt as string),
     updatedAt: new Date(row.updatedAt as string),
   };
@@ -44,6 +45,7 @@ export class TinyBaseUserRepository implements IUserRepository {
       password: data.password ?? '',
       role: data.role ?? 'CUSTOMER',
       storageTier: 'FREE_500MB',
+      slug: data.email ? data.email.split('@')[0].toLowerCase().replace(/[^a-z0-9-]/g, '-') : '',
       createdAt: now,
       updatedAt: now,
     });

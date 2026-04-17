@@ -1,5 +1,5 @@
 import type { Store } from 'tinybase';
-import type { Project, ProjectStatus, ProjectPriority } from '../types';
+import type { Project, ProjectStatus, ProjectPriority, Visibility, ProjectOwnerType } from '../types';
 import type { IProjectRepository, CreateProjectData, UpdateProjectData, ProjectWithFileCount } from '../repositories/project.repository';
 import type { FileRecordPersister } from './file-record-persister';
 import crypto from 'crypto';
@@ -27,6 +27,10 @@ function rowToProject(id: string, row: Record<string, any>): Project {
     repositoryUrl: (row.repositoryUrl as string) || null,
     documentationUrl: (row.documentationUrl as string) || null,
     organisationId: row.organisationId as string,
+    slug: (row.slug as string) || (row.name as string),
+    ownerType: ((row.ownerType as string) || 'ORGANISATION') as ProjectOwnerType,
+    ownerId: (row.ownerId as string) || (row.organisationId as string),
+    visibility: ((row.visibility as string) || 'PRIVATE') as Visibility,
     isActive: row.isActive === 1,
     createdAt: new Date(row.createdAt as string),
     updatedAt: new Date(row.updatedAt as string),
@@ -55,6 +59,10 @@ export class TinyBaseProjectRepository implements IProjectRepository {
       repositoryUrl: data.repositoryUrl ?? '',
       documentationUrl: data.documentationUrl ?? '',
       organisationId: data.organisationId,
+      slug: data.name.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+      ownerType: 'ORGANISATION',
+      ownerId: data.organisationId,
+      visibility: 'PRIVATE',
       isActive: 1,
       createdAt: now,
       updatedAt: now,

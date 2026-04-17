@@ -1,5 +1,5 @@
 import type { Store } from 'tinybase';
-import type { Organisation, OrganisationMember, OrganisationRole } from '../types';
+import type { Organisation, OrganisationMember, OrganisationRole, Visibility } from '../types';
 import type {
   IOrganisationRepository, CreateOrganisationData, OrganisationWithMemberCount,
   IOrganisationMemberRepository, OrganisationMemberWithUser,
@@ -39,6 +39,9 @@ function rowToOrg(id: string, row: Record<string, any>): Organisation {
     maxProjects: (row.maxProjects as number) || null,
     maxMembers: (row.maxMembers as number) || null,
     ownerId: row.ownerId as string,
+    slug: (row.slug as string) || (row.name as string),
+    visibility: ((row.visibility as string) || 'PUBLIC') as Visibility,
+    defaultProjectVisibility: ((row.defaultProjectVisibility as string) || 'PRIVATE') as Visibility,
     createdAt: new Date(row.createdAt as string),
     updatedAt: new Date(row.updatedAt as string),
   };
@@ -95,6 +98,9 @@ export class TinyBaseOrganisationRepository implements IOrganisationRepository {
       maxProjects: 50,
       maxMembers: 100,
       ownerId: data.ownerId,
+      slug: data.name.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+      visibility: 'PUBLIC',
+      defaultProjectVisibility: 'PRIVATE',
       createdAt: now,
       updatedAt: now,
     });
