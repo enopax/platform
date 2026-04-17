@@ -11,6 +11,7 @@ import { TinyBaseUserFileRepository } from '@/lib/store/tinybase/user-file.tinyb
 import { TinyBaseUserStorageQuotaRepository, TinyBaseUserStorageMetricsRepository, TinyBaseUserStorageActivityRepository } from '@/lib/store/tinybase/user-storage.tinybase';
 import { TinyBaseTeamRepository, TinyBaseTeamMemberRepository } from '@/lib/store/tinybase/team.tinybase';
 import { TinyBaseProjectAccessRepository } from '@/lib/store/tinybase/project-access.tinybase';
+import { TinyBaseProjectShareRepository } from '@/lib/store/tinybase/project-share.tinybase';
 import { TinyBaseNamespaceRepository } from '@/lib/store/tinybase/namespace.tinybase';
 import type { DataStore } from '@/lib/store/data-store';
 
@@ -35,6 +36,7 @@ export function createTestStore(): DataStore {
     teams: new TinyBaseTeamRepository(store),
     teamMembers: new TinyBaseTeamMemberRepository(store),
     projectAccess: new TinyBaseProjectAccessRepository(store),
+    projectShares: new TinyBaseProjectShareRepository(store),
     async destroy() {},
   };
 }

@@ -134,6 +134,18 @@ export interface ProjectAccess {
   grantedBy: string;
 }
 
+export type SharePermission = 'VIEW' | 'CONTRIBUTE' | 'MANAGE';
+
+export interface ProjectShare {
+  id: string;
+  projectId: string;
+  sharedWithType: ProjectOwnerType;
+  sharedWithId: string;
+  permission: SharePermission;
+  sharedBy: string;
+  sharedAt: Date;
+}
+
 export interface Namespace {
   id: string;
   slug: string;
