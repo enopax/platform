@@ -55,6 +55,12 @@ export default function OrganisationOverviewClient({
                 Members
               </Button>
             </Link>
+            <Link href={`/orga/${organisation.name}/teams`}>
+              <Button variant="light" className="text-sm px-3 py-2">
+                <RiTeamLine className="mr-2 h-4 w-4" />
+                Teams
+              </Button>
+            </Link>
             {canManage && (
               <Link href={`/orga/${organisation.name}/settings`}>
                 <Button variant="light" className="text-sm px-3 py-2">
