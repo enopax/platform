@@ -33,6 +33,21 @@ export default function SettingsForm({
         </Callout>
       )}
 
+      {user.slug && (
+        <div className="space-y-2">
+          <Label htmlFor="slug">Username</Label>
+          <Input
+            id="slug"
+            name="slug"
+            type="text"
+            defaultValue={user.slug}
+            disabled
+            className="bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400">enopax.com/<strong>{user.slug}</strong></p>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="firstname">First Name</Label>
         <Input

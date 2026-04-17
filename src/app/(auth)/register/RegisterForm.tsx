@@ -47,16 +47,34 @@ export default function RegisterForm({ prefilledEmail, inviteToken, organisation
           <form action={formAction} className="space-y-4">
             {inviteToken && <input type="hidden" name="inviteToken" value={inviteToken} />}
             <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Username
+              </label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                pattern="[a-z0-9-]+"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="your-username"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Lowercase letters, numbers, and hyphens. This is your URL: enopax.com/<strong>username</strong></p>
+              {state.fieldErrors?.username && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{state.fieldErrors.username}</p>
+              )}
+            </div>
+
+            <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Name
+                Display Name <span className="text-gray-400">(optional)</span>
               </label>
               <input
                 id="name"
                 name="name"
                 type="text"
-                required
                 className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Your name"
+                placeholder="How you want to be known"
               />
               {state.fieldErrors?.name && (
                 <p className="mt-1 text-xs text-red-600 dark:text-red-400">{state.fieldErrors.name}</p>
