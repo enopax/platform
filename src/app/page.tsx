@@ -33,14 +33,9 @@ export default async function Page() {
                 Production-grade Kubernetes clusters on EU cloud providers — deployed in minutes, not days.
                 No vendor lock-in. GDPR-compliant by design.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/register">
-                  <Button className="px-8 py-3 text-lg font-semibold">
-                    Get Started Free
-                  </Button>
-                </Link>
+              <div className="flex justify-center">
                 <Link href="/signin">
-                  <Button variant="secondary" className="px-8 py-3 text-lg font-semibold">
+                  <Button className="px-8 py-3 text-lg font-semibold">
                     Sign In
                   </Button>
                 </Link>
@@ -132,11 +127,11 @@ export default async function Page() {
               Ready to deploy?
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
-              Create your free account and provision your first cluster in minutes.
+              Sign in to provision your first cluster in minutes.
             </p>
-            <Link href="/register">
+            <Link href="/signin">
               <Button className="px-10 py-3 text-lg font-semibold">
-                Get Started
+                Sign In
               </Button>
             </Link>
           </div>
@@ -151,7 +146,6 @@ export default async function Page() {
             </p>
             <div className="flex gap-6 text-sm text-gray-500 dark:text-gray-400">
               <Link href="/signin" className="hover:text-gray-900 dark:hover:text-white">Sign In</Link>
-              <Link href="/register" className="hover:text-gray-900 dark:hover:text-white">Register</Link>
             </div>
           </div>
         </Container>
