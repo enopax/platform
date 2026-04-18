@@ -12,3 +12,4 @@ export type { ITeamRepository, ITeamMemberRepository, CreateTeamData, UpdateTeam
 export type { IProjectAccessRepository, GrantProjectAccessData } from './project-access.repository';
 export type { IProjectShareRepository, CreateProjectShareData } from './project-share.repository';
 export type { INamespaceRepository, RegisterNamespaceData } from './namespace.repository';
+export type { IProjectRoleRepository, CreateProjectRoleData, UpdateProjectRoleData } from './project-role.repository';

@@ -303,3 +303,26 @@ export interface ApiKey {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type ProjectPermission =
+  | 'project:view'
+  | 'project:settings'
+  | 'resource:view'
+  | 'resource:create'
+  | 'resource:edit'
+  | 'resource:delete'
+  | 'resource:deploy'
+  | 'access:view'
+  | 'access:manage';
+
+export interface ProjectRoleDefinition {
+  id: string;
+  organisationId: string;
+  name: string;
+  description: string;
+  permissions: ProjectPermission[];
+  isBuiltIn: boolean;
+  rank: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
