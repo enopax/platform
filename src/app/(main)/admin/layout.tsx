@@ -8,7 +8,8 @@ export default async function Layout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
-  if (!session) return redirect(`/`);
+  if (!session) return redirect('/');
+  if (session.user?.role !== 'ADMIN') return redirect('/');
 
   return (
     <div className="max-w-6xl m-auto">
