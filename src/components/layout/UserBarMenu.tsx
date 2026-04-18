@@ -119,7 +119,7 @@ export default function UserBarMenu({
           action={async () => {
             'use server';
             await signOut({
-              redirectTo: '/signin',
+              redirectTo: '/',
             });
           }}
         >
