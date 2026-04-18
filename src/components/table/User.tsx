@@ -96,7 +96,7 @@ const columns: ColumnDef<User>[] = [
           <ActivateButton userId={row.original.id} />
         )}
         <Tooltip content="Edit User" asChild>
-          <Link href={`/admin/user/${row.original.id}`}>
+          <Link href={`/admin/users/${row.original.id}`}>
             <Button
               type="button"
               variant="light"

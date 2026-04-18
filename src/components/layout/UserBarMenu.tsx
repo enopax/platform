@@ -84,11 +84,6 @@ export default function UserBarMenu({
             </DropdownMenuLabel>
 
             <DropdownMenuGroup>
-              <Link href="/admin">
-                <DropdownMenuItem>
-                  Nodes
-                </DropdownMenuItem>
-              </Link>
               <Link href="/admin/users">
                 <DropdownMenuItem>
                   Users
@@ -97,16 +92,6 @@ export default function UserBarMenu({
               <Link href="/admin/organisations">
                 <DropdownMenuItem>
                   Organisations
-                </DropdownMenuItem>
-              </Link>
-              <Link href="/admin/projects">
-                <DropdownMenuItem>
-                  Projects
-                </DropdownMenuItem>
-              </Link>
-              <Link href="/admin/previews/email">
-                <DropdownMenuItem>
-                  Preview email
                 </DropdownMenuItem>
               </Link>
             </DropdownMenuGroup>

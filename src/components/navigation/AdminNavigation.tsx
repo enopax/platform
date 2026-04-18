@@ -11,17 +11,12 @@ export default function AdminNavigation() {
   const getActiveTab = () => {
     if (pathname.includes('/admin/user')) return 'users';
     if (pathname.includes('/admin/organisations')) return 'organisations';
-    if (pathname.includes('/admin/project')) return 'projects';
-    if (pathname.includes('/admin/preview')) return 'preview';
-    return 'nodes';
+    return 'users';
   };
 
   const navItems = [
-    { id: 'nodes', label: 'Nodes', href: '/admin' },
     { id: 'users', label: 'Users', href: '/admin/users' },
     { id: 'organisations', label: 'Organisations', href: '/admin/organisations' },
-    { id: 'projects', label: 'Projects', href: '/admin/projects' },
-    { id: 'preview', label: 'Email Preview', href: '/admin/preview/email' },
   ];
 
   return (
