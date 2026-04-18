@@ -53,36 +53,6 @@ export default function OrganisationOverviewClient({
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href={`/${organisation.name}/members`}>
-              <Button variant="light" className="text-sm px-3 py-2">
-                <RiUserLine className="mr-2 h-4 w-4" />
-                Members
-              </Button>
-            </Link>
-            <Link href={`/${organisation.name}/teams`}>
-              <Button variant="light" className="text-sm px-3 py-2">
-                <RiTeamLine className="mr-2 h-4 w-4" />
-                Teams
-              </Button>
-            </Link>
-            {isOrgAdmin && (
-              <Link href={`/${organisation.name}/invitations`}>
-                <Button variant="light" className="text-sm px-3 py-2">
-                  <RiMailLine className="mr-2 h-4 w-4" />
-                  Invitations
-                </Button>
-              </Link>
-            )}
-            {canManage && (
-              <Link href={`/${organisation.name}/settings`}>
-                <Button variant="light" className="text-sm px-3 py-2">
-                  <RiSettings3Line className="mr-2 h-4 w-4" />
-                  Settings
-                </Button>
-              </Link>
-            )}
-          </div>
         </div>
 
 

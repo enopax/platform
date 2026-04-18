@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getStoreAsync } from '@/lib/store';
 import { OrganisationProvider } from '@/contexts/OrganisationContext';
+import OrgSidebar from '@/components/navigation/OrgSidebar';
 
 export default async function NamespaceLayout({
   children,
@@ -52,7 +53,12 @@ export default async function NamespaceLayout({
           },
         }}
       >
-        {children}
+        <div className="flex min-h-[calc(100vh-2.5rem)]">
+          <div className="hidden lg:block sticky top-0 h-screen overflow-y-auto">
+            <OrgSidebar />
+          </div>
+          <main className="flex-1 p-6">{children}</main>
+        </div>
       </OrganisationProvider>
     );
   }
@@ -94,7 +100,12 @@ export default async function NamespaceLayout({
           },
         }}
       >
-        {children}
+        <div className="flex min-h-[calc(100vh-2.5rem)]">
+          <div className="hidden lg:block sticky top-0 h-screen overflow-y-auto">
+            <OrgSidebar />
+          </div>
+          <main className="flex-1 p-6">{children}</main>
+        </div>
       </OrganisationProvider>
     );
   }
