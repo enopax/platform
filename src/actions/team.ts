@@ -6,6 +6,7 @@ import { getStoreAsync } from '@/lib/store';
 import type { ProjectRole } from '@/lib/store';
 import { validateNameFormat } from '@/lib/name-validation';
 import { resolveProjectPermissions } from '@/lib/permissions';
+import { logAudit } from '@/lib/audit';
 
 const VALID_PROJECT_ROLES: ProjectRole[] = ['VIEWER', 'DEVELOPER', 'DEPLOYER', 'ADMIN'];
 
@@ -360,12 +361,28 @@ export async function grantProjectAccess(
       }
     }
 
-    await store.projectAccess.grant({
+    const access = await store.projectAccess.grant({
       projectId,
       teamId,
       role: role as ProjectRole,
       grantedBy: session.user.id,
     });
+
+    const isCrossOrg = team.organisationId !== project.organisationId;
+    if (isCrossOrg) {
+      logAudit({
+        userId: session.user.id,
+        action: 'cross-org-access-granted',
+        entityType: 'project-access',
+        entityId: access.id,
+        details: {
+          projectId,
+          teamId,
+          role,
+          crossOrgTeamOrgId: team.organisationId,
+        },
+      });
+    }
 
     revalidatePath(`/orga`);
 
