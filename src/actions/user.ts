@@ -163,6 +163,21 @@ export async function settings(state: object | null, formData: FormData) {
   }
 }
 
+export async function activateUser(userId: string): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== 'ADMIN') {
+    return { success: false, error: 'Not authorised' };
+  }
+
+  const store = await getStoreAsync();
+  const user = await store.users.findById(userId);
+  if (!user) return { success: false, error: 'User not found' };
+
+  await store.users.update(userId, { role: 'CUSTOMER' });
+  revalidatePath('/admin/users');
+  return { success: true };
+}
+
 export async function setAvatar(userId: string, images: string[]) {
   try {
     const session = await auth();

@@ -2,10 +2,31 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
+import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/common/Button';
 import { Tooltip } from '@/components/common/Tooltip';
 import { type User } from '@/lib/store';
+import { activateUser } from '@/actions/user';
 import Link from 'next/link';
+
+function ActivateButton({ userId }: { userId: string }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  const handleActivate = () => {
+    startTransition(async () => {
+      await activateUser(userId);
+      router.refresh();
+    });
+  };
+
+  return (
+    <Button type="button" variant="primary" size="sm" onClick={handleActivate} disabled={isPending}>
+      {isPending ? 'Activating…' : 'Activate'}
+    </Button>
+  );
+}
 
 const columns: ColumnDef<User>[] = [
   {
@@ -35,10 +56,11 @@ const columns: ColumnDef<User>[] = [
     },
     cell: ({ row }) => (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        row.original.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
-        'bg-gray-100 text-gray-800'
+        row.original.role === 'ADMIN' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+        row.original.role === 'GUEST' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' :
+        'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
       }`}>
-        {row.original.role}
+        {row.original.role === 'GUEST' ? 'Early Access' : row.original.role}
       </span>
     ),
   },
@@ -70,6 +92,9 @@ const columns: ColumnDef<User>[] = [
     },
     cell: ({ row }) => (
       <span className="flex gap-2 justify-end">
+        {row.original.role === 'GUEST' && (
+          <ActivateButton userId={row.original.id} />
+        )}
         <Tooltip content="Edit User" asChild>
           <Link href={`/admin/user/${row.original.id}`}>
             <Button
@@ -80,16 +105,6 @@ const columns: ColumnDef<User>[] = [
               Edit
             </Button>
           </Link>
-        </Tooltip>
-        <Tooltip content="Delete User" asChild>
-          <Button
-            type="button"
-            variant="light"
-            size="sm"
-            //onClick={() => deleteUser(row.original.id)}
-          >
-            Delete
-          </Button>
         </Tooltip>
       </span>
     ),
