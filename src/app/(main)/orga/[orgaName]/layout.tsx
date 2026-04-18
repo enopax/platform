@@ -25,6 +25,16 @@ export default async function OrganisationLayout({
   const projects = await store.projects.findByOrgId(organisation.id, { isActive: true });
   const members = await store.organisationMembers.findByOrgId(organisation.id);
 
+  const activeShares = await store.projectShares.findSharedWithEntity('ORGANISATION', organisation.id, 'ACTIVE');
+  const sharedProjects = [];
+  for (const share of activeShares) {
+    const project = await store.projects.findById(share.projectId);
+    if (project && project.isActive) {
+      const ownerOrg = await store.organisations.findById(project.organisationId);
+      sharedProjects.push({ ...project, ownerName: ownerOrg?.name || 'Unknown', ownerSlug: ownerOrg?.slug || ownerOrg?.name || 'unknown' });
+    }
+  }
+
   return (
     <OrganisationProvider
       organisation={{
@@ -34,6 +44,7 @@ export default async function OrganisationLayout({
         ownerId: organisation.ownerId,
         isActive: organisation.isActive,
         projects,
+        sharedProjects,
         _count: {
           members: members.length,
           projects: projects.length,
