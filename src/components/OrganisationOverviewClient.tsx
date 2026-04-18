@@ -11,15 +11,18 @@ import {
   RiProjectorLine,
   RiAddLine,
   RiUserLine,
-  RiTeamLine
+  RiTeamLine,
+  RiMailLine,
 } from '@remixicon/react';
 
 interface OrganisationOverviewClientProps {
   canManage: boolean;
+  isOrgAdmin?: boolean;
 }
 
 export default function OrganisationOverviewClient({
   canManage,
+  isOrgAdmin,
 }: OrganisationOverviewClientProps) {
   const organisation = useOrganisation();
 
@@ -61,6 +64,14 @@ export default function OrganisationOverviewClient({
                 Teams
               </Button>
             </Link>
+            {isOrgAdmin && (
+              <Link href={`/${organisation.name}/invitations`}>
+                <Button variant="light" className="text-sm px-3 py-2">
+                  <RiMailLine className="mr-2 h-4 w-4" />
+                  Invitations
+                </Button>
+              </Link>
+            )}
             {canManage && (
               <Link href={`/${organisation.name}/settings`}>
                 <Button variant="light" className="text-sm px-3 py-2">
