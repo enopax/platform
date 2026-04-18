@@ -145,6 +145,7 @@ export default async function Page() {
               Enopax — European Kubernetes Infrastructure
             </p>
             <div className="flex gap-6 text-sm text-gray-500 dark:text-gray-400">
+              <Link href="/docs/imprint" className="hover:text-gray-900 dark:hover:text-white">Imprint</Link>
               <Link href="/signin" className="hover:text-gray-900 dark:hover:text-white">Sign In</Link>
             </div>
           </div>

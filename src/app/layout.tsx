@@ -7,7 +7,6 @@ import "./globals.css";
 import { auth } from '@/lib/auth';
 
 import UserBar from '@/components/layout/UserBar';
-import Footer from '@/components/layout/Footer';
 import CommandPaletteProvider from '@/components/navigation/CommandPaletteProvider';
 
 const geist = Geist({
@@ -16,7 +15,7 @@ const geist = Geist({
 
 
 export const metadata: Metadata = {
-  title: 'Enopax File System',
+  title: 'Enopax — European Kubernetes Infrastructure',
   description: process.env.NEXT_PUBLIC_META_DESC,
   openGraph: {
     images: [process.env.NEXT_PUBLIC_OG_IMAGE || ''],
@@ -36,7 +35,6 @@ export default async function RootLayout({
         <div className="text-neutral-800 dark:text-neutral-200">
           <UserBar user={session?.user} />
           {children}
-          <Footer />
           <CommandPaletteProvider />
         </div>
       </body>
