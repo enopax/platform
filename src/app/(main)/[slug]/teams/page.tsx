@@ -68,7 +68,7 @@ export default async function TeamsPage({ params }: TeamsPageProps) {
 
       {teamsWithCounts.length === 0 ? (
         <Card className="p-12 text-center">
-          <RiTeamLine className="mx-auto w-10 h-10 text-gray-400 mb-3" />
+          <RiTeamLine className="mx-auto w-10 h-10 text-gray-400 dark:text-gray-600 mb-3" />
           <p className="text-gray-600 dark:text-gray-400 font-medium">No teams yet</p>
           {canManage && (
             <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
@@ -108,7 +108,7 @@ export default async function TeamsPage({ params }: TeamsPageProps) {
                     <span className="text-sm text-gray-500 dark:text-gray-400">
                       {team.memberCount} {team.memberCount === 1 ? 'member' : 'members'}
                     </span>
-                    <RiArrowRightLine className="w-4 h-4 text-gray-400" />
+                    <RiArrowRightLine className="w-4 h-4 text-gray-400 dark:text-gray-600" />
                   </div>
                 </div>
               </Card>

@@ -141,7 +141,7 @@ export default async function ProjectSharePage({ params }: ProjectSharePageProps
 
         {sharesWithNames.length === 0 && (
           <Card className="p-12 text-center">
-            <RiShareLine className="mx-auto w-10 h-10 text-gray-400 mb-3" />
+            <RiShareLine className="mx-auto w-10 h-10 text-gray-400 dark:text-gray-600 mb-3" />
             <p className="text-gray-600 dark:text-gray-400 font-medium">
               This project has not been shared with anyone yet
             </p>

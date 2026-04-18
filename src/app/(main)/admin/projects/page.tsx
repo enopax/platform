@@ -42,7 +42,7 @@ export default async function ProjectAdminPage() {
                         <Badge variant={project.status === 'ACTIVE' ? 'success' : 'warning'}>
                           {project.status}
                         </Badge>
-                        <span className="text-xs text-gray-400">{project.createdAt.toLocaleDateString('en-GB')}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">{project.createdAt.toLocaleDateString('en-GB')}</span>
                       </div>
                     </div>
                   </Link>
@@ -52,7 +52,7 @@ export default async function ProjectAdminPage() {
           ))}
 
           {totalProjects === 0 && (
-            <p className="text-gray-500 text-center py-12">No projects yet</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-12">No projects yet</p>
           )}
         </div>
       </Container>

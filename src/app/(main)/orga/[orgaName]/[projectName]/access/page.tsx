@@ -86,7 +86,7 @@ export default async function ProjectAccessPage({ params }: ProjectAccessPagePro
 
       {accessWithTeams.length === 0 ? (
         <Card className="p-12 text-center">
-          <RiTeamLine className="mx-auto w-10 h-10 text-gray-400 mb-3" />
+          <RiTeamLine className="mx-auto w-10 h-10 text-gray-400 dark:text-gray-600 mb-3" />
           <p className="text-gray-600 dark:text-gray-400 font-medium">No teams have been granted access yet</p>
           {availableTeams.length > 0 && (
             <div className="mt-4">

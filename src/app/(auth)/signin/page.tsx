@@ -10,7 +10,7 @@ export default function SignInPage() {
 
   return (
     <main className="min-h-[80vh] flex items-center justify-center">
-      <p className="text-gray-500">Redirecting to login...</p>
+      <p className="text-gray-500 dark:text-gray-400">Redirecting to login...</p>
     </main>
   );
 }

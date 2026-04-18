@@ -52,7 +52,7 @@ export default async function TransferProjectPage({ params }: TransferProjectPag
       <Card className="max-w-lg">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
           <span className="font-semibold text-gray-900 dark:text-white">{organisation.name}</span>
-          <RiArrowRightLine className="w-4 h-4 text-gray-400" />
+          <RiArrowRightLine className="w-4 h-4 text-gray-400 dark:text-gray-600" />
           <span className="text-sm text-gray-500 dark:text-gray-400">target organisation</span>
         </div>
         <div className="p-6">

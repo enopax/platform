@@ -65,7 +65,7 @@ export default async function InvitationsPage({ params }: InvitationsPageProps) 
 
       {invitationsWithDetails.length === 0 ? (
         <Card className="p-12 text-center">
-          <RiMailLine className="mx-auto w-10 h-10 text-gray-400 mb-3" />
+          <RiMailLine className="mx-auto w-10 h-10 text-gray-400 dark:text-gray-600 mb-3" />
           <p className="text-gray-600 dark:text-gray-400 font-medium">
             No pending invitations
           </p>
