@@ -24,6 +24,7 @@ const config: Config = {
           700: '#2f3bb8',  // Deep blue-purple
           800: '#252f94',  // Dark blue-purple
           900: '#1e2470',  // Very dark blue-purple
+          950: '#141a4d',  // Deepest blue-purple
         }
       },
       keyframes: {
