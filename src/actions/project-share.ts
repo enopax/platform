@@ -61,7 +61,7 @@ export async function shareProject(
       project.organisationId
     );
     const isOrgAdmin =
-      session.user.role === 'ADMIN' ||
+      session.user.role === 'SUPERADMIN' ||
       (orgMembership && ['OWNER', 'ADMIN'].includes(orgMembership.role));
 
     if (!isOrgAdmin) {
@@ -205,7 +205,7 @@ export async function updateSharePermission(
       project.organisationId
     );
     const isOrgAdmin =
-      session.user.role === 'ADMIN' ||
+      session.user.role === 'SUPERADMIN' ||
       (orgMembership && ['OWNER', 'ADMIN'].includes(orgMembership.role));
 
     if (!isOrgAdmin) {
@@ -251,7 +251,7 @@ export async function revokeShare(
       project.organisationId
     );
     const isOrgAdmin =
-      session.user.role === 'ADMIN' ||
+      session.user.role === 'SUPERADMIN' ||
       (orgMembership && ['OWNER', 'ADMIN'].includes(orgMembership.role));
 
     if (!isOrgAdmin) {
@@ -305,13 +305,13 @@ export async function acceptShare(
         share.sharedWithId
       );
       const isOrgAdmin =
-        session.user.role === 'ADMIN' ||
+        session.user.role === 'SUPERADMIN' ||
         (membership && ['OWNER', 'ADMIN'].includes(membership.role));
       if (!isOrgAdmin) {
         return { success: false, error: 'You do not have permission to accept this invitation' };
       }
     } else if (share.sharedWithType === 'USER') {
-      if (session.user.id !== share.sharedWithId && session.user.role !== 'ADMIN') {
+      if (session.user.id !== share.sharedWithId && session.user.role !== 'SUPERADMIN') {
         return { success: false, error: 'You do not have permission to accept this invitation' };
       }
     }
@@ -360,13 +360,13 @@ export async function declineShare(
         share.sharedWithId
       );
       const isOrgAdmin =
-        session.user.role === 'ADMIN' ||
+        session.user.role === 'SUPERADMIN' ||
         (membership && ['OWNER', 'ADMIN'].includes(membership.role));
       if (!isOrgAdmin) {
         return { success: false, error: 'You do not have permission to decline this invitation' };
       }
     } else if (share.sharedWithType === 'USER') {
-      if (session.user.id !== share.sharedWithId && session.user.role !== 'ADMIN') {
+      if (session.user.id !== share.sharedWithId && session.user.role !== 'SUPERADMIN') {
         return { success: false, error: 'You do not have permission to decline this invitation' };
       }
     }
@@ -428,7 +428,7 @@ export async function transferProject(
       project.organisationId
     );
     const isOwner =
-      session.user.role === 'ADMIN' ||
+      session.user.role === 'SUPERADMIN' ||
       (orgMembership && orgMembership.role === 'OWNER');
 
     if (!isOwner) {

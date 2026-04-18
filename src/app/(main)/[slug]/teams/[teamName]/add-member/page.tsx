@@ -27,7 +27,7 @@ export default async function AddMemberPage({ params }: AddMemberPageProps) {
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
 
   const canManage =
-    session.user.role === 'ADMIN' ||
+    session.user.role === 'SUPERADMIN' ||
     membership?.role === 'OWNER' ||
     membership?.role === 'ADMIN' ||
     membership?.role === 'MANAGER';

@@ -206,7 +206,7 @@ export async function settings(state: object | null, formData: FormData) {
 
 export async function activateUser(userId: string): Promise<{ success: boolean; error?: string }> {
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== 'ADMIN') {
+  if (!session?.user?.id || session.user.role !== 'SUPERADMIN') {
     return { success: false, error: 'Not authorised' };
   }
 

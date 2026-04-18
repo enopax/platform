@@ -32,7 +32,7 @@ async function requireOrgAdminAccess(organisationId: string) {
   const store = await getStoreAsync();
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
-  const isOrgAdmin = session.user.role === 'ADMIN';
+  const isOrgAdmin = session.user.role === 'SUPERADMIN';
   const isOwnerOrAdmin = membership?.role === 'OWNER' || membership?.role === 'ADMIN';
 
   if (!isOrgAdmin && !isOwnerOrAdmin) {

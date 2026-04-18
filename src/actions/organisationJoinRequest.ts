@@ -298,7 +298,7 @@ export async function kickMember(
       return { error: 'Authentication required' };
     }
 
-    const isAdmin = session.user.role === 'ADMIN';
+    const isAdmin = session.user.role === 'SUPERADMIN';
     const store = await getStoreAsync();
 
     if (!isAdmin) {

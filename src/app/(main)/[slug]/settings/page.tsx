@@ -41,7 +41,7 @@ export default async function OrganisationSettingsPage({ params }: OrganisationS
   // Check if user is a member of this organisation
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
-  const isAdmin = session.user.role === 'ADMIN';
+  const isAdmin = session.user.role === 'SUPERADMIN';
   const isOwner = membership?.role === 'OWNER';
   const isManager = membership?.role === 'MANAGER';
   const isMember = !!membership;

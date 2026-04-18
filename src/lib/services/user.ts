@@ -48,7 +48,7 @@ export class UserService {
   async updateUserAdmin(userId: string, data: UpdateUserData, adminUserId: string): Promise<User> {
     try {
       const adminUser = await this.getUserById(adminUserId);
-      if (adminUser?.role !== 'ADMIN') {
+      if (adminUser?.role !== 'SUPERADMIN') {
         throw new Error('Insufficient permissions to update user');
       }
       return await this.updateUser(userId, data);
@@ -102,7 +102,7 @@ export class UserService {
   async isUserAdmin(userId: string): Promise<boolean> {
     try {
       const user = await this.getUserById(userId);
-      return user?.role === 'ADMIN';
+      return user?.role === 'SUPERADMIN';
     } catch (error) {
       console.error('Failed to check admin status:', error);
       return false;

@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     );
   }
 
-  if (user.role === 'CUSTOMER' || user.role === 'ADMIN') {
+  if (user.role === 'CUSTOMER' || user.role === 'SUPERADMIN') {
     return new Response(
       '<html><body style="font-family:sans-serif;text-align:center;padding:60px"><h2>Already activated</h2><p>' + user.email + ' is already a ' + user.role + '.</p></body></html>',
       { status: 200, headers: { 'Content-Type': 'text/html' } }

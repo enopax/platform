@@ -76,7 +76,7 @@ export default function UserBarMenu({
         </DropdownMenuGroup>
 
         {/* ----- Admin ----- */}
-        {user.role == 'ADMIN' && (
+        {user.role == 'SUPERADMIN' && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>

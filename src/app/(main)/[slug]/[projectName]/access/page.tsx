@@ -32,7 +32,7 @@ export default async function ProjectAccessPage({ params }: ProjectAccessPagePro
 
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
   const isOrgAdmin =
-    session.user.role === 'ADMIN' ||
+    session.user.role === 'SUPERADMIN' ||
     membership?.role === 'OWNER' ||
     membership?.role === 'ADMIN';
 

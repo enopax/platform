@@ -19,7 +19,7 @@ export async function checkOrganisationPermissions(
   userRole: string,
   organisationId: string
 ): Promise<OrganisationPermissions> {
-  const isAdmin = userRole === 'ADMIN';
+  const isAdmin = userRole === 'SUPERADMIN';
 
   const store = await getStoreAsync();
   const membership = isAdmin
@@ -86,7 +86,7 @@ export async function checkProjectPermissions(
   organisationId: string,
   projectId: string
 ): Promise<ProjectPermissions> {
-  const isAdmin = userRole === 'ADMIN';
+  const isAdmin = userRole === 'SUPERADMIN';
 
   const store = await getStoreAsync();
   const orgMembership = isAdmin

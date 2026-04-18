@@ -22,7 +22,7 @@ export default async function InviteMemberPage({ params }: InviteMemberPageProps
   const organisation = await store.organisations.findByName(slug);
   if (!organisation) notFound();
 
-  const isAdmin = session.user.role === 'ADMIN';
+  const isAdmin = session.user.role === 'SUPERADMIN';
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
 
   const isOwner = membership?.role === 'OWNER';

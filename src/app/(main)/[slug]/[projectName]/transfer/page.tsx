@@ -27,7 +27,7 @@ export default async function TransferProjectPage({ params }: TransferProjectPag
 
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
   const isOwner =
-    session.user.role === 'ADMIN' ||
+    session.user.role === 'SUPERADMIN' ||
     (membership && membership.role === 'OWNER');
 
   if (!isOwner) {

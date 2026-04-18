@@ -9,7 +9,7 @@ export default async function Layout({
 }>) {
   const session = await auth();
   if (!session) return redirect('/');
-  if (session.user?.role !== 'ADMIN') return redirect('/');
+  if (session.user?.role !== 'SUPERADMIN') return redirect('/');
 
   return (
     <div className="max-w-6xl m-auto">

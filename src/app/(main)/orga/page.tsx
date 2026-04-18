@@ -10,7 +10,7 @@ export default async function OrganisationsPage() {
     return redirect('/auth/signin');
   }
 
-  const isAdmin = session.user.role === 'ADMIN';
+  const isAdmin = session.user.role === 'SUPERADMIN';
   const store = await getStoreAsync();
 
   let activeOrgs;

@@ -28,12 +28,12 @@ export default async function TeamsPage({ params }: TeamsPageProps) {
   if (!organisation) notFound();
 
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
-  if (!membership && session.user.role !== 'ADMIN') {
+  if (!membership && session.user.role !== 'SUPERADMIN') {
     notFound();
   }
 
   const canManage =
-    session.user.role === 'ADMIN' ||
+    session.user.role === 'SUPERADMIN' ||
     membership?.role === 'OWNER' ||
     membership?.role === 'ADMIN' ||
     membership?.role === 'MANAGER';

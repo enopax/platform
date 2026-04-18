@@ -26,7 +26,7 @@ export default async function RolesPage({ params }: RolesPageProps) {
 
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
-  const isAdmin = session.user.role === 'ADMIN';
+  const isAdmin = session.user.role === 'SUPERADMIN';
   const isOwner = membership?.role === 'OWNER';
   const isManager = membership?.role === 'MANAGER';
 

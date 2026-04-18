@@ -27,7 +27,7 @@ export default async function AddProjectAccessPage({ params }: AddProjectAccessP
 
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
   const isOrgAdmin =
-    session.user.role === 'ADMIN' ||
+    session.user.role === 'SUPERADMIN' ||
     membership?.role === 'OWNER' ||
     membership?.role === 'ADMIN';
 

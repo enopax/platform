@@ -24,7 +24,7 @@ export default async function MembersManagementPage({ params }: MembersManagemen
   if (!organisation) notFound();
   const organisationId = organisation.id;
 
-  const isAdmin = session.user.role === 'ADMIN';
+  const isAdmin = session.user.role === 'SUPERADMIN';
 
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 

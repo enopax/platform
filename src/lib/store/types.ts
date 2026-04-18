@@ -1,4 +1,4 @@
-export type UserRole = 'GUEST' | 'CUSTOMER' | 'ADMIN';
+export type UserRole = 'GUEST' | 'CUSTOMER' | 'SUPERADMIN';
 
 export type OrganisationRole = 'MEMBER' | 'MANAGER' | 'ADMIN' | 'OWNER';
 

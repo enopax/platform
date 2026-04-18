@@ -368,7 +368,7 @@ export default function MobileNavigation({ user, organisations: initialOrganisat
               </Link>
 
               {/* Admin Menu Items (conditional) */}
-              {user.role === 'ADMIN' && (
+              {user.role === 'SUPERADMIN' && (
                 <>
                   <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
 

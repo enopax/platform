@@ -5,7 +5,7 @@ import { checkOrganisationPermissions } from '@/lib/permissions';
 import OrganisationOverviewClient from '@/components/OrganisationOverviewClient';
 
 async function resolveIsOrgAdmin(userId: string, userRole: string, orgId: string): Promise<boolean> {
-  if (userRole === 'ADMIN') return true;
+  if (userRole === 'SUPERADMIN') return true;
   const store = await getStoreAsync();
   const membership = await store.organisationMembers.findByUserAndOrg(userId, orgId);
   return membership?.role === 'OWNER' || membership?.role === 'ADMIN';

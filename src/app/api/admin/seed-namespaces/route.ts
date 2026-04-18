@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST() {
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== 'ADMIN') {
+  if (!session?.user?.id || session.user.role !== 'SUPERADMIN') {
     return NextResponse.json({ error: 'Unauthorised' }, { status: 403 });
   }
 
