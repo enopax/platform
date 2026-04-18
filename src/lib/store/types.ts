@@ -136,6 +136,8 @@ export interface ProjectAccess {
 
 export type SharePermission = 'VIEW' | 'CONTRIBUTE' | 'MANAGE';
 
+export type ShareStatus = 'INVITED' | 'ACTIVE' | 'DECLINED' | 'REVOKED';
+
 export interface ProjectShare {
   id: string;
   projectId: string;
@@ -144,6 +146,7 @@ export interface ProjectShare {
   permission: SharePermission;
   sharedBy: string;
   sharedAt: Date;
+  status: ShareStatus;
 }
 
 export interface Namespace {

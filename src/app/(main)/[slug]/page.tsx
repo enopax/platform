@@ -4,6 +4,13 @@ import { getStoreAsync } from '@/lib/store';
 import { checkOrganisationPermissions } from '@/lib/permissions';
 import OrganisationOverviewClient from '@/components/OrganisationOverviewClient';
 
+async function resolveIsOrgAdmin(userId: string, userRole: string, orgId: string): Promise<boolean> {
+  if (userRole === 'ADMIN') return true;
+  const store = await getStoreAsync();
+  const membership = await store.organisationMembers.findByUserAndOrg(userId, orgId);
+  return membership?.role === 'OWNER' || membership?.role === 'ADMIN';
+}
+
 interface NamespacePageProps {
   params: Promise<{ slug: string }>;
 }
@@ -27,7 +34,8 @@ export default async function NamespacePage({ params }: NamespacePageProps) {
 
     if (!permissions.isMember && !permissions.isAdmin) notFound();
 
-    return <OrganisationOverviewClient canManage={permissions.canManage} />;
+    const isOrgAdmin = await resolveIsOrgAdmin(session.user.id, session.user.role, organisation.id);
+    return <OrganisationOverviewClient canManage={permissions.canManage} isOrgAdmin={isOrgAdmin} />;
   }
 
   if (namespace?.entityType === 'USER') {
@@ -53,7 +61,8 @@ export default async function NamespacePage({ params }: NamespacePageProps) {
 
     if (!permissions.isMember && !permissions.isAdmin) notFound();
 
-    return <OrganisationOverviewClient canManage={permissions.canManage} />;
+    const isOrgAdmin2 = await resolveIsOrgAdmin(session.user.id, session.user.role, orgByName.id);
+    return <OrganisationOverviewClient canManage={permissions.canManage} isOrgAdmin={isOrgAdmin2} />;
   }
 
   notFound();

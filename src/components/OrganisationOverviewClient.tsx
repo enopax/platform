@@ -6,20 +6,25 @@ import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import ProjectCard from '@/components/project/ProjectCard';
 import Link from 'next/link';
+import { Badge } from '@/components/common/Badge';
 import {
   RiSettings3Line,
   RiProjectorLine,
   RiAddLine,
   RiUserLine,
-  RiTeamLine
+  RiTeamLine,
+  RiMailLine,
+  RiShareLine,
 } from '@remixicon/react';
 
 interface OrganisationOverviewClientProps {
   canManage: boolean;
+  isOrgAdmin?: boolean;
 }
 
 export default function OrganisationOverviewClient({
   canManage,
+  isOrgAdmin,
 }: OrganisationOverviewClientProps) {
   const organisation = useOrganisation();
 
@@ -61,6 +66,14 @@ export default function OrganisationOverviewClient({
                 Teams
               </Button>
             </Link>
+            {isOrgAdmin && (
+              <Link href={`/${organisation.name}/invitations`}>
+                <Button variant="light" className="text-sm px-3 py-2">
+                  <RiMailLine className="mr-2 h-4 w-4" />
+                  Invitations
+                </Button>
+              </Link>
+            )}
             {canManage && (
               <Link href={`/${organisation.name}/settings`}>
                 <Button variant="light" className="text-sm px-3 py-2">
@@ -114,6 +127,36 @@ export default function OrganisationOverviewClient({
             </Card>
           )}
         </div>
+
+        {organisation.sharedProjects && organisation.sharedProjects.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <RiShareLine className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Shared Projects
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {organisation.sharedProjects.map((project) => (
+                <Link key={project.id} href={`/${project.ownerSlug}/${project.name}`}>
+                  <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {project.name}
+                      </h3>
+                      <Badge variant="neutral">Owner: {project.ownerName}</Badge>
+                    </div>
+                    {project.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {project.description}
+                      </p>
+                    )}
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </Container>
     </main>
   );

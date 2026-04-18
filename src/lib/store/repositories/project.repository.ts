@@ -43,5 +43,6 @@ export interface IProjectRepository {
   findByNameAndOrg(name: string, organisationId: string): Promise<Project | null>;
   findByOrgId(organisationId: string, options?: { isActive?: boolean }): Promise<Project[]>;
   update(id: string, data: UpdateProjectData): Promise<Project>;
+  transferToOrg(id: string, targetOrgId: string): Promise<Project>;
   search(query: string, limit?: number): Promise<Project[]>;
 }

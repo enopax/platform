@@ -49,17 +49,39 @@ export default async function ProjectAccessPage({ params }: ProjectAccessPagePro
     accessRows.map(async (row) => {
       const team = await store.teams.findById(row.teamId);
       const members = team ? await store.teamMembers.findByTeamId(team.id) : [];
+      const isExternal = team ? team.organisationId !== organisation.id : false;
+      let orgName: string | undefined;
+      if (isExternal && team) {
+        const teamOrg = await store.organisations.findById(team.organisationId);
+        orgName = teamOrg?.name;
+      }
       return {
         ...row,
         teamName: team?.name ?? 'Unknown team',
         memberCount: members.length,
+        isExternal,
+        orgName,
       };
     })
   );
 
   const grantedTeamIds = new Set(accessRows.map((r) => r.teamId));
   const allTeams = await store.teams.findByOrgId(organisation.id);
-  const availableTeams = allTeams.filter((t) => !grantedTeamIds.has(t.id));
+
+  const shares = await store.projectShares.findByProjectId(project.id, 'ACTIVE');
+  const collabOrgShares = shares.filter(
+    (s) => s.sharedWithType === 'ORGANISATION' && (s.permission === 'CONTRIBUTE' || s.permission === 'MANAGE')
+  );
+  const collabTeams: (typeof allTeams[number])[] = [];
+  for (const share of collabOrgShares) {
+    const teams = await store.teams.findByOrgId(share.sharedWithId);
+    collabTeams.push(...teams);
+  }
+
+  const availableTeams = [
+    ...allTeams.filter((t) => !grantedTeamIds.has(t.id)),
+    ...collabTeams.filter((t) => !grantedTeamIds.has(t.id)),
+  ];
 
   return (
     <div>
@@ -117,12 +139,23 @@ export default async function ProjectAccessPage({ params }: ProjectAccessPagePro
                     <RiTeamLine className="w-5 h-5 text-brand-600 dark:text-brand-400" />
                   </div>
                   <div>
-                    <Link
-                      href={`/${slug}/teams/${row.teamName}`}
-                      className="font-semibold text-gray-900 dark:text-white hover:underline"
-                    >
-                      {row.teamName}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      {row.isExternal ? (
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          {row.teamName}
+                        </span>
+                      ) : (
+                        <Link
+                          href={`/${slug}/teams/${row.teamName}`}
+                          className="font-semibold text-gray-900 dark:text-white hover:underline"
+                        >
+                          {row.teamName}
+                        </Link>
+                      )}
+                      {row.isExternal && row.orgName && (
+                        <Badge variant="default">{row.orgName}</Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {row.memberCount} {row.memberCount === 1 ? 'member' : 'members'}
                     </p>

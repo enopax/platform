@@ -3,6 +3,11 @@
 import React, { createContext, useContext } from 'react';
 import type { Project } from '@/lib/store';
 
+export interface SharedProject extends Project {
+  ownerName: string;
+  ownerSlug: string;
+}
+
 export interface OrganisationContextType {
   id: string;
   name: string;
@@ -10,6 +15,7 @@ export interface OrganisationContextType {
   ownerId: string;
   isActive: boolean;
   projects: Project[];
+  sharedProjects: SharedProject[];
   _count: {
     members: number;
     projects: number;

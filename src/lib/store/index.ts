@@ -21,6 +21,7 @@ export type {
   Project,
   ProjectAccess,
   SharePermission,
+  ShareStatus,
   ProjectShare,
   Namespace,
   OrganisationJoinRequest,

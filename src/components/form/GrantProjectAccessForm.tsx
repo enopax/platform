@@ -16,6 +16,7 @@ interface AvailableTeam {
   id: string;
   name: string;
   defaultProjectRole: string;
+  orgName?: string;
 }
 
 interface GrantProjectAccessFormProps {
@@ -77,7 +78,7 @@ export default function GrantProjectAccessForm({
               <SelectContent>
                 {availableTeams.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
-                    {t.name} (default: {t.defaultProjectRole})
+                    {t.name}{t.orgName ? ` (${t.orgName})` : ''} — default: {t.defaultProjectRole}
                   </SelectItem>
                 ))}
               </SelectContent>

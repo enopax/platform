@@ -41,9 +41,29 @@ export default async function AddProjectAccessPage({ params }: AddProjectAccessP
   const accessRows = await store.projectAccess.findByProjectId(project.id);
   const grantedTeamIds = new Set(accessRows.map((r) => r.teamId));
   const allTeams = await store.teams.findByOrgId(organisation.id);
-  const availableTeams = allTeams
-    .filter((t) => !grantedTeamIds.has(t.id))
-    .map((t) => ({ id: t.id, name: t.name, defaultProjectRole: t.defaultProjectRole }));
+
+  const shares = await store.projectShares.findByProjectId(project.id, 'ACTIVE');
+  const collabOrgShares = shares.filter(
+    (s) => s.sharedWithType === 'ORGANISATION' && (s.permission === 'CONTRIBUTE' || s.permission === 'MANAGE')
+  );
+  const collabTeamsWithOrg: { id: string; name: string; defaultProjectRole: string; orgName: string }[] = [];
+  for (const share of collabOrgShares) {
+    const teams = await store.teams.findByOrgId(share.sharedWithId);
+    const collabOrg = await store.organisations.findById(share.sharedWithId);
+    const orgName = collabOrg?.name ?? share.sharedWithId;
+    for (const t of teams) {
+      if (!grantedTeamIds.has(t.id)) {
+        collabTeamsWithOrg.push({ id: t.id, name: t.name, defaultProjectRole: t.defaultProjectRole, orgName });
+      }
+    }
+  }
+
+  const availableTeams = [
+    ...allTeams
+      .filter((t) => !grantedTeamIds.has(t.id))
+      .map((t) => ({ id: t.id, name: t.name, defaultProjectRole: t.defaultProjectRole, orgName: undefined as string | undefined })),
+    ...collabTeamsWithOrg,
+  ];
 
   return (
     <div>
