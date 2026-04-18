@@ -42,7 +42,7 @@ export const {
           name: user.name || null,
           email: user.email,
           image: user.image || undefined,
-          role: 'CUSTOMER',
+          role: 'GUEST',
         });
       }
 
