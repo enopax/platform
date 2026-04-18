@@ -117,11 +117,16 @@ export default async function Page() {
         <Container>
           <div className="max-w-2xl mx-auto text-center px-4">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Ready to deploy?
+              Interested in how K8s deployments are done in the future?
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              Provision your first cluster in minutes.
+            <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
+              Register to send a request and stay up to date.
             </p>
+            <Link href="/register">
+              <Button className="px-8 py-3 text-lg font-semibold">
+                Register
+              </Button>
+            </Link>
           </div>
         </Container>
       </section>
