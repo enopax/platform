@@ -45,7 +45,7 @@ export default async function NamespacePage({ params }: NamespacePageProps) {
     return (
       <main className="p-8">
         <h1 className="text-2xl font-bold">{user.name || user.slug}</h1>
-        <p className="text-gray-500 mt-2">Personal projects coming soon</p>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">Personal projects coming soon</p>
       </main>
     );
   }

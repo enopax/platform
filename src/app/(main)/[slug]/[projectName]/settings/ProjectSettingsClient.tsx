@@ -118,17 +118,17 @@ export default function ProjectSettingsClient({ currentUserId }: ProjectSettings
 
             <div className="space-y-3 text-sm">
               <div>
-                <span className="text-gray-500">Organisation:</span>
+                <span className="text-gray-500 dark:text-gray-400">Organisation:</span>
                 <span className="ml-2 font-medium text-gray-900 dark:text-white">{organisation.name}</span>
               </div>
 
               <div>
-                <span className="text-gray-500">Progress:</span>
+                <span className="text-gray-500 dark:text-gray-400">Progress:</span>
                 <span className="ml-2 font-medium text-gray-900 dark:text-white">{project.progress}%</span>
               </div>
 
               <div>
-                <span className="text-gray-500">Created:</span>
+                <span className="text-gray-500 dark:text-gray-400">Created:</span>
                 <span className="ml-2 font-medium text-gray-900 dark:text-white">
                   {new Date(project.createdAt).toLocaleDateString('en-GB', {
                     year: 'numeric',
@@ -139,7 +139,7 @@ export default function ProjectSettingsClient({ currentUserId }: ProjectSettings
               </div>
 
               <div>
-                <span className="text-gray-500">Last Updated:</span>
+                <span className="text-gray-500 dark:text-gray-400">Last Updated:</span>
                 <span className="ml-2 font-medium text-gray-900 dark:text-white">
                   {new Date(project.updatedAt).toLocaleDateString('en-GB', {
                     year: 'numeric',
@@ -151,7 +151,7 @@ export default function ProjectSettingsClient({ currentUserId }: ProjectSettings
 
               {project.description && (
                 <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <span className="text-gray-500">Description:</span>
+                  <span className="text-gray-500 dark:text-gray-400">Description:</span>
                   <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{project.description}</p>
                 </div>
               )}

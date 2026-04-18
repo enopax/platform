@@ -150,14 +150,14 @@ export default function AddResourcePage() {
 
             <div className="space-y-3 text-sm">
               <div>
-                <span className="text-gray-500">Project Name:</span>
+                <span className="text-gray-500 dark:text-gray-400">Project Name:</span>
                 <span className="ml-2 font-medium text-gray-900 dark:text-white">
                   {project.name}
                 </span>
               </div>
 
               <div>
-                <span className="text-gray-500">Organisation:</span>
+                <span className="text-gray-500 dark:text-gray-400">Organisation:</span>
                 <span className="ml-2 font-medium text-gray-900 dark:text-white">
                   {organisation.name}
                 </span>
@@ -165,7 +165,7 @@ export default function AddResourcePage() {
 
               {project.description && (
                 <div>
-                  <span className="text-gray-500">Description:</span>
+                  <span className="text-gray-500 dark:text-gray-400">Description:</span>
                   <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
                     {project.description}
                   </p>

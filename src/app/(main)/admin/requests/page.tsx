@@ -35,7 +35,7 @@ export default async function RequestsAdminPage() {
         <Headline>Guest Requests ({requests.length})</Headline>
 
         {requests.length === 0 ? (
-          <p className="text-gray-500 text-center py-12">No requests yet</p>
+          <p className="text-gray-500 dark:text-gray-400 text-center py-12">No requests yet</p>
         ) : (
           <div className="space-y-4 mt-6">
             {requests.map((req, i) => (
@@ -43,9 +43,9 @@ export default async function RequestsAdminPage() {
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <span className="font-medium text-gray-900 dark:text-white">{req.name || 'Anonymous'}</span>
-                    <span className="ml-2 text-sm text-gray-500">{req.email}</span>
+                    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">{req.email}</span>
                   </div>
-                  <span className="text-xs text-gray-400">{new Date(req.createdAt).toLocaleString('en-GB')}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(req.createdAt).toLocaleString('en-GB')}</span>
                 </div>
                 <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{req.message}</p>
               </Card>
