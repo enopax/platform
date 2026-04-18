@@ -22,7 +22,7 @@ export default async function Page() {
     <main>
       <section className="mx-auto max-w-6xl">
         <Container>
-          <div className="relative w-full py-24 md:py-36">
+          <div className="relative w-full py-16 md:py-20">
             <div className="max-w-3xl mx-auto text-center px-4">
               <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
                 Managed Kubernetes.
