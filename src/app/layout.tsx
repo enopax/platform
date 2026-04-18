@@ -15,7 +15,7 @@ const geist = Geist({
 
 
 export const metadata: Metadata = {
-  title: 'Enopax — European Kubernetes Infrastructure',
+  title: 'Enopax — European Infrastructure',
   description: process.env.NEXT_PUBLIC_META_DESC,
   openGraph: {
     images: [process.env.NEXT_PUBLIC_OG_IMAGE || ''],
