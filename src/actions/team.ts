@@ -342,7 +342,7 @@ export async function grantProjectAccess(
         'ORGANISATION',
         team.organisationId
       );
-      if (!share || (share.permission !== 'CONTRIBUTE' && share.permission !== 'MANAGE')) {
+      if (!share || share.status !== 'ACTIVE' || (share.permission !== 'CONTRIBUTE' && share.permission !== 'MANAGE')) {
         return {
           error: 'Team does not belong to the same organisation as the project',
           fieldErrors: { teamId: 'Team must belong to the same organisation or a collaborating organisation' },

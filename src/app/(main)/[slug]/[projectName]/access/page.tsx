@@ -68,7 +68,7 @@ export default async function ProjectAccessPage({ params }: ProjectAccessPagePro
   const grantedTeamIds = new Set(accessRows.map((r) => r.teamId));
   const allTeams = await store.teams.findByOrgId(organisation.id);
 
-  const shares = await store.projectShares.findByProjectId(project.id);
+  const shares = await store.projectShares.findByProjectId(project.id, 'ACTIVE');
   const collabOrgShares = shares.filter(
     (s) => s.sharedWithType === 'ORGANISATION' && (s.permission === 'CONTRIBUTE' || s.permission === 'MANAGE')
   );

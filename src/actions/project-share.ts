@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { getStoreAsync } from '@/lib/store';
 import type { SharePermission } from '@/lib/store';
+import { sendShareInvitationEmail } from '@/lib/share-invitations';
 
 const VALID_PERMISSIONS: SharePermission[] = ['VIEW', 'CONTRIBUTE', 'MANAGE'];
 
@@ -82,7 +83,6 @@ export async function shareProject(
       };
     }
 
-    const hostOrg = await store.organisations.findById(project.organisationId);
     if (
       namespace.entityType === 'ORGANISATION' &&
       namespace.entityId === project.organisationId
@@ -98,7 +98,7 @@ export async function shareProject(
       namespace.entityType as 'USER' | 'ORGANISATION',
       namespace.entityId
     );
-    if (existing) {
+    if (existing && existing.status !== 'REVOKED' && existing.status !== 'DECLINED') {
       return {
         error: 'This project is already shared with that organisation or user',
         fieldErrors: { slug: 'Already shared with this entity' },
@@ -113,9 +113,40 @@ export async function shareProject(
       sharedBy: session.user.id,
     });
 
-    const org = await store.organisations.findById(project.organisationId);
-    if (org) {
-      revalidatePath(`/${org.name}/${project.name}/share`);
+    const hostOrg2 = await store.organisations.findById(project.organisationId);
+
+    if (namespace.entityType === 'ORGANISATION') {
+      const collabOrg = await store.organisations.findById(namespace.entityId);
+      if (collabOrg) {
+        const members = await store.organisationMembers.findByOrgId(collabOrg.id);
+        const ownerMember = members.find((m) => m.role === 'OWNER');
+        if (ownerMember) {
+          const ownerUser = await store.users.findById(ownerMember.userId);
+          if (ownerUser) {
+            await sendShareInvitationEmail(
+              ownerUser.email,
+              project.name,
+              hostOrg2?.name ?? project.organisationId,
+              permission as SharePermission,
+              collabOrg.name,
+            ).catch(() => {});
+          }
+        }
+      }
+    } else {
+      const targetUser = await store.users.findById(namespace.entityId);
+      if (targetUser) {
+        await sendShareInvitationEmail(
+          targetUser.email,
+          project.name,
+          hostOrg2?.name ?? project.organisationId,
+          permission as SharePermission,
+        ).catch(() => {});
+      }
+    }
+
+    if (hostOrg2) {
+      revalidatePath(`/${hostOrg2.name}/${project.name}/share`);
     }
 
     return { success: true };
@@ -224,5 +255,99 @@ export async function revokeShare(
     return { success: true };
   } catch {
     return { success: false, error: 'Failed to revoke share. Please try again.' };
+  }
+}
+
+export async function acceptShare(
+  shareId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: 'Authentication required' };
+    }
+
+    const store = await getStoreAsync();
+
+    const share = await store.projectShares.findById(shareId);
+    if (!share) {
+      return { success: false, error: 'Share invitation not found' };
+    }
+
+    if (share.status !== 'INVITED') {
+      return { success: false, error: 'This invitation is no longer pending' };
+    }
+
+    if (share.sharedWithType === 'ORGANISATION') {
+      const membership = await store.organisationMembers.findByUserAndOrg(
+        session.user.id,
+        share.sharedWithId
+      );
+      const isOrgAdmin =
+        session.user.role === 'ADMIN' ||
+        (membership && ['OWNER', 'ADMIN'].includes(membership.role));
+      if (!isOrgAdmin) {
+        return { success: false, error: 'You do not have permission to accept this invitation' };
+      }
+    } else if (share.sharedWithType === 'USER') {
+      if (session.user.id !== share.sharedWithId && session.user.role !== 'ADMIN') {
+        return { success: false, error: 'You do not have permission to accept this invitation' };
+      }
+    }
+
+    await store.projectShares.updateStatus(shareId, 'ACTIVE');
+
+    revalidatePath(`/${session.user.id}/invitations`);
+
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Failed to accept invitation. Please try again.' };
+  }
+}
+
+export async function declineShare(
+  shareId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: 'Authentication required' };
+    }
+
+    const store = await getStoreAsync();
+
+    const share = await store.projectShares.findById(shareId);
+    if (!share) {
+      return { success: false, error: 'Share invitation not found' };
+    }
+
+    if (share.status !== 'INVITED') {
+      return { success: false, error: 'This invitation is no longer pending' };
+    }
+
+    if (share.sharedWithType === 'ORGANISATION') {
+      const membership = await store.organisationMembers.findByUserAndOrg(
+        session.user.id,
+        share.sharedWithId
+      );
+      const isOrgAdmin =
+        session.user.role === 'ADMIN' ||
+        (membership && ['OWNER', 'ADMIN'].includes(membership.role));
+      if (!isOrgAdmin) {
+        return { success: false, error: 'You do not have permission to decline this invitation' };
+      }
+    } else if (share.sharedWithType === 'USER') {
+      if (session.user.id !== share.sharedWithId && session.user.role !== 'ADMIN') {
+        return { success: false, error: 'You do not have permission to decline this invitation' };
+      }
+    }
+
+    await store.projectShares.updateStatus(shareId, 'DECLINED');
+
+    revalidatePath(`/${session.user.id}/invitations`);
+
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Failed to decline invitation. Please try again.' };
   }
 }

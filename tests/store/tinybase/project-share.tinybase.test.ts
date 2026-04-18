@@ -75,7 +75,7 @@ describe('TinyBaseProjectShareRepository', () => {
     expect(updated.sharedWithId).toBe('org-2');
   });
 
-  it('revokes a share', async () => {
+  it('revokes a share (soft delete — sets status to REVOKED)', async () => {
     const share = await repo.create({
       projectId: 'proj-1',
       sharedWithType: 'ORGANISATION',
@@ -87,9 +87,73 @@ describe('TinyBaseProjectShareRepository', () => {
     await repo.revoke(share.id);
 
     const found = await repo.findById(share.id);
-    expect(found).toBeNull();
+    expect(found).not.toBeNull();
+    expect(found!.status).toBe('REVOKED');
 
-    const shares = await repo.findByProjectId('proj-1');
-    expect(shares).toHaveLength(0);
+    const activeShares = await repo.findByProjectId('proj-1', 'ACTIVE');
+    expect(activeShares).toHaveLength(0);
+
+    const allShares = await repo.findByProjectId('proj-1');
+    expect(allShares).toHaveLength(1);
+    expect(allShares[0].status).toBe('REVOKED');
+  });
+
+  it('new shares start as INVITED status', async () => {
+    const share = await repo.create({
+      projectId: 'proj-1',
+      sharedWithType: 'ORGANISATION',
+      sharedWithId: 'org-2',
+      permission: 'CONTRIBUTE',
+      sharedBy: 'admin',
+    });
+    expect(share.status).toBe('INVITED');
+  });
+
+  it('updateStatus changes status', async () => {
+    const share = await repo.create({
+      projectId: 'proj-1',
+      sharedWithType: 'ORGANISATION',
+      sharedWithId: 'org-2',
+      permission: 'VIEW',
+      sharedBy: 'admin',
+    });
+
+    const updated = await repo.updateStatus(share.id, 'ACTIVE');
+    expect(updated.status).toBe('ACTIVE');
+  });
+
+  it('findSharedWithEntity can filter by status', async () => {
+    const share = await repo.create({ projectId: 'proj-1', sharedWithType: 'ORGANISATION', sharedWithId: 'org-2', permission: 'VIEW', sharedBy: 'admin' });
+    await repo.updateStatus(share.id, 'ACTIVE');
+    await repo.create({ projectId: 'proj-2', sharedWithType: 'ORGANISATION', sharedWithId: 'org-2', permission: 'VIEW', sharedBy: 'admin' });
+
+    const activeOnly = await repo.findSharedWithEntity('ORGANISATION', 'org-2', 'ACTIVE');
+    expect(activeOnly).toHaveLength(1);
+    expect(activeOnly[0].projectId).toBe('proj-1');
+
+    const invitedOnly = await repo.findSharedWithEntity('ORGANISATION', 'org-2', 'INVITED');
+    expect(invitedOnly).toHaveLength(1);
+    expect(invitedOnly[0].projectId).toBe('proj-2');
+  });
+
+  it('allows re-sharing after revoke', async () => {
+    const share = await repo.create({
+      projectId: 'proj-1',
+      sharedWithType: 'ORGANISATION',
+      sharedWithId: 'org-2',
+      permission: 'VIEW',
+      sharedBy: 'admin',
+    });
+    await repo.revoke(share.id);
+
+    const reshared = await repo.create({
+      projectId: 'proj-1',
+      sharedWithType: 'ORGANISATION',
+      sharedWithId: 'org-2',
+      permission: 'MANAGE',
+      sharedBy: 'admin',
+    });
+    expect(reshared.status).toBe('INVITED');
+    expect(reshared.permission).toBe('MANAGE');
   });
 });

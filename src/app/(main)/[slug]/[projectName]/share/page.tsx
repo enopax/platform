@@ -101,20 +101,37 @@ export default async function ProjectSharePage({ params }: ProjectSharePageProps
                       <p className="font-semibold text-gray-900 dark:text-white">
                         {share.entityName}
                       </p>
-                      <Badge variant="default" className="text-xs">
-                        {share.sharedWithType}
-                      </Badge>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="default" className="text-xs">
+                          {share.sharedWithType}
+                        </Badge>
+                        <Badge
+                          variant={
+                            share.status === 'ACTIVE' ? 'success' :
+                            share.status === 'INVITED' ? 'warning' :
+                            share.status === 'DECLINED' ? 'error' :
+                            'default'
+                          }
+                          className="text-xs"
+                        >
+                          {share.status}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <ChangeSharePermissionForm
-                      shareId={share.id}
-                      currentPermission={share.permission}
-                    />
-                    <RevokeShareButton
-                      shareId={share.id}
-                      entityName={share.entityName}
-                    />
+                    {share.status === 'ACTIVE' && (
+                      <ChangeSharePermissionForm
+                        shareId={share.id}
+                        currentPermission={share.permission}
+                      />
+                    )}
+                    {(share.status === 'ACTIVE' || share.status === 'INVITED') && (
+                      <RevokeShareButton
+                        shareId={share.id}
+                        entityName={share.entityName}
+                      />
+                    )}
                   </div>
                 </li>
               ))}
