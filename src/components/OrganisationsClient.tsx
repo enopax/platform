@@ -36,38 +36,24 @@ export function OrganisationsClient({
   return (
     <div className="max-w-7xl mx-auto px-4">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <RiBuildingLine className="h-6 w-6 text-brand-600 dark:text-brand-400" />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                My Organisations
-              </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          My Organisations
+        </h1>
+        <div className="flex items-center gap-3">
+          {organisations.length > 0 && (
+            <div className="w-64">
+              <OrganisationSearchSection />
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {organisations.length === 0
-                ? 'Create your first organisation to get started'
-                : `${organisations.length} organisation${organisations.length !== 1 ? 's' : ''}`}
-            </p>
-          </div>
-          <div className="flex-shrink-0">
-            <Link href="/orga/new">
-              <Button>
-                <RiAddLine className="mr-2 h-4 w-4" />
-                New Organisation
-              </Button>
-            </Link>
-          </div>
+          )}
+          <Link href="/orga/new">
+            <Button>
+              <RiAddLine className="mr-2 h-4 w-4" />
+              New Organisation
+            </Button>
+          </Link>
         </div>
       </div>
-
-      {/* Search Section */}
-      {organisations.length > 0 && (
-        <div className="mb-8">
-          <OrganisationSearchSection />
-        </div>
-      )}
 
       {/* Organisations Grid */}
       {organisations.length > 0 ? (
