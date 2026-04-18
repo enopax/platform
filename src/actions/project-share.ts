@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { getStoreAsync } from '@/lib/store';
 import type { SharePermission } from '@/lib/store';
 import { sendShareInvitationEmail } from '@/lib/share-invitations';
+import { logAudit } from '@/lib/audit';
 
 const VALID_PERMISSIONS: SharePermission[] = ['VIEW', 'CONTRIBUTE', 'MANAGE'];
 
@@ -105,12 +106,24 @@ export async function shareProject(
       };
     }
 
-    await store.projectShares.create({
+    const newShare = await store.projectShares.create({
       projectId,
       sharedWithType: namespace.entityType as 'USER' | 'ORGANISATION',
       sharedWithId: namespace.entityId,
       permission: permission as SharePermission,
       sharedBy: session.user.id,
+    });
+
+    logAudit({
+      userId: session.user.id,
+      action: 'share-created',
+      entityType: 'project-share',
+      entityId: newShare.id,
+      details: {
+        projectId,
+        targetSlug: slug,
+        permission,
+      },
     });
 
     const hostOrg2 = await store.organisations.findById(project.organisationId);
@@ -247,6 +260,14 @@ export async function revokeShare(
 
     await store.projectShares.revoke(shareId);
 
+    logAudit({
+      userId: session.user.id,
+      action: 'share-revoked',
+      entityType: 'project-share',
+      entityId: shareId,
+      details: { projectId: share.projectId },
+    });
+
     const org = await store.organisations.findById(project.organisationId);
     if (org) {
       revalidatePath(`/${org.name}/${project.name}/share`);
@@ -297,6 +318,14 @@ export async function acceptShare(
 
     await store.projectShares.updateStatus(shareId, 'ACTIVE');
 
+    logAudit({
+      userId: session.user.id,
+      action: 'share-accepted',
+      entityType: 'project-share',
+      entityId: shareId,
+      details: { projectId: share.projectId },
+    });
+
     revalidatePath(`/${session.user.id}/invitations`);
 
     return { success: true };
@@ -344,10 +373,118 @@ export async function declineShare(
 
     await store.projectShares.updateStatus(shareId, 'DECLINED');
 
+    logAudit({
+      userId: session.user.id,
+      action: 'share-declined',
+      entityType: 'project-share',
+      entityId: shareId,
+      details: { projectId: share.projectId },
+    });
+
     revalidatePath(`/${session.user.id}/invitations`);
 
     return { success: true };
   } catch {
     return { success: false, error: 'Failed to decline invitation. Please try again.' };
+  }
+}
+
+export interface TransferProjectState {
+  success?: boolean;
+  error?: string;
+  fieldErrors?: { targetSlug?: string };
+  newOrgName?: string;
+}
+
+export async function transferProject(
+  projectId: string,
+  prevState: TransferProjectState,
+  formData: FormData
+): Promise<TransferProjectState> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { error: 'Authentication required' };
+    }
+
+    const targetSlug = (formData.get('targetSlug') as string)?.trim();
+
+    if (!targetSlug) {
+      return {
+        error: 'Target organisation slug is required',
+        fieldErrors: { targetSlug: 'Target organisation slug is required' },
+      };
+    }
+
+    const store = await getStoreAsync();
+
+    const project = await store.projects.findById(projectId);
+    if (!project) {
+      return { error: 'Project not found' };
+    }
+
+    const orgMembership = await store.organisationMembers.findByUserAndOrg(
+      session.user.id,
+      project.organisationId
+    );
+    const isOwner =
+      session.user.role === 'ADMIN' ||
+      (orgMembership && orgMembership.role === 'OWNER');
+
+    if (!isOwner) {
+      return { error: 'Only the organisation owner can transfer a project' };
+    }
+
+    let targetNamespace = await store.namespaces.findBySlug(targetSlug);
+
+    if (!targetNamespace) {
+      const orgByName = await store.organisations.findByName(targetSlug);
+      if (orgByName) {
+        targetNamespace = await store.namespaces.findByEntity('ORGANISATION', orgByName.id);
+      }
+    }
+
+    if (!targetNamespace || targetNamespace.entityType !== 'ORGANISATION') {
+      return {
+        error: 'No organisation found with this slug',
+        fieldErrors: { targetSlug: 'No organisation found with this slug' },
+      };
+    }
+
+    const targetOrgId = targetNamespace.entityId;
+
+    if (targetOrgId === project.organisationId) {
+      return {
+        error: 'Project already belongs to this organisation',
+        fieldErrors: { targetSlug: 'Project already belongs to this organisation' },
+      };
+    }
+
+    const targetOrg = await store.organisations.findById(targetOrgId);
+    if (!targetOrg) {
+      return { error: 'Target organisation not found' };
+    }
+
+    await store.projectAccess.revokeAllForProject(projectId);
+    await store.projectShares.revokeAllForProject(projectId);
+    await store.projects.transferToOrg(projectId, targetOrgId);
+
+    logAudit({
+      userId: session.user.id,
+      action: 'project-transferred',
+      entityType: 'project-transfer',
+      entityId: projectId,
+      details: {
+        fromOrgId: project.organisationId,
+        toOrgId: targetOrgId,
+        toOrgName: targetOrg.name,
+      },
+    });
+
+    revalidatePath('/');
+
+    return { success: true, newOrgName: targetOrg.name };
+  } catch {
+    return { error: 'Failed to transfer project. Please try again.' };
   }
 }

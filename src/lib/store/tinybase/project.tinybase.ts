@@ -149,6 +149,18 @@ export class TinyBaseProjectRepository implements IProjectRepository {
     return rowToProject(id, this.store.getRow(TABLE, id));
   }
 
+  async transferToOrg(id: string, targetOrgId: string): Promise<Project> {
+    const row = this.store.getRow(TABLE, id);
+    if (!row.name) throw new Error(`Project ${id} not found`);
+
+    this.store.setCell(TABLE, id, 'organisationId', targetOrgId);
+    this.store.setCell(TABLE, id, 'ownerType', 'ORGANISATION');
+    this.store.setCell(TABLE, id, 'ownerId', targetOrgId);
+    this.store.setCell(TABLE, id, 'updatedAt', new Date().toISOString());
+
+    return rowToProject(id, this.store.getRow(TABLE, id));
+  }
+
   async search(query: string, limit: number = 10): Promise<Project[]> {
     const q = query.toLowerCase();
     let results: Project[] = [];
