@@ -1,57 +1,60 @@
 import Container from '@/components/common/Container';
 import Headline from '@/components/common/Headline';
-import { Button } from '@/components/common/Button';
-import Table from '@/components/GenericTable';
-import { columns } from '@/components/table/Project';
+import { Badge } from '@/components/common/Badge';
 import { getStoreAsync } from '@/lib/store';
 import Link from 'next/link';
 
-export default async function ProjectAdminPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string }>,
-}) {
-  const size = 20;
-  const { page = '1' } = await searchParams;
-  const pageNumber = Number(page);
-
+export default async function ProjectAdminPage() {
   const store = await getStoreAsync();
-  const allProjects = await store.projects.search('', 10000);
-  const count = allProjects.length;
+  const allOrgs = await store.organisations.search('', 10000);
 
-  const sorted = allProjects.sort((a, b) =>
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  const projectsByOrg = await Promise.all(
+    allOrgs.map(async (org) => {
+      const projects = await store.projects.findByOrgId(org.id);
+      return { org, projects };
+    })
   );
-  const projectsRaw = sorted.slice((pageNumber - 1) * size, pageNumber * size);
 
-  // Convert Decimal to string for client components
-  const projects = projectsRaw.map(project => ({
-    ...project,
-    budget: project.budget?.toString() || null,
-  }));
+  const totalProjects = projectsByOrg.reduce((sum, { projects }) => sum + projects.length, 0);
 
   return (
     <main className="mt-4">
       <Container>
-        <div className="flex items-center justify-between mb-6">
-          <Headline>All Projects</Headline>
-          <Link href="/admin/project/new">
-            <Button>Add Project</Button>
-          </Link>
-        </div>
+        <Headline>All Projects ({totalProjects})</Headline>
 
-        {count ? (
-          <Table
-            pageNumber={pageNumber}
-            tableSize={count}
-            tableData={projects}
-            tableColumns={columns}
-          />
-        ): (
-          <p className="my-20">
-            No projects available
-          </p>
-        )}
+        <div className="space-y-6 mt-6">
+          {projectsByOrg.filter(({ projects }) => projects.length > 0).map(({ org, projects }) => (
+            <div key={org.id}>
+              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                {org.name} ({projects.length})
+              </h2>
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
+                {projects.map((project) => (
+                  <Link key={project.id} href={`/${org.name}/${project.name}`} className="block hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div className="px-4 py-3 flex items-center justify-between">
+                      <div>
+                        <span className="font-medium text-gray-900 dark:text-white">{project.name}</span>
+                        {project.description && (
+                          <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">{project.description}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={project.status === 'ACTIVE' ? 'success' : 'warning'}>
+                          {project.status}
+                        </Badge>
+                        <span className="text-xs text-gray-400">{project.createdAt.toLocaleDateString('en-GB')}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {totalProjects === 0 && (
+            <p className="text-gray-500 text-center py-12">No projects yet</p>
+          )}
+        </div>
       </Container>
     </main>
   );

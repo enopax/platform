@@ -14,9 +14,23 @@ export async function sendGuestMessage(message: string): Promise<{ success: bool
     return { success: false, error: 'Not authenticated' };
   }
 
+  const fs = await import('fs');
+  const path = await import('path');
+  const dataDir = process.env.DATA_DIR || path.join(process.cwd(), 'data');
+  const requestsDir = path.join(dataDir, 'guest-requests');
+  fs.mkdirSync(requestsDir, { recursive: true });
+  const timestamp = new Date().toISOString();
+  const filename = `${Date.now()}-${session.user.id.slice(0, 8)}.json`;
+  fs.writeFileSync(path.join(requestsDir, filename), JSON.stringify({
+    userId: session.user.id,
+    email: session.user.email,
+    name: session.user.name || '',
+    message,
+    createdAt: timestamp,
+  }, null, 2), { mode: 0o600 });
+
   const emailServer = process.env.EMAIL_SERVER;
   if (!emailServer) {
-    console.log(`[GUEST MESSAGE] From: ${session.user.email}, Message: ${message}`);
     return { success: true };
   }
 
