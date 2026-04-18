@@ -6,6 +6,47 @@ import { auth, signIn } from '@/lib/auth';
 import { getStoreAsync } from '@/lib/store';
 import type { UserRole } from '@/lib/store';
 import { userService } from '@/lib/services/user';
+import nodemailer from 'nodemailer';
+
+export async function sendGuestMessage(message: string): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id || !session?.user?.email) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  const emailServer = process.env.EMAIL_SERVER;
+  if (!emailServer) {
+    console.log(`[GUEST MESSAGE] From: ${session.user.email}, Message: ${message}`);
+    return { success: true };
+  }
+
+  try {
+    const transporter = nodemailer.createTransport(emailServer);
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM || 'noreply@enopax.com',
+      to: 'register@enopax.com',
+      replyTo: session.user.email,
+      subject: `Early access message from ${session.user.name || session.user.email}`,
+      html: `
+        <div style="max-width:500px; margin:0 auto; font-family:Arial,sans-serif; padding:40px 20px;">
+          <h2 style="color:#1f2937; margin-bottom:16px;">New message from early access user</h2>
+          <table style="width:100%; border-collapse:collapse; margin-bottom:24px;">
+            <tr><td style="padding:8px 0; color:#6b7280;">From</td><td style="padding:8px 0; font-weight:600;">${session.user.name || '-'}</td></tr>
+            <tr><td style="padding:8px 0; color:#6b7280;">Email</td><td style="padding:8px 0; font-weight:600;">${session.user.email}</td></tr>
+          </table>
+          <div style="background:#f3f4f6; border-radius:8px; padding:16px; margin-bottom:24px;">
+            <p style="color:#374151; white-space:pre-wrap; margin:0;">${message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+          </div>
+          <p style="color:#9ca3af; font-size:13px;">Reply directly to this email to respond to the user.</p>
+        </div>
+      `,
+    });
+    return { success: true };
+  } catch (e) {
+    console.error('Failed to send guest message:', e);
+    return { success: false, error: 'Failed to send message' };
+  }
+}
 
 export async function sendCredentials(state: object | null, formData: FormData) {
   try {
