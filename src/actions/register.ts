@@ -5,6 +5,7 @@ import { createDexUser, generateUserIdFromEmail } from '@/lib/dex/client';
 import { getStoreAsync } from '@/lib/store';
 import { createVerificationToken, sendVerificationEmail } from '@/lib/email-verification';
 import { isBlockedName } from '@/lib/name-validation';
+import { sendAdminRegistrationNotification } from '@/lib/admin-notifications';
 
 export interface RegisterState {
   success?: boolean;
@@ -72,15 +73,18 @@ export async function register(
         name,
         email,
         slug: username,
-        role: 'CUSTOMER',
+        role: 'GUEST',
       });
     }
 
     await store.namespaces.register({ slug: username, entityType: 'USER', entityId: user.id });
 
-    // Send verification email
+    // Send verification email to user
     const token = await createVerificationToken(user.id, email);
     await sendVerificationEmail(email, token);
+
+    // Notify admins about new registration
+    await sendAdminRegistrationNotification(user.id, email, name || username);
 
     const inviteToken = (formData.get('inviteToken') as string)?.trim();
     const redirectTo = inviteToken ? `/accept-invite?token=${inviteToken}` : '/';
