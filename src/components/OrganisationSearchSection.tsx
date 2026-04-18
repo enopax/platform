@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/common/Card';
+import { useState } from 'react';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import OrganisationSearch from '@/components/search/OrganisationSearch';
 import { getUserJoinRequestStatus, createJoinRequest } from '@/actions/organisationJoinRequest';
 import {
-  RiSearchLine,
   RiBuildingLine,
   RiUserLine,
   RiProjectorLine,
@@ -42,7 +40,6 @@ type SearchableOrganisation = {
 
 export default function OrganisationSearchSection() {
   const [searchResult, setSearchResult] = useState<SearchableOrganisation | null>(null);
-  const [showSearch, setShowSearch] = useState(false);
   const [joinRequestStatus, setJoinRequestStatus] = useState<OrganisationJoinRequest | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
@@ -54,7 +51,6 @@ export default function OrganisationSearchSection() {
 
   const clearSearch = () => {
     setSearchResult(null);
-    setShowSearch(false);
     setJoinRequestStatus(null);
   };
 
@@ -120,143 +116,114 @@ export default function OrganisationSearchSection() {
   };
 
   return (
-    <div className="mb-8">
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Find Organisations
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Search for organisations to view their details or request membership
-            </p>
-          </div>
-          {!showSearch && (
-            <Button 
-              variant="outline" 
-              onClick={() => setShowSearch(true)}
-            >
-              <RiSearchLine className="mr-2 h-4 w-4" />
-              Search
-            </Button>
-          )}
-        </div>
+    <div>
+      <OrganisationSearch
+        setResult={handleSearchResult}
+        placeholder="Search organisations..."
+      />
 
-        {showSearch && (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <OrganisationSearch
-                  setResult={handleSearchResult}
-                  placeholder="Search organisations by name or description..."
-                />
+      {searchResult && (
+        <div className="absolute right-0 mt-2 w-80 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg z-50">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center">
+              <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg mr-3">
+                <RiBuildingLine className="w-5 h-5 text-brand-600 dark:text-brand-400" />
               </div>
-              <Button variant="outline" onClick={clearSearch}>
-                Cancel
-              </Button>
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white">
+                  {searchResult.name}
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Owner: {searchResult.owner.name ||
+                         `${searchResult.owner.firstname || ''} ${searchResult.owner.lastname || ''}`.trim() ||
+                         searchResult.owner.email}
+                </p>
+              </div>
             </div>
+          </div>
 
-            {searchResult && (
-              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center">
-                    <div className="p-2 bg-brand-100 dark:bg-brand-900/30 rounded-lg mr-3">
-                      <RiBuildingLine className="w-5 h-5 text-brand-600 dark:text-brand-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white">
-                        {searchResult.name}
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Owner: {searchResult.owner.name || 
-                               `${searchResult.owner.firstname || ''} ${searchResult.owner.lastname || ''}`.trim() || 
-                               searchResult.owner.email}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="secondary">
-                    Organisation
-                  </Badge>
-                </div>
+          {searchResult.description && (
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+              {searchResult.description}
+            </p>
+          )}
 
-                {searchResult.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                    {searchResult.description}
-                  </p>
+          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-4">
+            <div className="flex items-center">
+              <RiUserLine className="h-3 w-3 mr-1" />
+              <span className="font-medium">{searchResult._count.members}</span>
+              <span className="ml-1">members</span>
+            </div>
+            <div className="flex items-center">
+              <RiProjectorLine className="h-3 w-3 mr-1" />
+              <span className="font-medium">{searchResult._count.projects}</span>
+              <span className="ml-1">projects</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {joinRequestStatus ? (
+              <>
+                {getJoinRequestBadge(joinRequestStatus.status)}
+                {joinRequestStatus.status === 'REJECTED' && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleJoinRequest}
+                    disabled={isRequesting}
+                    isLoading={isRequesting}
+                  >
+                    <RiUserAddLine className="mr-1 h-3 w-3" />
+                    {isRequesting ? 'Requesting...' : 'Request Again'}
+                  </Button>
                 )}
-
-                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
-                  <div className="flex items-center">
-                    <RiUserLine className="h-3 w-3 mr-1" />
-                    <span className="font-medium">{searchResult._count.members}</span>
-                    <span className="ml-1">members</span>
-                  </div>
-                  <div className="flex items-center">
-                    <RiProjectorLine className="h-3 w-3 mr-1" />
-                    <span className="font-medium">{searchResult._count.projects}</span>
-                    <span className="ml-1">projects</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2">
-                  {joinRequestStatus ? (
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      {getJoinRequestBadge(joinRequestStatus.status)}
-                      {joinRequestStatus.status === 'REJECTED' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleJoinRequest}
-                          disabled={isRequesting}
-                          isLoading={isRequesting}
-                        >
-                          <RiUserAddLine className="mr-1 h-3 w-3" />
-                          {isRequesting ? 'Requesting...' : 'Request Again'}
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleJoinRequest}
-                      disabled={loadingStatus || isRequesting}
-                      isLoading={isRequesting}
-                    >
-                      <RiUserAddLine className="mr-1 h-3 w-3" />
-                      {isRequesting ? 'Requesting...' : 'Request to Join'}
-                    </Button>
-                  )}
-                  {searchResult.website && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(
-                        searchResult.website!.startsWith('http') 
-                          ? searchResult.website! 
-                          : `https://${searchResult.website}`, 
-                        '_blank'
-                      )}
-                    >
-                      <RiExternalLinkLine className="mr-1 h-3 w-3" />
-                      Visit Website
-                    </Button>
-                  )}
-                  {searchResult.email && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.location.href = `mailto:${searchResult.email}`}
-                    >
-                      Contact
-                    </Button>
-                  )}
-                </div>
-              </div>
+              </>
+            ) : (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleJoinRequest}
+                disabled={loadingStatus || isRequesting}
+                isLoading={isRequesting}
+              >
+                <RiUserAddLine className="mr-1 h-3 w-3" />
+                {isRequesting ? 'Requesting...' : 'Request to Join'}
+              </Button>
+            )}
+            {searchResult.website && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => window.open(
+                  searchResult.website!.startsWith('http')
+                    ? searchResult.website!
+                    : `https://${searchResult.website}`,
+                  '_blank'
+                )}
+              >
+                <RiExternalLinkLine className="mr-1 h-3 w-3" />
+                Visit Website
+              </Button>
+            )}
+            {searchResult.email && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => window.location.href = `mailto:${searchResult.email}`}
+              >
+                Contact
+              </Button>
             )}
           </div>
-        )}
-      </Card>
+
+          <button
+            onClick={clearSearch}
+            className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <RiCloseLine className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

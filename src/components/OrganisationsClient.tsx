@@ -42,7 +42,7 @@ export function OrganisationsClient({
         </h1>
         <div className="flex items-center gap-3">
           {organisations.length > 0 && (
-            <div className="w-64">
+            <div className="relative w-64">
               <OrganisationSearchSection />
             </div>
           )}
