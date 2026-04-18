@@ -337,10 +337,17 @@ export async function grantProjectAccess(
     }
 
     if (team.organisationId !== project.organisationId) {
-      return {
-        error: 'Team does not belong to the same organisation as the project',
-        fieldErrors: { teamId: 'Team must belong to the same organisation' },
-      };
+      const share = await store.projectShares.findByProjectAndEntity(
+        projectId,
+        'ORGANISATION',
+        team.organisationId
+      );
+      if (!share || (share.permission !== 'CONTRIBUTE' && share.permission !== 'MANAGE')) {
+        return {
+          error: 'Team does not belong to the same organisation as the project',
+          fieldErrors: { teamId: 'Team must belong to the same organisation or a collaborating organisation' },
+        };
+      }
     }
 
     const orgMembership = await store.organisationMembers.findByUserAndOrg(session.user.id, project.organisationId);

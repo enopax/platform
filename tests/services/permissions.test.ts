@@ -76,4 +76,27 @@ describe('resolveProjectPermissions', () => {
     const result = await resolveProjectPermissions('stranger-999', project.id);
     expect(result).toBeNull();
   });
+
+  it('returns role from cross-org team on shared project', async () => {
+    const orgA = await store.organisations.create({ name: 'org-a', ownerId: 'owner-a' });
+    const orgB = await store.organisations.create({ name: 'org-b', ownerId: 'owner-b' });
+
+    const project = await store.projects.create({ name: 'shared-proj', organisationId: orgA.id });
+
+    await store.projectShares.create({
+      projectId: project.id,
+      sharedWithType: 'ORGANISATION',
+      sharedWithId: orgB.id,
+      permission: 'CONTRIBUTE',
+      sharedBy: 'owner-a',
+    });
+
+    const teamB = await store.teams.create({ organisationId: orgB.id, name: 'Dev', defaultProjectRole: 'DEVELOPER' });
+    await store.teamMembers.add({ teamId: teamB.id, userId: 'user-b', addedBy: 'owner-b' });
+
+    await store.projectAccess.grant({ projectId: project.id, teamId: teamB.id, role: 'DEVELOPER', grantedBy: 'owner-a' });
+
+    const result = await resolveProjectPermissions('user-b', project.id);
+    expect(result).toBe('DEVELOPER');
+  });
 });
