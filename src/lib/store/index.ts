@@ -34,6 +34,8 @@ export type {
   Resource,
   ProjectResource,
   ApiKey,
+  ProjectPermission,
+  ProjectRoleDefinition,
 } from './types';
 
 export { getStore, getStoreAsync, setStore, resetStore } from './data-store';
@@ -85,4 +87,7 @@ export type {
   CreateProjectShareData,
   INamespaceRepository,
   RegisterNamespaceData,
+  IProjectRoleRepository,
+  CreateProjectRoleData,
+  UpdateProjectRoleData,
 } from './repositories';

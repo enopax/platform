@@ -12,6 +12,7 @@ import type { ITeamRepository, ITeamMemberRepository } from './repositories/team
 import type { IProjectAccessRepository } from './repositories/project-access.repository';
 import type { IProjectShareRepository } from './repositories/project-share.repository';
 import type { INamespaceRepository } from './repositories/namespace.repository';
+import type { IProjectRoleRepository } from './repositories/project-role.repository';
 import { createStore } from 'tinybase';
 import { FileRecordPersister } from './tinybase/file-record-persister';
 import { TinyBaseUserRepository } from './tinybase/user.tinybase';
@@ -28,6 +29,7 @@ import { TinyBaseTeamRepository, TinyBaseTeamMemberRepository } from './tinybase
 import { TinyBaseProjectAccessRepository } from './tinybase/project-access.tinybase';
 import { TinyBaseProjectShareRepository } from './tinybase/project-share.tinybase';
 import { TinyBaseNamespaceRepository } from './tinybase/namespace.tinybase';
+import { TinyBaseProjectRoleRepository } from './tinybase/project-role.tinybase';
 import path from 'path';
 
 export interface DataStore {
@@ -50,6 +52,7 @@ export interface DataStore {
   teamMembers: ITeamMemberRepository;
   projectAccess: IProjectAccessRepository;
   projectShares: IProjectShareRepository;
+  projectRoles: IProjectRoleRepository;
   destroy(): Promise<void>;
 }
 
@@ -75,6 +78,7 @@ const TABLE_CONFIG = [
   { tableName: 'team-members', indexes: [{ name: 'teamId', cellId: 'teamId' }, { name: 'userId', cellId: 'userId' }] },
   { tableName: 'project-access', indexes: [{ name: 'projectId', cellId: 'projectId' }, { name: 'teamId', cellId: 'teamId' }] },
   { tableName: 'project-shares', indexes: [{ name: 'projectId', cellId: 'projectId' }, { name: 'sharedWithId', cellId: 'sharedWithId' }] },
+  { tableName: 'project-roles', indexes: [{ name: 'organisationId', cellId: 'organisationId' }] },
 ];
 
 let _store: DataStore | null = null;
@@ -107,6 +111,7 @@ async function createDataStore(): Promise<DataStore> {
     teamMembers: new TinyBaseTeamMemberRepository(tinyStore, persister),
     projectAccess: new TinyBaseProjectAccessRepository(tinyStore, persister),
     projectShares: new TinyBaseProjectShareRepository(tinyStore, persister),
+    projectRoles: new TinyBaseProjectRoleRepository(tinyStore, persister),
     async destroy() {
       await persister.destroy();
     },

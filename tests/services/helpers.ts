@@ -13,6 +13,7 @@ import { TinyBaseTeamRepository, TinyBaseTeamMemberRepository } from '@/lib/stor
 import { TinyBaseProjectAccessRepository } from '@/lib/store/tinybase/project-access.tinybase';
 import { TinyBaseProjectShareRepository } from '@/lib/store/tinybase/project-share.tinybase';
 import { TinyBaseNamespaceRepository } from '@/lib/store/tinybase/namespace.tinybase';
+import { TinyBaseProjectRoleRepository } from '@/lib/store/tinybase/project-role.tinybase';
 import type { DataStore } from '@/lib/store/data-store';
 
 export function createTestStore(): DataStore {
@@ -37,6 +38,7 @@ export function createTestStore(): DataStore {
     teamMembers: new TinyBaseTeamMemberRepository(store),
     projectAccess: new TinyBaseProjectAccessRepository(store),
     projectShares: new TinyBaseProjectShareRepository(store),
+    projectRoles: new TinyBaseProjectRoleRepository(store),
     async destroy() {},
   };
 }

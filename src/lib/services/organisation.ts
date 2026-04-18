@@ -2,6 +2,7 @@ import { getStoreAsync } from '@/lib/store';
 import type { Organisation, OrganisationRole } from '@/lib/store';
 import type { CreateOrganisationData, OrganisationWithMemberCount } from '@/lib/store/repositories/organisation.repository';
 import { validateNameFormat } from '../name-validation';
+import { seedBuiltInRoles } from '../seed-roles';
 
 export type { CreateOrganisationData };
 export type OrganisationInfo = OrganisationWithMemberCount;
@@ -24,6 +25,8 @@ export class OrganisationService {
         description: 'Default team — all organisation members',
         defaultProjectRole: 'DEVELOPER',
       });
+
+      await seedBuiltInRoles(organisation.id);
 
       try {
         const orgSlug = organisation.slug || organisation.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
