@@ -40,7 +40,7 @@ export default function UserBar({ user }: TopNavProps) {
         {user && (
           <button
             onClick={toggleMobileMenu}
-            className="lg:hidden p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
             aria-label="Toggle menu"
           >
             <RiMenuLine className="h-5 w-5" />
