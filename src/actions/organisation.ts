@@ -55,6 +55,7 @@ export async function updateOrganisation(
     const address = formData.get('address') as string;
     const ownerId = formData.get('ownerId') as string;
     const isActive = formData.get('isActive') === 'true';
+    const visibility = formData.get('visibility') as string | null;
 
     // Validate name format
     const nameValidation = validateNameFormat(name, 'organisation');
@@ -118,6 +119,7 @@ export async function updateOrganisation(
       email: email?.trim() || undefined,
       phone: phone?.trim() || undefined,
       address: address?.trim() || undefined,
+      ...(visibility && { visibility }),
     });
 
     revalidatePath('/admin/organisation');

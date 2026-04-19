@@ -10,21 +10,15 @@ export default async function OrganisationsPage() {
     return redirect('/auth/signin');
   }
 
-  const isAdmin = session.user.role === 'SUPERADMIN';
   const store = await getStoreAsync();
 
-  const userMemberships = isAdmin
-    ? []
-    : await store.organisationMembers.findByUserId(session.user.id);
+  const userMemberships = await store.organisationMembers.findByUserId(session.user.id);
+  const memberOrgIds = new Set(userMemberships.map(m => m.organisationId));
 
-  let activeOrgs;
-  if (isAdmin) {
-    activeOrgs = await store.organisations.search('', 1000);
-  } else {
-    const memberOrgIds = new Set(userMemberships.map(m => m.organisationId));
-    const allOrgs = await store.organisations.search('', 1000);
-    activeOrgs = allOrgs.filter(org => memberOrgIds.has(org.id));
-  }
+  const allOrgs = await store.organisations.search('', 1000);
+  const activeOrgs = allOrgs.filter(org =>
+    org.isActive && (org.ownerId === session.user.id || memberOrgIds.has(org.id))
+  );
 
   const organisations = await Promise.all(
     activeOrgs
@@ -33,7 +27,7 @@ export default async function OrganisationsPage() {
         const owner = await store.users.findById(org.ownerId);
         const members = await store.organisationMembers.findByOrgId(org.id);
         const membership = userMemberships.find(m => m.organisationId === org.id);
-        const userIsAdmin = isAdmin || org.ownerId === session.user.id || membership?.role === 'OWNER' || membership?.role === 'ADMIN';
+        const userIsAdmin = org.ownerId === session.user.id || membership?.role === 'OWNER' || membership?.role === 'ADMIN';
         return {
           id: org.id,
           name: org.name,
