@@ -5,6 +5,7 @@ import "./globals.css";
 import { auth } from '@/lib/auth';
 
 import UserBar from '@/components/layout/UserBar';
+import MobileNavigation from '@/components/navigation/MobileNavigation';
 import CommandPaletteProviderWrapper from '@/components/navigation/CommandPaletteProvider';
 import { CommandPaletteProvider } from '@/hooks/useCommandPalette';
 import { MobileMenuProvider } from '@/hooks/useMobileMenu';
@@ -36,6 +37,7 @@ export default async function RootLayout({
           <MobileMenuProvider>
             <div className="text-neutral-800 dark:text-neutral-200">
               <UserBar user={session?.user} />
+              <MobileNavigation user={session?.user} />
               {children}
               <CommandPaletteProviderWrapper />
             </div>
