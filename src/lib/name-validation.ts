@@ -1,45 +1,52 @@
 /**
  * Name validation utility for organisations, projects, teams, and resources
  * Ensures names are URL-safe and don't conflict with reserved routes
+ *
+ * Blocked names are scoped per entity type based on actual route conflicts:
+ * - Organisations live at /{orgName} — conflicts with top-level routes
+ * - Projects live at /{orgName}/{projectName} — conflicts with org sub-routes
+ * - Teams live at /{orgName}/teams/{teamName} — only "new" conflicts
+ * - Resources live at /{orgName}/{projectName}/{resourceName} — conflicts with project sub-routes
+ * - Roles are not in URLs — no restrictions
  */
 
-import blockedNamesConfig from './constants/blocked-names.json';
+export type EntityType = 'organisation' | 'project' | 'team' | 'resource';
 
-const BLOCKED_NAMES = new Set(
-  blockedNamesConfig.blockedNames.map(name => name.toLowerCase())
-);
+const BLOCKED_NAMES_BY_ENTITY: Record<EntityType, Set<string>> = {
+  organisation: new Set([
+    'admin', 'account', 'orga', 'api', 'auth', 'login', 'logout', 'register',
+    'callback', 'signin', 'signout', 'docs',
+    '_next', 'static', 'favicon', 'robots', 'sitemap', 'manifest',
+  ]),
+  project: new Set([
+    'settings', 'members', 'teams', 'roles', 'invitations', 'new',
+  ]),
+  team: new Set([
+    'new',
+  ]),
+  resource: new Set([
+    'settings', 'access', 'share', 'transfer', 'new',
+  ]),
+};
 
-/**
- * Regex pattern for valid URL-safe characters
- * Allows: a-z, A-Z, 0-9, hyphens (-)
- */
 const VALID_NAME_PATTERN = /^[a-zA-Z0-9-]+$/;
 
-/**
- * Validates that a name contains only URL-safe characters
- * @param name - The name to validate
- * @returns true if the name contains only valid characters
- */
 export function isValidNameFormat(name: string): boolean {
   return VALID_NAME_PATTERN.test(name);
 }
 
-/**
- * Checks if a name is in the blocked names list (case-insensitive)
- * @param name - The name to check
- * @returns true if the name is blocked
- */
-export function isBlockedName(name: string): boolean {
-  return BLOCKED_NAMES.has(name.toLowerCase());
+export function isBlockedName(name: string, entityType?: EntityType): boolean {
+  const lower = name.toLowerCase();
+  if (!entityType) {
+    return Object.values(BLOCKED_NAMES_BY_ENTITY).some(set => set.has(lower));
+  }
+  return BLOCKED_NAMES_BY_ENTITY[entityType].has(lower);
 }
 
-/**
- * Comprehensive validation for entity names
- * Checks both character format and blocked names
- * @param name - The name to validate
- * @returns Object with validation result and error message if invalid
- */
-export function validateNameFormat(name: string): { isValid: boolean; error?: string } {
+export function validateNameFormat(
+  name: string,
+  entityType?: EntityType,
+): { isValid: boolean; error?: string } {
   if (!name || name.trim().length === 0) {
     return { isValid: false, error: 'Name is required' };
   }
@@ -53,7 +60,7 @@ export function validateNameFormat(name: string): { isValid: boolean; error?: st
     };
   }
 
-  if (isBlockedName(trimmedName)) {
+  if (isBlockedName(trimmedName, entityType)) {
     return {
       isValid: false,
       error: `"${trimmedName}" is a reserved name and cannot be used`,

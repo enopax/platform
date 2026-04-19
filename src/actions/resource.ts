@@ -57,7 +57,7 @@ export async function createResource(
     const templateId = formData.get('templateId') as string;
 
     // Validate resource name format
-    const nameValidation = validateNameFormat(name);
+    const nameValidation = validateNameFormat(name, 'resource');
     if (!nameValidation.isValid) {
       return {
         error: nameValidation.error || 'Invalid resource name',
@@ -256,7 +256,7 @@ export async function updateResource(
     const isPublic = formData.get('isPublic') === 'on';
 
     // Validate resource name format
-    const nameValidation = validateNameFormat(name);
+    const nameValidation = validateNameFormat(name, 'resource');
     if (!nameValidation.isValid) {
       return {
         error: nameValidation.error || 'Invalid resource name',
