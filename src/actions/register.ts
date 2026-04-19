@@ -36,7 +36,7 @@ export async function register(
       fieldErrors.username = 'Username must be between 2 and 39 characters';
     } else if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(username) && !/^[a-z0-9]$/.test(username)) {
       fieldErrors.username = 'Username can only contain lowercase letters, numbers, and hyphens, and cannot start or end with a hyphen';
-    } else if (isBlockedName(username)) {
+    } else if (isBlockedName(username, 'organisation')) {
       fieldErrors.username = 'This username is reserved and cannot be used';
     }
 

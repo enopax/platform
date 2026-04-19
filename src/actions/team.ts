@@ -63,7 +63,7 @@ export async function createTeam(
       };
     }
 
-    const nameValidation = validateNameFormat(name.trim());
+    const nameValidation = validateNameFormat(name.trim(), 'team');
     if (!nameValidation.isValid) {
       return {
         error: nameValidation.error || 'Invalid team name',
@@ -130,7 +130,7 @@ export async function updateTeam(
       };
     }
 
-    const nameValidation = validateNameFormat(name.trim());
+    const nameValidation = validateNameFormat(name.trim(), 'team');
     if (!nameValidation.isValid) {
       return {
         error: nameValidation.error || 'Invalid team name',

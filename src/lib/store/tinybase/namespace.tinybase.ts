@@ -3,6 +3,7 @@ import type { Namespace, NamespaceEntityType } from '../types';
 import type { INamespaceRepository, RegisterNamespaceData } from '../repositories/namespace.repository';
 import type { FileRecordPersister } from './file-record-persister';
 import crypto from 'crypto';
+import { isBlockedName } from '@/lib/name-validation';
 
 const TABLE = 'namespaces';
 
@@ -26,12 +27,7 @@ export class TinyBaseNamespaceRepository implements INamespaceRepository {
   async register(data: RegisterNamespaceData): Promise<Namespace> {
     const slug = data.slug.toLowerCase();
 
-    const RESERVED_SLUGS = new Set([
-      'account', 'admin', 'signin', 'register', 'accept-invite', 'api',
-      '_next', 'assets', 'icons', 'settings', 'new', 'explore', 'orga',
-      'auth', 'teams', 'members', 'projects', 'resources', 'delete', 'edit',
-    ]);
-    if (RESERVED_SLUGS.has(slug)) throw new Error(`Slug "${slug}" is reserved`);
+    if (isBlockedName(slug, 'organisation')) throw new Error(`Slug "${slug}" is reserved`);
 
     const existing = await this.findBySlug(slug);
     if (existing) throw new Error(`Slug "${slug}" is already taken`);

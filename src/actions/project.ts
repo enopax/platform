@@ -86,7 +86,7 @@ export async function updateProject(
     }
 
     // Validate project name format
-    const nameValidation = validateNameFormat(name);
+    const nameValidation = validateNameFormat(name, 'project');
     if (!nameValidation.isValid) {
       return {
         error: nameValidation.error || 'Invalid project name',
@@ -236,7 +236,7 @@ export async function createProject(
     }
 
     // Validate project name format
-    const nameValidation = validateNameFormat(name);
+    const nameValidation = validateNameFormat(name, 'project');
     if (!nameValidation.isValid) {
       return {
         error: nameValidation.error || 'Invalid project name',

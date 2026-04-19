@@ -57,7 +57,7 @@ export async function updateOrganisation(
     const isActive = formData.get('isActive') === 'true';
 
     // Validate name format
-    const nameValidation = validateNameFormat(name);
+    const nameValidation = validateNameFormat(name, 'organisation');
     if (!nameValidation.isValid) {
       return {
         error: nameValidation.error || 'Invalid organisation name',
@@ -148,7 +148,7 @@ export async function createOrganisation(
     const ownerId = formData.get('ownerId') as string;
 
     // Validate name format
-    const nameValidation = validateNameFormat(name);
+    const nameValidation = validateNameFormat(name, 'organisation');
     if (!nameValidation.isValid) {
       return {
         error: nameValidation.error || 'Invalid organisation name',
