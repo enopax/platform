@@ -8,12 +8,8 @@ import ProjectCard from '@/components/project/ProjectCard';
 import Link from 'next/link';
 import { Badge } from '@/components/common/Badge';
 import {
-  RiSettings3Line,
   RiProjectorLine,
   RiAddLine,
-  RiUserLine,
-  RiTeamLine,
-  RiMailLine,
   RiShareLine,
 } from '@remixicon/react';
 
@@ -31,29 +27,25 @@ export default function OrganisationOverviewClient({
   return (
     <main className="mt-4">
       <Container>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              {organisation.name}
-            </h1>
-            {organisation.description && (
-              <p className="text-gray-600 dark:text-gray-300 mt-2">
-                {organisation.description}
-              </p>
-            )}
-            <div className="flex items-center gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
-              <span className="flex items-center gap-1">
-                <RiUserLine className="h-4 w-4" />
-                {organisation._count?.members} members
-              </span>
-              <span className="flex items-center gap-1">
-                <RiProjectorLine className="h-4 w-4" />
-                {organisation._count?.projects} projects
-              </span>
-            </div>
-          </div>
+        {/* Header — hidden on desktop (name is in top nav breadcrumb) */}
+        <div className="lg:hidden mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {organisation.name}
+          </h1>
+          {organisation.description && (
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
+              {organisation.description}
+            </p>
+          )}
         </div>
+        {/* Description only on desktop (no title duplication) */}
+        {organisation.description && (
+          <div className="hidden lg:block mb-8">
+            <p className="text-gray-600 dark:text-gray-300">
+              {organisation.description}
+            </p>
+          </div>
+        )}
 
 
         {/* Projects Section */}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { CommandPaletteProvider, useCommandPalette } from '@/hooks/useCommandPalette';
+import { useCommandPalette } from '@/hooks/useCommandPalette';
 import CommandPalette from '@/components/navigation/CommandPalette';
 
 function CommandPaletteKeyHandler() {
@@ -26,9 +26,5 @@ function CommandPaletteKeyHandler() {
 }
 
 export default function CommandPaletteProviderWrapper() {
-  return (
-    <CommandPaletteProvider>
-      <CommandPaletteKeyHandler />
-    </CommandPaletteProvider>
-  );
+  return <CommandPaletteKeyHandler />;
 }

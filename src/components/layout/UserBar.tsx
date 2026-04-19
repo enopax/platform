@@ -48,7 +48,7 @@ export default function UserBar({ user }: TopNavProps) {
         )}
 
         {orgName && (
-          <nav className="flex items-center gap-1.5 text-sm">
+          <nav className={`flex items-center gap-1.5 text-sm ${!projectName ? 'hidden lg:flex' : ''}`}>
             <Link
               href={`/${orgName}`}
               className="font-medium text-gray-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
@@ -66,10 +66,7 @@ export default function UserBar({ user }: TopNavProps) {
                 </Link>
               </>
             )}
-            <span className="ml-1 inline-flex items-center px-1.5 py-0.5 text-[10px] text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-full">
-              <RiLockLine className="h-2.5 w-2.5 mr-0.5" />
-              Private
-            </span>
+            <RiLockLine className="ml-1 h-3.5 w-3.5 text-gray-400 dark:text-gray-500" title="Private" />
           </nav>
         )}
       </div>

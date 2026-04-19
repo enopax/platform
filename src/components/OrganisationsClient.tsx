@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { RiBuildingLine, RiAddLine } from '@remixicon/react';
 import { Button } from '@/components/common/Button';
 import { OrganisationCard } from '@/components/OrganisationCard';
-import OrganisationSearchSection from '@/components/OrganisationSearchSection';
 import { Card } from '@/components/common/Card';
 
 type OrganisationType = {
@@ -41,11 +40,6 @@ export function OrganisationsClient({
           My Organisations
         </h1>
         <div className="flex items-center gap-3">
-          {organisations.length > 0 && (
-            <div className="relative w-64">
-              <OrganisationSearchSection />
-            </div>
-          )}
           <Link href="/orga/new">
             <Button>
               <RiAddLine className="mr-2 h-4 w-4" />
