@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   RiCloseLine,
+  RiBuildingLine,
   RiDashboardLine,
   RiUserLine,
   RiTeamLine,
@@ -32,9 +33,10 @@ type Organisation = {
 
 interface MobileNavigationProps {
   organisations?: Organisation[];
+  user?: any;
 }
 
-export default function MobileNavigation({ organisations = [] }: MobileNavigationProps) {
+export default function MobileNavigation({ organisations = [], user }: MobileNavigationProps) {
   const { isOpen, close: onClose } = useMobileMenu();
   const pathname = usePathname();
 
@@ -82,10 +84,10 @@ export default function MobileNavigation({ organisations = [] }: MobileNavigatio
   return (
     <>
       {isOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={onClose} />
+        <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose} />
       )}
 
-      <div className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex flex-col h-full">
@@ -197,6 +199,48 @@ export default function MobileNavigation({ organisations = [] }: MobileNavigatio
                 </nav>
               </>
             )}
+            {/* Navigation links */}
+            <div className="mt-6 mx-3 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <div className="mb-2 px-3">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                  Navigation
+                </span>
+              </div>
+              <nav className="space-y-0.5">
+                <Link
+                  href="/orga"
+                  onClick={onClose}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors ${
+                    pathname === '/orga'
+                      ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/20 dark:text-brand-300'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <RiBuildingLine className="h-4 w-4 shrink-0" />
+                  Organisations
+                </Link>
+                {user?.role === 'SUPERADMIN' && (
+                  <>
+                    <Link
+                      href="/admin/users"
+                      onClick={onClose}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <RiUserLine className="h-4 w-4 shrink-0" />
+                      Admin: Users
+                    </Link>
+                    <Link
+                      href="/admin/organisations"
+                      onClick={onClose}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <RiBuildingLine className="h-4 w-4 shrink-0" />
+                      Admin: Organisations
+                    </Link>
+                  </>
+                )}
+              </nav>
+            </div>
           </div>
         </div>
       </div>

@@ -1,6 +1,5 @@
 import { auth } from '@/lib/auth';
 import { getStoreAsync } from '@/lib/store';
-import SidebarNavigation from '@/components/navigation/SidebarNavigation';
 import MobileNavigation from '@/components/navigation/MobileNavigation';
 
 async function getUserOrganisations(userId: string) {
@@ -45,14 +44,10 @@ export default async function Layout({
   }
 
   return (
-    <div className="flex">
-      <div className="hidden lg:block sticky top-0 h-screen overflow-y-auto">
-        <SidebarNavigation organisations={organisations} />
-      </div>
+    <div>
+      <MobileNavigation organisations={organisations} user={session?.user} />
 
-      <MobileNavigation organisations={organisations} />
-
-      <main className="flex-1 p-6">
+      <main className="p-6">
         {children}
       </main>
     </div>

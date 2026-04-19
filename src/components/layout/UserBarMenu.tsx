@@ -8,7 +8,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/menu/DropdownMenu';
@@ -40,52 +39,14 @@ export default function UserBarMenu({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>
-          <u>Main</u>
-        </DropdownMenuLabel>
-
         <DropdownMenuGroup>
-          <Link href="/orga">
-            <DropdownMenuItem>
-              Organisations
-            </DropdownMenuItem>
-          </Link>
-        </DropdownMenuGroup>
-
-        <DropdownMenuLabel>
-          <u>Account</u>
-        </DropdownMenuLabel>
-
-        <DropdownMenuGroup>
-          <Link href="/account/developer">
-            <DropdownMenuItem>
-              Developer
-            </DropdownMenuItem>
-          </Link>
           <Link href="/account/settings">
-            <DropdownMenuItem>
-              Settings
-            </DropdownMenuItem>
+            <DropdownMenuItem>Settings</DropdownMenuItem>
+          </Link>
+          <Link href="/account/developer">
+            <DropdownMenuItem>Developer</DropdownMenuItem>
           </Link>
         </DropdownMenuGroup>
-
-        {user.role === 'SUPERADMIN' && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>
-              <u>Admin</u>
-            </DropdownMenuLabel>
-
-            <DropdownMenuGroup>
-              <Link href="/admin/users">
-                <DropdownMenuItem>Users</DropdownMenuItem>
-              </Link>
-              <Link href="/admin/organisations">
-                <DropdownMenuItem>Organisations</DropdownMenuItem>
-              </Link>
-            </DropdownMenuGroup>
-          </>
-        )}
 
         <DropdownMenuSeparator />
 
