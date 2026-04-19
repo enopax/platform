@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
+  RiBuildingLine,
   RiDashboardLine,
   RiUserLine,
   RiTeamLine,
@@ -62,7 +63,38 @@ export default function SidebarNavigation({
 
   const projects = organisation?.projects || [];
 
-  if (!orgName) return null;
+  if (!orgName) {
+    if (organisations.length === 0) return null;
+    return (
+      <aside className="w-56 shrink-0 border-r border-gray-200 dark:border-gray-800 min-h-screen py-4 px-3">
+        <div className="mb-2 px-3">
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            Organisations
+          </span>
+        </div>
+        <nav className="space-y-0.5">
+          {organisations.map((org) => {
+            const orgHref = `/${org.name}`;
+            const active = pathname === orgHref || pathname.startsWith(`${orgHref}/`);
+            return (
+              <Link
+                key={org.id}
+                href={orgHref}
+                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                  active
+                    ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/20 dark:text-brand-300'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`}
+              >
+                <RiBuildingLine className="h-4 w-4 shrink-0" />
+                {org.name}
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+    );
+  }
 
   const orgBase = `/${orgName}`;
 
