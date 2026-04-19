@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-//import { GeistSans } from "geist/font/sans";
-import Image from "next/image";
 import { Geist } from 'next/font/google';
 import "./globals.css";
 
@@ -8,6 +6,7 @@ import { auth } from '@/lib/auth';
 
 import UserBar from '@/components/layout/UserBar';
 import CommandPaletteProvider from '@/components/navigation/CommandPaletteProvider';
+import { MobileMenuProvider } from '@/hooks/useMobileMenu';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -32,11 +31,13 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${geist.className} antialiased bg-gray-50 dark:bg-gray-950`}>
-        <div className="text-neutral-800 dark:text-neutral-200">
-          <UserBar user={session?.user} />
-          {children}
-          <CommandPaletteProvider />
-        </div>
+        <MobileMenuProvider>
+          <div className="text-neutral-800 dark:text-neutral-200">
+            <UserBar user={session?.user} />
+            {children}
+            <CommandPaletteProvider />
+          </div>
+        </MobileMenuProvider>
       </body>
     </html>
   );

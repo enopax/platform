@@ -1,9 +1,8 @@
-import { type User } from '@/lib/store';
+'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/common/Button';
 import Avatar from '@/components/common/Avatar';
-import { RiMenuLine } from '@remixicon/react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,48 +12,43 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/menu/DropdownMenu';
-import { signOut } from '@/lib/auth';
+import { handleSignOut } from '@/actions/auth';
 
 export default function UserBarMenu({
   user,
 }: {
-  user?: User,
+  user?: any,
 }) {
   if (!user) return (
     <Link href="/signin">
-      <Button variant="secondary">
+      <Button variant="secondary" className="text-sm">
         Sign In
       </Button>
     </Link>
   );
 
   return (
-    <div className="flex items-center gap-2">
-      <Link href={user.slug ? `/${user.slug}` : '/account/settings'} aria-label="My profile" className="inline-flex">
-        <Avatar
-          name={user.name || user.email}
-          image={user.image}
-          size="small"
-        />
-      </Link>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="p-2" aria-label="Open menu">
-            <RiMenuLine className="h-5 w-5" />
-          </Button>
-        </DropdownMenuTrigger>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="inline-flex" aria-label="User menu">
+          <Avatar
+            name={user.name || user.email}
+            image={user.image}
+            size="small"
+          />
+        </button>
+      </DropdownMenuTrigger>
 
-      <DropdownMenuContent>
-        {/* ----- Account ----- */}
+      <DropdownMenuContent align="end">
         <DropdownMenuLabel>
           <u>Main</u>
         </DropdownMenuLabel>
 
         <DropdownMenuGroup>
           <Link href="/orga">
-             <DropdownMenuItem>
-               Organisations
-             </DropdownMenuItem>
+            <DropdownMenuItem>
+              Organisations
+            </DropdownMenuItem>
           </Link>
         </DropdownMenuGroup>
 
@@ -64,19 +58,18 @@ export default function UserBarMenu({
 
         <DropdownMenuGroup>
           <Link href="/account/developer">
-             <DropdownMenuItem>
-               Developer
-             </DropdownMenuItem>
+            <DropdownMenuItem>
+              Developer
+            </DropdownMenuItem>
           </Link>
           <Link href="/account/settings">
-             <DropdownMenuItem>
-                Settings
-             </DropdownMenuItem>
+            <DropdownMenuItem>
+              Settings
+            </DropdownMenuItem>
           </Link>
         </DropdownMenuGroup>
 
-        {/* ----- Admin ----- */}
-        {user.role == 'SUPERADMIN' && (
+        {user.role === 'SUPERADMIN' && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>
@@ -85,14 +78,10 @@ export default function UserBarMenu({
 
             <DropdownMenuGroup>
               <Link href="/admin/users">
-                <DropdownMenuItem>
-                  Users
-                </DropdownMenuItem>
+                <DropdownMenuItem>Users</DropdownMenuItem>
               </Link>
               <Link href="/admin/organisations">
-                <DropdownMenuItem>
-                  Organisations
-                </DropdownMenuItem>
+                <DropdownMenuItem>Organisations</DropdownMenuItem>
               </Link>
             </DropdownMenuGroup>
           </>
@@ -100,14 +89,7 @@ export default function UserBarMenu({
 
         <DropdownMenuSeparator />
 
-        <form
-          action={async () => {
-            'use server';
-            await signOut({
-              redirectTo: '/',
-            });
-          }}
-        >
+        <form action={handleSignOut}>
           <button className="w-full">
             <DropdownMenuItem className="text-red-500">
               Sign Out
@@ -115,7 +97,6 @@ export default function UserBarMenu({
           </button>
         </form>
       </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    </DropdownMenu>
   );
 }

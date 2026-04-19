@@ -20,14 +20,6 @@ export default async function Page() {
 
   return (
     <main>
-      {/* Mobile header — visible only below lg where UserBar is hidden */}
-      <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
-        <span className="text-sm font-semibold text-gray-900 dark:text-white">Enopax</span>
-        <Link href="/signin">
-          <Button variant="secondary" className="text-sm">Sign In</Button>
-        </Link>
-      </div>
-
       <section className="mx-auto max-w-6xl">
         <Container>
           <div className="relative w-full py-16 md:py-20">
