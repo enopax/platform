@@ -47,13 +47,17 @@ export async function updateOrganisation(
   formData: FormData
 ): Promise<UpdateOrganisationState> {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { error: 'Authentication required' };
+    }
+
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const website = formData.get('website') as string;
     const email = formData.get('email') as string;
     const phone = formData.get('phone') as string;
     const address = formData.get('address') as string;
-    const ownerId = formData.get('ownerId') as string;
     const isActive = formData.get('isActive') === 'true';
     const visibility = formData.get('visibility') as string | null;
 
@@ -63,22 +67,6 @@ export async function updateOrganisation(
       return {
         error: nameValidation.error || 'Invalid organisation name',
         fieldErrors: { name: nameValidation.error || 'Invalid organisation name' }
-      };
-    }
-
-    if (!ownerId) {
-      return {
-        error: 'Owner is required',
-        fieldErrors: { ownerId: 'Owner is required' }
-      };
-    }
-
-    // Validate owner exists
-    const ownerExists = await userService.validateUserExists(ownerId);
-    if (!ownerExists) {
-      return {
-        error: 'Selected owner does not exist',
-        fieldErrors: { ownerId: 'Selected owner does not exist' }
       };
     }
 
@@ -111,15 +99,14 @@ export async function updateOrganisation(
       }
     }
 
-    // Use service to update organisation (this will need to be implemented in the service)
-    await organisationService.updateOrganisation(organisationId, ownerId, {
+    await organisationService.updateOrganisation(organisationId, session.user.id, {
       name: name.trim(),
       description: description?.trim() || undefined,
       website: website?.trim() || undefined,
       email: email?.trim() || undefined,
       phone: phone?.trim() || undefined,
       address: address?.trim() || undefined,
-      ...(visibility && { visibility }),
+      visibility: visibility || undefined,
     });
 
     revalidatePath('/admin/organisation');

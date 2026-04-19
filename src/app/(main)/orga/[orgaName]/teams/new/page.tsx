@@ -28,7 +28,6 @@ export default async function NewTeamPage({ params }: NewTeamPageProps) {
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
 
   const canManage =
-    session.user.role === 'SUPERADMIN' ||
     membership?.role === 'OWNER' ||
     membership?.role === 'ADMIN' ||
     membership?.role === 'MANAGER';

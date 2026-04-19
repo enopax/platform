@@ -41,18 +41,16 @@ export default async function OrganisationSettingsPage({ params }: OrganisationS
   // Check if user is a member of this organisation
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
-  const isAdmin = session.user.role === 'SUPERADMIN';
   const isOwner = membership?.role === 'OWNER';
   const isManager = membership?.role === 'MANAGER';
-  const isMember = !!membership;
 
   // Check permissions
-  if (!isMember && !isAdmin) {
+  if (!membership) {
     notFound();
   }
 
-  // Only owners, managers, and admins can access settings
-  const canManageSettings = isOwner || isManager || isAdmin;
+  // Only owners and managers can access settings
+  const canManageSettings = isOwner || isManager;
   if (!canManageSettings) {
     notFound();
   }

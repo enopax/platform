@@ -298,15 +298,12 @@ export async function kickMember(
       return { error: 'Authentication required' };
     }
 
-    const isAdmin = session.user.role === 'SUPERADMIN';
     const store = await getStoreAsync();
 
-    if (!isAdmin) {
-      const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
+    const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
-      if (!membership || (membership.role !== 'OWNER' && membership.role !== 'MANAGER')) {
-        return { error: 'You do not have permission to remove members' };
-      }
+    if (!membership || (membership.role !== 'OWNER' && membership.role !== 'MANAGER')) {
+      return { error: 'You do not have permission to remove members' };
     }
 
     const targetMembership = await store.organisationMembers.findByUserAndOrg(targetUserId, organisationId);

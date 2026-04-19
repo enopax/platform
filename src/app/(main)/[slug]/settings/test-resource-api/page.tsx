@@ -26,9 +26,8 @@ export default async function TestResourceApiPage({ params }: TestResourceApiPag
 
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
 
-  const isAdmin = session.user.role === 'SUPERADMIN';
   const isOwner = membership?.role === 'OWNER';
-  const canAccess = isAdmin || isOwner;
+  const canAccess = isOwner;
 
   if (!canAccess) {
     return (

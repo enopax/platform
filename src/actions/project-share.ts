@@ -60,9 +60,7 @@ export async function shareProject(
       session.user.id,
       project.organisationId
     );
-    const isOrgAdmin =
-      session.user.role === 'SUPERADMIN' ||
-      (orgMembership && ['OWNER', 'ADMIN'].includes(orgMembership.role));
+    const isOrgAdmin = orgMembership && ['OWNER', 'ADMIN'].includes(orgMembership.role);
 
     if (!isOrgAdmin) {
       return { error: 'You do not have permission to share this project' };
@@ -204,9 +202,7 @@ export async function updateSharePermission(
       session.user.id,
       project.organisationId
     );
-    const isOrgAdmin =
-      session.user.role === 'SUPERADMIN' ||
-      (orgMembership && ['OWNER', 'ADMIN'].includes(orgMembership.role));
+    const isOrgAdmin = orgMembership && ['OWNER', 'ADMIN'].includes(orgMembership.role);
 
     if (!isOrgAdmin) {
       return { error: 'You do not have permission to update this share' };
@@ -250,9 +246,7 @@ export async function revokeShare(
       session.user.id,
       project.organisationId
     );
-    const isOrgAdmin =
-      session.user.role === 'SUPERADMIN' ||
-      (orgMembership && ['OWNER', 'ADMIN'].includes(orgMembership.role));
+    const isOrgAdmin = orgMembership && ['OWNER', 'ADMIN'].includes(orgMembership.role);
 
     if (!isOrgAdmin) {
       return { success: false, error: 'You do not have permission to revoke this share' };
@@ -304,14 +298,12 @@ export async function acceptShare(
         session.user.id,
         share.sharedWithId
       );
-      const isOrgAdmin =
-        session.user.role === 'SUPERADMIN' ||
-        (membership && ['OWNER', 'ADMIN'].includes(membership.role));
+      const isOrgAdmin = membership && ['OWNER', 'ADMIN'].includes(membership.role);
       if (!isOrgAdmin) {
         return { success: false, error: 'You do not have permission to accept this invitation' };
       }
     } else if (share.sharedWithType === 'USER') {
-      if (session.user.id !== share.sharedWithId && session.user.role !== 'SUPERADMIN') {
+      if (session.user.id !== share.sharedWithId) {
         return { success: false, error: 'You do not have permission to accept this invitation' };
       }
     }
@@ -359,14 +351,12 @@ export async function declineShare(
         session.user.id,
         share.sharedWithId
       );
-      const isOrgAdmin =
-        session.user.role === 'SUPERADMIN' ||
-        (membership && ['OWNER', 'ADMIN'].includes(membership.role));
+      const isOrgAdmin = membership && ['OWNER', 'ADMIN'].includes(membership.role);
       if (!isOrgAdmin) {
         return { success: false, error: 'You do not have permission to decline this invitation' };
       }
     } else if (share.sharedWithType === 'USER') {
-      if (session.user.id !== share.sharedWithId && session.user.role !== 'SUPERADMIN') {
+      if (session.user.id !== share.sharedWithId) {
         return { success: false, error: 'You do not have permission to decline this invitation' };
       }
     }
@@ -427,9 +417,7 @@ export async function transferProject(
       session.user.id,
       project.organisationId
     );
-    const isOwner =
-      session.user.role === 'SUPERADMIN' ||
-      (orgMembership && orgMembership.role === 'OWNER');
+    const isOwner = orgMembership && orgMembership.role === 'OWNER';
 
     if (!isOwner) {
       return { error: 'Only the organisation owner can transfer a project' };

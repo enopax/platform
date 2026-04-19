@@ -26,12 +26,11 @@ export default async function RolesPage({ params }: RolesPageProps) {
   if (!organisation) notFound();
 
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
-  if (!membership && session.user.role !== 'SUPERADMIN') notFound();
+  if (!membership) notFound();
 
   const canManage =
-    session.user.role === 'SUPERADMIN' ||
-    membership?.role === 'OWNER' ||
-    membership?.role === 'ADMIN';
+    membership.role === 'OWNER' ||
+    membership.role === 'ADMIN';
 
   let roles = await store.projectRoles.findByOrgId(organisation.id);
 

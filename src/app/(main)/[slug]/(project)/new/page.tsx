@@ -40,8 +40,7 @@ export default async function CreateProjectPage({ params }: CreateProjectPagePro
   }
   const organisationId = orgLookup.id;
 
-  const isAdmin = session.user.role === 'SUPERADMIN';
-  const membership = isAdmin ? true : await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
+  const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
   if (!membership) {
     return (

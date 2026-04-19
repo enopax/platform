@@ -39,9 +39,8 @@ export async function inviteMember(
   if (!organisation) return { error: 'Organisation not found' };
 
   const inviterMembership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
-  const isAdmin = session.user.role === 'SUPERADMIN';
-  if (!isAdmin && !inviterMembership) return { error: 'Not authorised' };
-  if (!isAdmin && inviterMembership && !['OWNER', 'MANAGER'].includes(inviterMembership.role)) {
+  if (!inviterMembership) return { error: 'Not authorised' };
+  if (!['OWNER', 'MANAGER'].includes(inviterMembership.role)) {
     return { error: 'Only owners and managers can invite members' };
   }
 
@@ -130,8 +129,7 @@ export async function revokeInvitation(invitationId: string): Promise<{ success:
   if (!invitation) return { success: false, error: 'Invitation not found' };
 
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, invitation.organisationId);
-  const isAdmin = session.user.role === 'SUPERADMIN';
-  if (!isAdmin && (!membership || !['OWNER', 'MANAGER'].includes(membership.role))) {
+  if (!membership || !['OWNER', 'MANAGER'].includes(membership.role)) {
     return { success: false, error: 'Not authorised' };
   }
 

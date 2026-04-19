@@ -79,7 +79,7 @@ export class OrganisationService {
   async updateOrganisation(
     organisationId: string,
     userId: string,
-    data: Partial<CreateOrganisationData>
+    data: Partial<CreateOrganisationData> & { visibility?: string }
   ): Promise<OrganisationInfo> {
     try {
       const store = await getStoreAsync();
