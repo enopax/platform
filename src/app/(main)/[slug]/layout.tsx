@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { getStoreAsync } from '@/lib/store';
 import { OrganisationProvider } from '@/contexts/OrganisationContext';
-import MobileNavigation from '@/components/navigation/MobileNavigation';
+import SidebarNavigation from '@/components/navigation/SidebarNavigation';
 
 async function getOrganisationData(store: any, org: any) {
   const projects = await store.projects.findByOrgId(org.id, { isActive: true });
@@ -43,7 +43,7 @@ async function getUserOrganisations(store: any, userId: string) {
   return Promise.all(orgDataPromises);
 }
 
-function renderOrgLayout(org: any, projects: any[], members: any[], sharedProjects: any[], organisations: any[], user: any, children: React.ReactNode) {
+function renderOrgLayout(org: any, projects: any[], members: any[], sharedProjects: any[], organisations: any[], children: React.ReactNode) {
   return (
     <OrganisationProvider
       organisation={{
@@ -60,9 +60,11 @@ function renderOrgLayout(org: any, projects: any[], members: any[], sharedProjec
         },
       }}
     >
-      <div className="min-h-[calc(100vh-2.5rem)]">
-        <MobileNavigation organisations={organisations} user={user} />
-        <main className="p-6">{children}</main>
+      <div className="flex min-h-[calc(100vh-2.5rem)]">
+        <div className="hidden lg:block sticky top-0 h-screen overflow-y-auto">
+          <SidebarNavigation organisations={organisations} />
+        </div>
+        <main className="flex-1 p-6">{children}</main>
       </div>
     </OrganisationProvider>
   );
@@ -94,7 +96,7 @@ export default async function NamespaceLayout({
     if (!organisation || !organisation.isActive) notFound();
 
     const { projects, members, sharedProjects } = await getOrganisationData(store, organisation);
-    return renderOrgLayout(organisation, projects, members, sharedProjects, organisations, session?.user, children);
+    return renderOrgLayout(organisation, projects, members, sharedProjects, organisations, children);
   }
 
   if (namespace?.entityType === 'USER') {
@@ -106,7 +108,7 @@ export default async function NamespaceLayout({
   const orgByName = await store.organisations.findByName(slug);
   if (orgByName && orgByName.isActive) {
     const { projects, members, sharedProjects } = await getOrganisationData(store, orgByName);
-    return renderOrgLayout(orgByName, projects, members, sharedProjects, organisations, session?.user, children);
+    return renderOrgLayout(orgByName, projects, members, sharedProjects, organisations, children);
   }
 
   notFound();
