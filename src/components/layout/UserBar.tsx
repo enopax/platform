@@ -2,11 +2,10 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import Avatar from '@/components/common/Avatar';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
-import { RiMenuLine, RiSearchLine, RiLockLine } from '@remixicon/react';
+import { RiSearchLine, RiLockLine } from '@remixicon/react';
 import UserBarMenu from '@/components/layout/UserBarMenu';
-import { useMobileMenu } from '@/hooks/useMobileMenu';
+import MobileNavigation from '@/components/navigation/MobileNavigation';
 
 interface TopNavProps {
   user?: any;
@@ -15,7 +14,6 @@ interface TopNavProps {
 export default function UserBar({ user }: TopNavProps) {
   const pathname = usePathname();
   const { open } = useCommandPalette();
-  const { toggle: toggleMobileMenu } = useMobileMenu();
 
   const segments = pathname.split('/').filter(Boolean);
 
@@ -35,17 +33,9 @@ export default function UserBar({ user }: TopNavProps) {
 
   return (
     <header className="flex items-center px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-      {/* Left: hamburger + breadcrumb */}
+      {/* Left: menu + breadcrumb */}
       <div className="flex items-center gap-3">
-        {user && (
-          <button
-            onClick={toggleMobileMenu}
-            className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-            aria-label="Toggle menu"
-          >
-            <RiMenuLine className="h-5 w-5" />
-          </button>
-        )}
+        <MobileNavigation user={user} />
 
         {orgName && (
           <nav className={`flex items-center gap-1.5 text-sm ${!projectName ? 'hidden lg:flex' : ''}`}>

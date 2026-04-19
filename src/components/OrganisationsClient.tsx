@@ -12,6 +12,8 @@ type OrganisationType = {
   name: string;
   description: string | null;
   isActive: boolean;
+  visibility?: string;
+  isUserAdmin?: boolean;
   owner: {
     name: string | null;
     firstname: string | null;
@@ -26,6 +28,8 @@ type OrganisationType = {
   createdAt: Date;
 };
 
+type FilterType = 'all' | 'admin' | 'public' | 'private';
+
 interface OrganisationsClientProps {
   organisations: OrganisationType[];
 }
@@ -33,64 +37,53 @@ interface OrganisationsClientProps {
 export function OrganisationsClient({
   organisations
 }: OrganisationsClientProps) {
-  const [search, setSearch] = useState('');
-  const [sort, setSort] = useState('name');
+  const [filter, setFilter] = useState<FilterType>('all');
 
   const filtered = useMemo(() => {
-    let result = organisations;
-
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(org =>
-        org.name.toLowerCase().includes(q) ||
-        org.description?.toLowerCase().includes(q)
-      );
+    switch (filter) {
+      case 'admin':
+        return organisations.filter(org => org.isUserAdmin);
+      case 'public':
+        return organisations.filter(org => org.visibility === 'PUBLIC');
+      case 'private':
+        return organisations.filter(org => org.visibility === 'PRIVATE');
+      default:
+        return organisations;
     }
+  }, [organisations, filter]);
 
-    if (sort === 'recent') {
-      result = [...result].sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    } else {
-      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    return result;
-  }, [organisations, search, sort]);
+  const filters: { key: FilterType; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'admin', label: 'Admin' },
+    { key: 'public', label: 'Public' },
+    { key: 'private', label: 'Private' },
+  ];
 
   return (
     <div className="flex">
       {/* Filter sidebar — desktop only */}
       {organisations.length > 0 && (
-        <aside className="hidden lg:block w-56 shrink-0 border-r border-gray-200 dark:border-gray-800 min-h-[calc(100vh-3rem)] py-4 px-3">
-          <div className="mb-4 px-1">
-            <div className="relative">
-              <RiSearchLine className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Find an organisation..."
-                className="w-full pl-8 pr-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              />
-            </div>
+        <aside className="hidden lg:block w-48 shrink-0 border-r border-gray-200 dark:border-gray-800 min-h-[calc(100vh-3rem)] py-4 px-3">
+          <div className="mb-2 px-1">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Filter
+            </span>
           </div>
-
-          <div className="px-1">
-            <div className="mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                Sort by
-              </span>
-            </div>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="w-full px-2 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
-            >
-              <option value="name">Name</option>
-              <option value="recent">Recently created</option>
-            </select>
-          </div>
+          <nav className="space-y-0.5">
+            {filters.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setFilter(key)}
+                className={`w-full text-left px-3 py-1.5 rounded-md text-sm transition-colors ${
+                  filter === key
+                    ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/20 dark:text-brand-300 font-medium'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
         </aside>
       )}
 
@@ -109,6 +102,25 @@ export function OrganisationsClient({
               </Button>
             </Link>
           </div>
+
+          {/* Mobile filter tabs */}
+          {organisations.length > 0 && (
+            <div className="lg:hidden flex gap-2 mb-4 overflow-x-auto">
+              {filters.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  className={`px-3 py-1 rounded-full text-sm whitespace-nowrap transition-colors ${
+                    filter === key
+                      ? 'bg-brand-500 text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Organisations Grid */}
           {filtered.length > 0 ? (
@@ -130,8 +142,7 @@ export function OrganisationsClient({
             </div>
           ) : organisations.length > 0 ? (
             <Card className="p-12 text-center">
-              <RiSearchLine className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600 mb-4" />
-              <p className="text-gray-500 dark:text-gray-400">No organisations match your search</p>
+              <p className="text-gray-500 dark:text-gray-400">No organisations match this filter</p>
             </Card>
           ) : (
             <Card className="p-12 text-center">
