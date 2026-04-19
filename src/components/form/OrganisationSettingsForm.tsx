@@ -188,6 +188,24 @@ export default function OrganisationSettingsForm({
           )}
         </div>
 
+        <div>
+          <Label htmlFor="visibility">
+            Visibility
+          </Label>
+          <select
+            id="visibility"
+            name="visibility"
+            defaultValue={(organisation as any).visibility || 'PUBLIC'}
+            className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            <option value="PUBLIC">Public</option>
+            <option value="PRIVATE">Private</option>
+          </select>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Public organisations can be found and receive project share requests.
+          </p>
+        </div>
+
         <div className="md:col-span-2">
           <div className="flex items-center space-x-2">
             <Switch
