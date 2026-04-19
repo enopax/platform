@@ -32,10 +32,9 @@ async function requireOrgAdminAccess(organisationId: string) {
   const store = await getStoreAsync();
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
-  const isOrgAdmin = session.user.role === 'SUPERADMIN';
   const isOwnerOrAdmin = membership?.role === 'OWNER' || membership?.role === 'ADMIN';
 
-  if (!isOrgAdmin && !isOwnerOrAdmin) {
+  if (!isOwnerOrAdmin) {
     return { error: 'You do not have permission to manage roles in this organisation' as const };
   }
 

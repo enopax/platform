@@ -29,20 +29,18 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
   if (!team) notFound();
 
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
-  if (!membership && session.user.role !== 'SUPERADMIN') {
+  if (!membership) {
     notFound();
   }
 
   const canManage =
-    session.user.role === 'SUPERADMIN' ||
-    membership?.role === 'OWNER' ||
-    membership?.role === 'ADMIN' ||
-    membership?.role === 'MANAGER';
+    membership.role === 'OWNER' ||
+    membership.role === 'ADMIN' ||
+    membership.role === 'MANAGER';
 
   const canDelete =
-    session.user.role === 'SUPERADMIN' ||
-    membership?.role === 'OWNER' ||
-    membership?.role === 'ADMIN';
+    membership.role === 'OWNER' ||
+    membership.role === 'ADMIN';
 
   const rawMembers = await store.teamMembers.findByTeamId(team.id);
   const members = await Promise.all(

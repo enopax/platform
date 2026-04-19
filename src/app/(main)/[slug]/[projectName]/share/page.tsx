@@ -29,9 +29,7 @@ export default async function ProjectSharePage({ params }: ProjectSharePageProps
   if (!project) notFound();
 
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisation.id);
-  const isOrgAdmin =
-    session.user.role === 'SUPERADMIN' ||
-    (membership && ['OWNER', 'ADMIN'].includes(membership.role));
+  const isOrgAdmin = membership && ['OWNER', 'ADMIN'].includes(membership.role);
 
   if (!isOrgAdmin) {
     notFound();

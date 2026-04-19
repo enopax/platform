@@ -24,18 +24,16 @@ export default async function MembersManagementPage({ params }: MembersManagemen
   if (!organisation) notFound();
   const organisationId = organisation.id;
 
-  const isAdmin = session.user.role === 'SUPERADMIN';
-
   const membership = await store.organisationMembers.findByUserAndOrg(session.user.id, organisationId);
 
-  const isOwner = membership?.role === 'OWNER';
-  const isManager = membership?.role === 'MANAGER';
-
-  if (!membership && !isAdmin) {
+  if (!membership) {
     notFound();
   }
 
-  if (!isOwner && !isManager && !isAdmin) {
+  const isOwner = membership.role === 'OWNER';
+  const isManager = membership.role === 'MANAGER';
+
+  if (!isOwner && !isManager) {
     notFound();
   }
 
@@ -112,7 +110,7 @@ export default async function MembersManagementPage({ params }: MembersManagemen
       organisationName={slug}
       isOwner={isOwner}
       isManager={isManager}
-      isAdmin={isAdmin}
+      isAdmin={false}
       currentUserId={session.user.id}
     />
   );
