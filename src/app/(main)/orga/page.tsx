@@ -13,12 +13,15 @@ export default async function OrganisationsPage() {
   const isAdmin = session.user.role === 'SUPERADMIN';
   const store = await getStoreAsync();
 
+  const userMemberships = isAdmin
+    ? []
+    : await store.organisationMembers.findByUserId(session.user.id);
+
   let activeOrgs;
   if (isAdmin) {
     activeOrgs = await store.organisations.search('', 1000);
   } else {
-    const memberships = await store.organisationMembers.findByUserId(session.user.id);
-    const memberOrgIds = new Set(memberships.map(m => m.organisationId));
+    const memberOrgIds = new Set(userMemberships.map(m => m.organisationId));
     const allOrgs = await store.organisations.search('', 1000);
     activeOrgs = allOrgs.filter(org => memberOrgIds.has(org.id));
   }
@@ -29,11 +32,15 @@ export default async function OrganisationsPage() {
       .map(async (org) => {
         const owner = await store.users.findById(org.ownerId);
         const members = await store.organisationMembers.findByOrgId(org.id);
+        const membership = userMemberships.find(m => m.organisationId === org.id);
+        const userIsAdmin = isAdmin || org.ownerId === session.user.id || membership?.role === 'OWNER' || membership?.role === 'ADMIN';
         return {
           id: org.id,
           name: org.name,
           description: org.description,
           isActive: org.isActive,
+          visibility: (org as any).visibility || 'PUBLIC',
+          isUserAdmin: userIsAdmin,
           createdAt: org.createdAt,
           owner: {
             name: owner?.name ?? null,
