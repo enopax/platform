@@ -1,7 +1,120 @@
 import { createTestStore } from './helpers';
-import { resolveProjectPermissions } from '@/lib/permissions';
+import { checkOrganisationPermissions, checkProjectPermissions, resolveProjectPermissions } from '@/lib/permissions';
 import type { DataStore } from '@/lib/store';
 import { setStore, resetStore } from '@/lib/store';
+
+describe('checkOrganisationPermissions', () => {
+  let store: DataStore;
+
+  beforeEach(() => {
+    resetStore();
+    store = createTestStore();
+    setStore(store);
+  });
+
+  it('grants canManage to OWNER', async () => {
+    const org = await store.organisations.create({ name: 'test-org', ownerId: 'owner-1' });
+    await store.organisationMembers.create({ userId: 'owner-1', organisationId: org.id, role: 'OWNER' });
+
+    const perms = await checkOrganisationPermissions('owner-1', 'CUSTOMER', org.id);
+    expect(perms.isMember).toBe(true);
+    expect(perms.isOwner).toBe(true);
+    expect(perms.canManage).toBe(true);
+  });
+
+  it('grants canManage to ADMIN', async () => {
+    const org = await store.organisations.create({ name: 'admin-org', ownerId: 'someone' });
+    await store.organisationMembers.create({ userId: 'admin-1', organisationId: org.id, role: 'ADMIN' });
+
+    const perms = await checkOrganisationPermissions('admin-1', 'CUSTOMER', org.id);
+    expect(perms.isMember).toBe(true);
+    expect(perms.isAdmin).toBe(true);
+    expect(perms.canManage).toBe(true);
+  });
+
+  it('grants canManage to MANAGER', async () => {
+    const org = await store.organisations.create({ name: 'mgr-org', ownerId: 'someone' });
+    await store.organisationMembers.create({ userId: 'mgr-1', organisationId: org.id, role: 'MANAGER' });
+
+    const perms = await checkOrganisationPermissions('mgr-1', 'CUSTOMER', org.id);
+    expect(perms.isMember).toBe(true);
+    expect(perms.isManager).toBe(true);
+    expect(perms.canManage).toBe(true);
+  });
+
+  it('denies canManage to MEMBER', async () => {
+    const org = await store.organisations.create({ name: 'member-org', ownerId: 'someone' });
+    await store.organisationMembers.create({ userId: 'member-1', organisationId: org.id, role: 'MEMBER' });
+
+    const perms = await checkOrganisationPermissions('member-1', 'CUSTOMER', org.id);
+    expect(perms.isMember).toBe(true);
+    expect(perms.canManage).toBe(false);
+  });
+
+  it('denies access to non-member', async () => {
+    const org = await store.organisations.create({ name: 'closed-org', ownerId: 'someone' });
+
+    const perms = await checkOrganisationPermissions('stranger', 'CUSTOMER', org.id);
+    expect(perms.isMember).toBe(false);
+    expect(perms.canManage).toBe(false);
+  });
+
+  it('SUPERADMIN without membership has no org access', async () => {
+    const org = await store.organisations.create({ name: 'sa-org', ownerId: 'someone' });
+
+    const perms = await checkOrganisationPermissions('superadmin-1', 'SUPERADMIN', org.id);
+    expect(perms.isMember).toBe(false);
+    expect(perms.canManage).toBe(false);
+  });
+
+  it('SUPERADMIN with membership uses membership role', async () => {
+    const org = await store.organisations.create({ name: 'sa-member-org', ownerId: 'someone' });
+    await store.organisationMembers.create({ userId: 'superadmin-1', organisationId: org.id, role: 'MEMBER' });
+
+    const perms = await checkOrganisationPermissions('superadmin-1', 'SUPERADMIN', org.id);
+    expect(perms.isMember).toBe(true);
+    expect(perms.canManage).toBe(false);
+  });
+});
+
+describe('checkProjectPermissions', () => {
+  let store: DataStore;
+
+  beforeEach(() => {
+    resetStore();
+    store = createTestStore();
+    setStore(store);
+  });
+
+  it('grants canManage to org OWNER', async () => {
+    const org = await store.organisations.create({ name: 'proj-org', ownerId: 'owner-1' });
+    await store.organisationMembers.create({ userId: 'owner-1', organisationId: org.id, role: 'OWNER' });
+    const project = await store.projects.create({ name: 'proj', organisationId: org.id });
+
+    const perms = await checkProjectPermissions('owner-1', 'CUSTOMER', org.id, project.id);
+    expect(perms.isMember).toBe(true);
+    expect(perms.canManage).toBe(true);
+  });
+
+  it('denies canManage to org MEMBER', async () => {
+    const org = await store.organisations.create({ name: 'proj-org2', ownerId: 'someone' });
+    await store.organisationMembers.create({ userId: 'member-1', organisationId: org.id, role: 'MEMBER' });
+    const project = await store.projects.create({ name: 'proj', organisationId: org.id });
+
+    const perms = await checkProjectPermissions('member-1', 'CUSTOMER', org.id, project.id);
+    expect(perms.isMember).toBe(true);
+    expect(perms.canManage).toBe(false);
+  });
+
+  it('SUPERADMIN without membership has no project access', async () => {
+    const org = await store.organisations.create({ name: 'proj-sa-org', ownerId: 'someone' });
+    const project = await store.projects.create({ name: 'proj', organisationId: org.id });
+
+    const perms = await checkProjectPermissions('superadmin-1', 'SUPERADMIN', org.id, project.id);
+    expect(perms.isMember).toBe(false);
+    expect(perms.canManage).toBe(false);
+  });
+});
 
 describe('resolveProjectPermissions', () => {
   let store: DataStore;

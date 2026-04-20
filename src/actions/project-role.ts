@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { getStoreAsync } from '@/lib/store';
 import type { ProjectPermission } from '@/lib/store';
+import { createRoleSchema, parseFormData } from '@/lib/form-schemas';
 
 export interface RoleState {
   success?: boolean;
@@ -62,17 +63,10 @@ export async function createProjectRole(
     if ('error' in access) return { error: access.error };
 
     const { store } = access;
-    const name = (formData.get('name') as string | null)?.trim() ?? '';
-    const description = (formData.get('description') as string | null)?.trim() ?? '';
-    const rankRaw = formData.get('rank') as string | null;
-    const rank = rankRaw ? parseInt(rankRaw, 10) : 10;
 
-    if (!name || name.length < 2) {
-      return {
-        error: 'Name must be at least 2 characters',
-        fieldErrors: { name: 'Name must be at least 2 characters' },
-      };
-    }
+    const parsed = parseFormData(createRoleSchema, formData);
+    if (!parsed.success) return { error: parsed.error, fieldErrors: parsed.fieldErrors };
+    const { name, description, rank } = parsed.data;
 
     const existing = await store.projectRoles.findByNameAndOrg(name, organisationId);
     if (existing) {

@@ -4,6 +4,7 @@ import { getStoreAsync } from '@/lib/store';
 import { revalidatePath } from 'next/cache';
 import { deployResource } from '@/lib/deployment-service';
 import { validateNameFormat } from '@/lib/name-validation';
+import { createResourceSchema, parseFormData } from '@/lib/form-schemas';
 
 export interface CreateResourceState {
   success?: boolean;
@@ -43,18 +44,16 @@ export async function createResource(
   formData: FormData
 ): Promise<CreateResourceState> {
   try {
-    const name = formData.get('name') as string;
+    const parsed = parseFormData(createResourceSchema, formData);
+    if (!parsed.success) return { error: parsed.error, fieldErrors: parsed.fieldErrors };
+    const { name, type, projectId, organisationName, isPublic, templateId } = parsed.data;
+
     const description = formData.get('description') as string;
-    const type = formData.get('type') as string;
     const status = formData.get('status') as string;
     const endpoint = formData.get('endpoint') as string;
     const quotaLimitStr = formData.get('quotaLimit') as string;
-    const projectId = formData.get('projectId') as string;
     const tagsStr = formData.get('tags') as string;
     const ownerId = formData.get('ownerId') as string;
-    const organisationName = formData.get('organisationName') as string;
-    const isPublic = formData.get('isPublic') === 'on';
-    const templateId = formData.get('templateId') as string;
 
     // Validate resource name format
     const nameValidation = validateNameFormat(name, 'resource');
@@ -62,13 +61,6 @@ export async function createResource(
       return {
         error: nameValidation.error || 'Invalid resource name',
         fieldErrors: { name: nameValidation.error || 'Invalid resource name' }
-      };
-    }
-
-    if (!type) {
-      return {
-        error: 'Resource type is required',
-        fieldErrors: { type: 'Resource type is required' }
       };
     }
 
