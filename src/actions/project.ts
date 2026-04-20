@@ -189,12 +189,12 @@ export async function updateProject(
     revalidatePath('/admin/project');
     revalidatePath(`/admin/project/${projectId}`);
     if (org?.name) {
-      revalidatePath(`/orga/${org.name}`);
+      revalidatePath(`/${org.name}`);
       if (updatedProject?.name) {
-        revalidatePath(`/orga/${org.name}/${updatedProject.name}`);
+        revalidatePath(`/${org.name}/${updatedProject.name}`);
       }
       if (currentProject.name && currentProject.name !== updatedProject?.name) {
-        revalidatePath(`/orga/${org.name}/${currentProject.name}`);
+        revalidatePath(`/${org.name}/${currentProject.name}`);
       }
     }
 
@@ -329,8 +329,8 @@ export async function createProject(
 
     revalidatePath('/admin/project');
     if (org) {
-      revalidatePath(`/orga/${org.name}`);
-      revalidatePath(`/orga/${org.name}/new-project`);
+      revalidatePath(`/${org.name}`);
+      revalidatePath(`/${org.name}/new-project`);
     }
 
     return { success: true };

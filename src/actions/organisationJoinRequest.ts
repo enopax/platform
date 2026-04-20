@@ -140,7 +140,7 @@ export async function respondToJoinRequest(
     }
 
     revalidatePath('/orga');
-    revalidatePath(`/orga/${joinRequest.organisationId}`);
+    revalidatePath(`/${joinRequest.organisationId}`);
     
     return { success: true };
   } catch (error) {
@@ -336,8 +336,8 @@ export async function kickMember(
     );
 
     revalidatePath('/orga');
-    revalidatePath(`/orga/${organisationId}`);
-    revalidatePath(`/orga/${organisationId}/members`);
+    revalidatePath(`/${organisationId}`);
+    revalidatePath(`/${organisationId}/members`);
     
     return { success: true };
   } catch (error) {

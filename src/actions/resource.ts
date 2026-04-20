@@ -225,7 +225,7 @@ export async function createResource(
       const trimmedProjectId = projectId.trim();
       const project = await store.projects.findById(trimmedProjectId);
       if (organisation?.name && project?.name) {
-        revalidatePath(`/orga/${organisation.name}/${project.name}`);
+        revalidatePath(`/${organisation.name}/${project.name}`);
         console.log(`🔄 Revalidated project path for org ${organisation.name}, project ${project.name}`);
       }
     }
@@ -355,13 +355,13 @@ export async function updateResource(
       const resourceName = name.trim();
       const allocations = await store.projectResources.findByResourceId(resourceId);
       if (allocations.length === 0) {
-        revalidatePath(`/orga/${organisation.name}`);
+        revalidatePath(`/${organisation.name}`);
       } else {
         for (const allocation of allocations) {
           const project = await store.projects.findById(allocation.projectId);
           if (project?.name) {
-            revalidatePath(`/orga/${organisation.name}/${project.name}`);
-            revalidatePath(`/orga/${organisation.name}/${project.name}/${resourceName}`);
+            revalidatePath(`/${organisation.name}/${project.name}`);
+            revalidatePath(`/${organisation.name}/${project.name}/${resourceName}`);
           }
         }
       }
@@ -391,12 +391,12 @@ export async function deleteResource(resourceId: string) {
     if (resource) {
       const organisation = await store.organisations.findById(resource.organisationId);
       if (organisation?.name) {
-        revalidatePath(`/orga/${organisation.name}`);
+        revalidatePath(`/${organisation.name}`);
         const allocations = await store.projectResources.findByResourceId(resourceId);
         for (const allocation of allocations) {
           const project = await store.projects.findById(allocation.projectId);
           if (project?.name) {
-            revalidatePath(`/orga/${organisation.name}/${project.name}`);
+            revalidatePath(`/${organisation.name}/${project.name}`);
           }
         }
       }
@@ -458,8 +458,8 @@ export async function allocateResourceToProject(
     });
 
     if (organisation?.name && project.name) {
-      revalidatePath(`/orga/${organisation.name}/${project.name}/${resource.name}`);
-      revalidatePath(`/orga/${organisation.name}/${project.name}`);
+      revalidatePath(`/${organisation.name}/${project.name}/${resource.name}`);
+      revalidatePath(`/${organisation.name}/${project.name}`);
     }
 
     return { success: true };
@@ -489,8 +489,8 @@ export async function removeResourceFromProject(
     const project = await store.projects.findById(projectId);
 
     if (organisation?.name && project?.name && resource?.name) {
-      revalidatePath(`/orga/${organisation.name}/${project.name}/${resource.name}`);
-      revalidatePath(`/orga/${organisation.name}/${project.name}`);
+      revalidatePath(`/${organisation.name}/${project.name}/${resource.name}`);
+      revalidatePath(`/${organisation.name}/${project.name}`);
     }
 
     return { success: true };
@@ -523,8 +523,8 @@ export async function updateResourceAllocationQuota(
     const project = await store.projects.findById(projectId);
 
     if (organisation?.name && project?.name && resource?.name) {
-      revalidatePath(`/orga/${organisation.name}/${project.name}/${resource.name}`);
-      revalidatePath(`/orga/${organisation.name}/${project.name}`);
+      revalidatePath(`/${organisation.name}/${project.name}/${resource.name}`);
+      revalidatePath(`/${organisation.name}/${project.name}`);
     }
 
     return { success: true };

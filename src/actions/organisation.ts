@@ -112,7 +112,7 @@ export async function updateOrganisation(
     revalidatePath('/admin/organisation');
     revalidatePath(`/admin/organisation/${organisationId}`);
     revalidatePath('/orga');
-    revalidatePath(`/orga/${name.trim()}`);
+    revalidatePath(`/${name.trim()}`);
 
     return { success: true };
   } catch (error) {
@@ -254,7 +254,7 @@ export async function deleteOrganisation(
     revalidatePath('/admin/organisations');
     revalidatePath('/orga');
     if (organisation?.name) {
-      revalidatePath(`/orga/${organisation.name}`);
+      revalidatePath(`/${organisation.name}`);
     }
 
     console.log('Paths revalidated, returning success');
