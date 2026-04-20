@@ -60,7 +60,7 @@ export async function inviteMember(
 
     await sendInvitationEmail(email, token, organisation.name, inviterName, role);
 
-    revalidatePath(`/orga/${organisation.name}/members`);
+    revalidatePath(`/${organisation.name}/members`);
     return { success: true };
   } catch (e: unknown) {
     console.error('Invitation error:', e);
@@ -115,7 +115,7 @@ export async function acceptInvitation(token: string): Promise<{ success: boolea
   });
 
   const organisation = await store.organisations.findById(invitation.organisationId);
-  if (organisation) revalidatePath(`/orga/${organisation.name}/members`);
+  if (organisation) revalidatePath(`/${organisation.name}/members`);
 
   return { success: true, organisationName: organisation?.name };
 }
@@ -136,7 +136,7 @@ export async function revokeInvitation(invitationId: string): Promise<{ success:
   await store.invitations.update(invitationId, { status: 'REVOKED' });
 
   const organisation = await store.organisations.findById(invitation.organisationId);
-  if (organisation) revalidatePath(`/orga/${organisation.name}/members`);
+  if (organisation) revalidatePath(`/${organisation.name}/members`);
 
   return { success: true };
 }

@@ -7,6 +7,7 @@ import type { ProjectRole } from '@/lib/store';
 import { validateNameFormat } from '@/lib/name-validation';
 import { resolveProjectPermissions } from '@/lib/permissions';
 import { logAudit } from '@/lib/audit';
+import { createTeamSchema, updateTeamSchema, parseFormData } from '@/lib/form-schemas';
 
 const VALID_PROJECT_ROLES: ProjectRole[] = ['VIEWER', 'DEVELOPER', 'DEPLOYER', 'ADMIN'];
 
@@ -52,16 +53,9 @@ export async function createTeam(
       return { error: 'Authentication required' };
     }
 
-    const name = formData.get('name') as string;
-    const description = formData.get('description') as string;
-    const defaultProjectRole = formData.get('defaultProjectRole') as string;
-
-    if (!name || name.trim().length < 2) {
-      return {
-        error: 'Name must be at least 2 characters',
-        fieldErrors: { name: 'Name must be at least 2 characters' },
-      };
-    }
+    const parsed = parseFormData(createTeamSchema, formData);
+    if (!parsed.success) return { error: parsed.error, fieldErrors: parsed.fieldErrors };
+    const { name, description, defaultProjectRole } = parsed.data;
 
     const nameValidation = validateNameFormat(name.trim(), 'team');
     if (!nameValidation.isValid) {
@@ -71,7 +65,7 @@ export async function createTeam(
       };
     }
 
-    if (!defaultProjectRole || !VALID_PROJECT_ROLES.includes(defaultProjectRole as ProjectRole)) {
+    if (!VALID_PROJECT_ROLES.includes(defaultProjectRole as ProjectRole)) {
       return {
         error: 'Default project role must be one of VIEWER, DEVELOPER, DEPLOYER, ADMIN',
         fieldErrors: { defaultProjectRole: 'Must be VIEWER, DEVELOPER, DEPLOYER, or ADMIN' },
@@ -119,16 +113,9 @@ export async function updateTeam(
       return { error: 'Authentication required' };
     }
 
-    const name = formData.get('name') as string;
-    const description = formData.get('description') as string;
-    const defaultProjectRole = formData.get('defaultProjectRole') as string;
-
-    if (!name || name.trim().length < 2) {
-      return {
-        error: 'Name must be at least 2 characters',
-        fieldErrors: { name: 'Name must be at least 2 characters' },
-      };
-    }
+    const parsed = parseFormData(updateTeamSchema, formData);
+    if (!parsed.success) return { error: parsed.error, fieldErrors: parsed.fieldErrors };
+    const { name, description, defaultProjectRole } = parsed.data;
 
     const nameValidation = validateNameFormat(name.trim(), 'team');
     if (!nameValidation.isValid) {
@@ -138,7 +125,7 @@ export async function updateTeam(
       };
     }
 
-    if (!defaultProjectRole || !VALID_PROJECT_ROLES.includes(defaultProjectRole as ProjectRole)) {
+    if (!VALID_PROJECT_ROLES.includes(defaultProjectRole as ProjectRole)) {
       return {
         error: 'Default project role must be one of VIEWER, DEVELOPER, DEPLOYER, ADMIN',
         fieldErrors: { defaultProjectRole: 'Must be VIEWER, DEVELOPER, DEPLOYER, or ADMIN' },

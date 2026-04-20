@@ -6,6 +6,7 @@ import { getStoreAsync } from '@/lib/store';
 import { projectService } from '@/lib/services/project';
 import { userService } from '@/lib/services/user';
 import { validateNameFormat } from '@/lib/name-validation';
+import { createProjectSchema, updateProjectSchema, parseFormData } from '@/lib/form-schemas';
 
 export interface UpdateProjectState {
   success?: boolean;
@@ -61,29 +62,17 @@ export async function updateProject(
   formData: FormData
 ): Promise<UpdateProjectState> {
   try {
-    const projectId = formData.get('projectId') as string;
-    const name = formData.get('name') as string;
-    const description = formData.get('description') as string;
+    const parsed = parseFormData(updateProjectSchema, formData);
+    if (!parsed.success) return { error: parsed.error, fieldErrors: parsed.fieldErrors };
+    const { projectId, name, description, repositoryUrl, documentationUrl, budget: budgetStr, status, priority } = parsed.data;
+
     const development = formData.get('development') === 'on';
-    const status = formData.get('status') as ProjectStatus;
-    const priority = formData.get('priority') as ProjectPriority;
-    const budgetStr = formData.get('budget') as string;
     const currency = formData.get('currency') as string;
     const startDateStr = formData.get('startDate') as string;
     const endDateStr = formData.get('endDate') as string;
     const actualEndDateStr = formData.get('actualEndDate') as string;
     const progressStr = formData.get('progress') as string;
-    const repositoryUrl = formData.get('repositoryUrl') as string;
-    const documentationUrl = formData.get('documentationUrl') as string;
-    const userId = formData.get('userId') as string; // Should be passed from client
-
-    // Basic validation
-    if (!projectId) {
-      return {
-        error: 'Project ID is required',
-        fieldErrors: { name: 'Project ID is required' }
-      };
-    }
+    const userId = formData.get('userId') as string;
 
     // Validate project name format
     const nameValidation = validateNameFormat(name, 'project');
@@ -189,12 +178,12 @@ export async function updateProject(
     revalidatePath('/admin/project');
     revalidatePath(`/admin/project/${projectId}`);
     if (org?.name) {
-      revalidatePath(`/orga/${org.name}`);
+      revalidatePath(`/${org.name}`);
       if (updatedProject?.name) {
-        revalidatePath(`/orga/${org.name}/${updatedProject.name}`);
+        revalidatePath(`/${org.name}/${updatedProject.name}`);
       }
       if (currentProject.name && currentProject.name !== updatedProject?.name) {
-        revalidatePath(`/orga/${org.name}/${currentProject.name}`);
+        revalidatePath(`/${org.name}/${currentProject.name}`);
       }
     }
 
@@ -212,22 +201,20 @@ export async function createProject(
   formData: FormData
 ): Promise<CreateProjectState> {
   try {
-    const name = formData.get('name') as string;
-    const description = formData.get('description') as string;
+    const parsed = parseFormData(createProjectSchema, formData);
+    if (!parsed.success) return { error: parsed.error, fieldErrors: parsed.fieldErrors };
+    const { name, description, organisationId, repositoryUrl, documentationUrl, budget: budgetStr } = parsed.data;
+
     const development = formData.get('development') === 'on';
     const status = (formData.get('status') as ProjectStatus) || 'PLANNING';
     const priority = (formData.get('priority') as ProjectPriority) || 'MEDIUM';
-    const budgetStr = formData.get('budget') as string;
     const currency = formData.get('currency') as string;
     const startDateStr = formData.get('startDate') as string;
     const endDateStr = formData.get('endDate') as string;
     const actualEndDateStr = formData.get('actualEndDate') as string;
     const progressStr = formData.get('progress') as string;
-    const repositoryUrl = formData.get('repositoryUrl') as string;
-    const documentationUrl = formData.get('documentationUrl') as string;
     const currentUserId = formData.get('currentUserId') as string;
 
-    // Basic validation
     if (!currentUserId) {
       return {
         error: 'User authentication required',
@@ -289,15 +276,6 @@ export async function createProject(
       };
     }
 
-    // Get organisation ID from form
-    const organisationId = formData.get('organisationId') as string;
-    if (!organisationId) {
-      return {
-        error: 'Organisation context is required',
-        fieldErrors: { name: 'Organisation context is required' }
-      };
-    }
-
     // Validate project name is not already in use within the organisation
     const nameAvailability = await projectService.validateProjectName(name.trim(), organisationId);
     if (!nameAvailability.isValid) {
@@ -329,8 +307,8 @@ export async function createProject(
 
     revalidatePath('/admin/project');
     if (org) {
-      revalidatePath(`/orga/${org.name}`);
-      revalidatePath(`/orga/${org.name}/new-project`);
+      revalidatePath(`/${org.name}`);
+      revalidatePath(`/${org.name}/new-project`);
     }
 
     return { success: true };

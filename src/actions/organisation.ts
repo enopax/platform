@@ -6,6 +6,7 @@ import { getStoreAsync } from '@/lib/store';
 import { organisationService } from '@/lib/services/organisation';
 import { userService } from '@/lib/services/user';
 import { validateNameFormat } from '@/lib/name-validation';
+import { updateOrganisationSchema, createOrganisationSchema, parseFormData } from '@/lib/form-schemas';
 
 export interface UpdateOrganisationState {
   success?: boolean;
@@ -52,16 +53,10 @@ export async function updateOrganisation(
       return { error: 'Authentication required' };
     }
 
-    const name = formData.get('name') as string;
-    const description = formData.get('description') as string;
-    const website = formData.get('website') as string;
-    const email = formData.get('email') as string;
-    const phone = formData.get('phone') as string;
-    const address = formData.get('address') as string;
-    const isActive = formData.get('isActive') === 'true';
-    const visibility = formData.get('visibility') as string | null;
+    const parsed = parseFormData(updateOrganisationSchema, formData);
+    if (!parsed.success) return { error: parsed.error, fieldErrors: parsed.fieldErrors };
+    const { name, description, website, email, phone, address, visibility } = parsed.data;
 
-    // Validate name format
     const nameValidation = validateNameFormat(name, 'organisation');
     if (!nameValidation.isValid) {
       return {
@@ -70,33 +65,12 @@ export async function updateOrganisation(
       };
     }
 
-    // Validate organisation name is not already in use (excluding current organisation)
     const nameAvailability = await organisationService.validateOrganisationName(name.trim(), organisationId);
     if (!nameAvailability.isValid) {
       return {
         error: nameAvailability.error || 'Organisation name is not available',
         fieldErrors: { name: nameAvailability.error || 'Organisation name is not available' }
       };
-    }
-
-    // Validate email format if provided
-    if (email && !email.includes('@')) {
-      return {
-        error: 'Invalid email format',
-        fieldErrors: { email: 'Invalid email format' }
-      };
-    }
-
-    // Validate website URL format if provided
-    if (website && website.trim()) {
-      try {
-        new URL(website.startsWith('http') ? website : `https://${website}`);
-      } catch {
-        return {
-          error: 'Invalid website URL format',
-          fieldErrors: { website: 'Invalid website URL format' }
-        };
-      }
     }
 
     await organisationService.updateOrganisation(organisationId, session.user.id, {
@@ -112,7 +86,7 @@ export async function updateOrganisation(
     revalidatePath('/admin/organisation');
     revalidatePath(`/admin/organisation/${organisationId}`);
     revalidatePath('/orga');
-    revalidatePath(`/orga/${name.trim()}`);
+    revalidatePath(`/${name.trim()}`);
 
     return { success: true };
   } catch (error) {
@@ -128,15 +102,10 @@ export async function createOrganisation(
   formData: FormData
 ): Promise<CreateOrganisationState> {
   try {
-    const name = formData.get('name') as string;
-    const description = formData.get('description') as string;
-    const website = formData.get('website') as string;
-    const email = formData.get('email') as string;
-    const phone = formData.get('phone') as string;
-    const address = formData.get('address') as string;
-    const ownerId = formData.get('ownerId') as string;
+    const parsed = parseFormData(createOrganisationSchema, formData);
+    if (!parsed.success) return { error: parsed.error, fieldErrors: parsed.fieldErrors };
+    const { name, description, website, email, phone, address, ownerId } = parsed.data;
 
-    // Validate name format
     const nameValidation = validateNameFormat(name, 'organisation');
     if (!nameValidation.isValid) {
       return {
@@ -145,14 +114,6 @@ export async function createOrganisation(
       };
     }
 
-    if (!ownerId) {
-      return {
-        error: 'Owner is required',
-        fieldErrors: { ownerId: 'Owner is required' }
-      };
-    }
-
-    // Validate owner exists
     const ownerExists = await userService.validateUserExists(ownerId);
     if (!ownerExists) {
       return {
@@ -161,7 +122,6 @@ export async function createOrganisation(
       };
     }
 
-    // Validate organisation name is not already in use
     const nameAvailability = await organisationService.validateOrganisationName(name.trim());
     if (!nameAvailability.isValid) {
       return {
@@ -170,27 +130,6 @@ export async function createOrganisation(
       };
     }
 
-    // Validate email format if provided
-    if (email && !email.includes('@')) {
-      return {
-        error: 'Invalid email format',
-        fieldErrors: { email: 'Invalid email format' }
-      };
-    }
-
-    // Validate website URL format if provided
-    if (website && website.trim()) {
-      try {
-        new URL(website.startsWith('http') ? website : `https://${website}`);
-      } catch {
-        return {
-          error: 'Invalid website URL format',
-          fieldErrors: { website: 'Invalid website URL format' }
-        };
-      }
-    }
-
-    // Use service to create organisation
     await organisationService.createOrganisation(ownerId, {
       name: name.trim(),
       description: description?.trim() || undefined,
@@ -254,7 +193,7 @@ export async function deleteOrganisation(
     revalidatePath('/admin/organisations');
     revalidatePath('/orga');
     if (organisation?.name) {
-      revalidatePath(`/orga/${organisation.name}`);
+      revalidatePath(`/${organisation.name}`);
     }
 
     console.log('Paths revalidated, returning success');

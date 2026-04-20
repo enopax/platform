@@ -4,6 +4,7 @@ import { getStoreAsync } from '@/lib/store';
 import { revalidatePath } from 'next/cache';
 import { deployResource } from '@/lib/deployment-service';
 import { validateNameFormat } from '@/lib/name-validation';
+import { createResourceSchema, parseFormData } from '@/lib/form-schemas';
 
 export interface CreateResourceState {
   success?: boolean;
@@ -43,18 +44,16 @@ export async function createResource(
   formData: FormData
 ): Promise<CreateResourceState> {
   try {
-    const name = formData.get('name') as string;
+    const parsed = parseFormData(createResourceSchema, formData);
+    if (!parsed.success) return { error: parsed.error, fieldErrors: parsed.fieldErrors };
+    const { name, type, projectId, organisationName, isPublic, templateId } = parsed.data;
+
     const description = formData.get('description') as string;
-    const type = formData.get('type') as string;
     const status = formData.get('status') as string;
     const endpoint = formData.get('endpoint') as string;
     const quotaLimitStr = formData.get('quotaLimit') as string;
-    const projectId = formData.get('projectId') as string;
     const tagsStr = formData.get('tags') as string;
     const ownerId = formData.get('ownerId') as string;
-    const organisationName = formData.get('organisationName') as string;
-    const isPublic = formData.get('isPublic') === 'on';
-    const templateId = formData.get('templateId') as string;
 
     // Validate resource name format
     const nameValidation = validateNameFormat(name, 'resource');
@@ -62,13 +61,6 @@ export async function createResource(
       return {
         error: nameValidation.error || 'Invalid resource name',
         fieldErrors: { name: nameValidation.error || 'Invalid resource name' }
-      };
-    }
-
-    if (!type) {
-      return {
-        error: 'Resource type is required',
-        fieldErrors: { type: 'Resource type is required' }
       };
     }
 
@@ -225,7 +217,7 @@ export async function createResource(
       const trimmedProjectId = projectId.trim();
       const project = await store.projects.findById(trimmedProjectId);
       if (organisation?.name && project?.name) {
-        revalidatePath(`/orga/${organisation.name}/${project.name}`);
+        revalidatePath(`/${organisation.name}/${project.name}`);
         console.log(`🔄 Revalidated project path for org ${organisation.name}, project ${project.name}`);
       }
     }
@@ -355,13 +347,13 @@ export async function updateResource(
       const resourceName = name.trim();
       const allocations = await store.projectResources.findByResourceId(resourceId);
       if (allocations.length === 0) {
-        revalidatePath(`/orga/${organisation.name}`);
+        revalidatePath(`/${organisation.name}`);
       } else {
         for (const allocation of allocations) {
           const project = await store.projects.findById(allocation.projectId);
           if (project?.name) {
-            revalidatePath(`/orga/${organisation.name}/${project.name}`);
-            revalidatePath(`/orga/${organisation.name}/${project.name}/${resourceName}`);
+            revalidatePath(`/${organisation.name}/${project.name}`);
+            revalidatePath(`/${organisation.name}/${project.name}/${resourceName}`);
           }
         }
       }
@@ -391,12 +383,12 @@ export async function deleteResource(resourceId: string) {
     if (resource) {
       const organisation = await store.organisations.findById(resource.organisationId);
       if (organisation?.name) {
-        revalidatePath(`/orga/${organisation.name}`);
+        revalidatePath(`/${organisation.name}`);
         const allocations = await store.projectResources.findByResourceId(resourceId);
         for (const allocation of allocations) {
           const project = await store.projects.findById(allocation.projectId);
           if (project?.name) {
-            revalidatePath(`/orga/${organisation.name}/${project.name}`);
+            revalidatePath(`/${organisation.name}/${project.name}`);
           }
         }
       }
@@ -458,8 +450,8 @@ export async function allocateResourceToProject(
     });
 
     if (organisation?.name && project.name) {
-      revalidatePath(`/orga/${organisation.name}/${project.name}/${resource.name}`);
-      revalidatePath(`/orga/${organisation.name}/${project.name}`);
+      revalidatePath(`/${organisation.name}/${project.name}/${resource.name}`);
+      revalidatePath(`/${organisation.name}/${project.name}`);
     }
 
     return { success: true };
@@ -489,8 +481,8 @@ export async function removeResourceFromProject(
     const project = await store.projects.findById(projectId);
 
     if (organisation?.name && project?.name && resource?.name) {
-      revalidatePath(`/orga/${organisation.name}/${project.name}/${resource.name}`);
-      revalidatePath(`/orga/${organisation.name}/${project.name}`);
+      revalidatePath(`/${organisation.name}/${project.name}/${resource.name}`);
+      revalidatePath(`/${organisation.name}/${project.name}`);
     }
 
     return { success: true };
@@ -523,8 +515,8 @@ export async function updateResourceAllocationQuota(
     const project = await store.projects.findById(projectId);
 
     if (organisation?.name && project?.name && resource?.name) {
-      revalidatePath(`/orga/${organisation.name}/${project.name}/${resource.name}`);
-      revalidatePath(`/orga/${organisation.name}/${project.name}`);
+      revalidatePath(`/${organisation.name}/${project.name}/${resource.name}`);
+      revalidatePath(`/${organisation.name}/${project.name}`);
     }
 
     return { success: true };
