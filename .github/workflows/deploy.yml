@@ -8,7 +8,10 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  # Legacy image path — kept working during the transition.
   IMAGE_NAME: ${{ github.repository_owner }}/platform
+  # New org-wide namespaced path (see enopax/enopax PR #15).
+  IMAGE_NAME_NAMESPACED: ${{ github.repository_owner }}/images/platform
 
 jobs:
   build:
@@ -31,7 +34,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Publish to BOTH the legacy path and the new namespaced path during
+          # the transition so existing deploys keep working. Every tag below is
+          # produced for both image paths. The legacy path will be removed in a
+          # follow-up PR once all consumers pull the namespaced path.
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_NAMESPACED }}
           tags: |
             type=sha,prefix=
             type=raw,value=latest
